@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\EquipmentType;
 use App\Models\MyGarage;
 use App\Models\Trainer;
+use App\Models\TrainerEquipment;
 use App\Models\TrainerLevelApproval;
 use App\Models\TrainerLocation;
 use App\Models\TrainerTrainingBike;
@@ -370,6 +372,8 @@ class TrainerController extends Controller
             'level_prices'            => 'nullable|array',
             'level_prices.*.level_id' => 'required_with:level_prices|integer|exists:trainer_levels,id',
             'level_prices.*.price'    => 'required_with:level_prices|numeric|min:0',
+            'equipment_type_ids'      => 'nullable|array',
+            'equipment_type_ids.*'    => 'integer|exists:equipment_types,id',
         ]);
 
         DB::beginTransaction();
@@ -422,6 +426,24 @@ class TrainerController extends Controller
                         'garage_id'  => $garageId,
                         'is_primary' => $i === 0,
                     ]);
+                }
+            }
+
+            // Attach equipment (optional, can also be done after approval)
+            if (!empty($validated['equipment_type_ids'])) {
+                foreach ($validated['equipment_type_ids'] as $typeId) {
+                    $type = EquipmentType::find($typeId);
+                    if (!$type) continue;
+                    TrainerEquipment::firstOrCreate(
+                        ['trainer_id' => $trainer->id, 'equipment_type_id' => $type->id],
+                        [
+                            'name'         => $type->name,
+                            'name_ar'      => $type->name_ar,
+                            'icon'         => $type->icon,
+                            'is_available' => true,
+                            'sort_order'   => $type->sort_order,
+                        ]
+                    );
                 }
             }
 

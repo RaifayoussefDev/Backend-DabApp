@@ -80,7 +80,7 @@
             "method": "GET",
             "header": [],
             "url": { "raw": "{{base_url}}/api/equipment-types", "host": ["{{base_url}}"], "path": ["api","equipment-types"] },
-            "description": "Public. Returns admin-managed equipment catalog.\n\nDefault IDs:\n- 1 = Helmet\n- 2 = Jacket\n- 3 = Knee Protector\n- 4 = Back Protector\n- 5 = Gloves\n- 6 = Boots\n\nUse these IDs in `equipment_type_ids[]` (Phase 4)."
+            "description": "Public. Returns admin-managed equipment catalog.\n\nDefault IDs:\n- 1 = Helmet\n- 2 = Jacket\n- 3 = Knee Protector\n- 4 = Back Protector\n- 5 = Gloves\n- 6 = Boots\n\nUse these IDs in `equipment_type_ids[]` — you can include them **at register (Step 2-5)** OR separately in Phase 4. Both work."
           }
         },
         {
@@ -167,11 +167,11 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\":               \"Youssef Benali\",\n  \"name_ar\":            \"يوسف بنعلي\",\n  \"bio\":                \"Professional motorcycle instructor with 8 years of experience on circuit and road.\",\n  \"bio_ar\":             \"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة في الحلبة والطريق.\",\n  \"specialty_ids\":      [1, 2],\n  \"experience_years\":   8,\n  \"certifications\":     \"FIM Level 2, MSF Certified\",\n  \"photo\":              \"trainers/photos/photo.jpg\",\n  \"cover\":              \"trainers/covers/cover.jpg\",\n  \"certification_files\": [\n    \"trainers/certs/fim_level2.pdf\",\n    \"trainers/certs/msf_cert.pdf\"\n  ],\n  \"level_prices\": [\n    { \"level_id\": 1, \"price\": 150 },\n    { \"level_id\": 2, \"price\": 220 },\n    { \"level_id\": 3, \"price\": 350 }\n  ]\n}",
+              "raw": "{\n  \"name\":               \"Youssef Benali\",\n  \"name_ar\":            \"يوسف بنعلي\",\n  \"bio\":                \"Professional motorcycle instructor with 8 years of experience on circuit and road.\",\n  \"bio_ar\":             \"مدرب دراجات نارية محترف مع 8 سنوات من الخبرة في الحلبة والطريق.\",\n  \"specialty_ids\":      [1, 2],\n  \"experience_years\":   8,\n  \"certifications\":     \"FIM Level 2, MSF Certified\",\n  \"photo\":              \"trainers/photos/photo.jpg\",\n  \"cover\":              \"trainers/covers/cover.jpg\",\n  \"certification_files\": [\n    \"trainers/certs/fim_level2.pdf\",\n    \"trainers/certs/msf_cert.pdf\"\n  ],\n  \"level_prices\": [\n    { \"level_id\": 1, \"price\": 150 },\n    { \"level_id\": 2, \"price\": 220 },\n    { \"level_id\": 3, \"price\": 350 }\n  ],\n  \"equipment_type_ids\": [1, 2, 5, 6]\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/trainer/register", "host": ["{{base_url}}"], "path": ["api","trainer","register"] },
-            "description": "Submit trainer profile. Status starts as `pending`.\n\n**What happens next:**\n- Add bikes to garage (Phase 3)\n- Select equipment (Phase 4)\n- Admin reviews everything and approves (Phase 5)\n- After approval you can add locations, schedule, gallery, and publish courses\n\n**`level_prices`** — list the levels you want to offer with your requested price. Admin can approve or override the price per level."
+            "description": "Submit trainer profile. Status starts as `pending`.\n\n**Optional fields you can include here (not required — can also be filled after approval):**\n- `equipment_type_ids[]` — select gear from catalog (IDs from Step 1-3). If not sent here, do Phase 4 separately.\n- `training_bike_ids[]` — only works if bikes are already in garage (not applicable in this flow — done in Phase 3 instead).\n\n**What happens next:**\n- Add bikes to garage (Phase 3)\n- If you did NOT send `equipment_type_ids` above, select equipment (Phase 4)\n- Admin reviews everything and approves (Phase 5)\n- After approval: add location, schedule, gallery, and publish courses\n\n**`level_prices`** — list the levels you want to offer with your requested price. Admin can approve or override the price per level."
           }
         },
         {
@@ -304,7 +304,7 @@
 
     {
       "name": "Phase 4 — Trainer: Equipment Selection",
-      "description": "Select from the admin-managed catalog which equipment you provide to students.\n\nNames and icons are copied automatically from the catalog.",
+      "description": "Select from the admin-managed catalog which equipment you provide to students.\n\nNames and icons are copied automatically from the catalog.\n\n**Skip this phase if you already included `equipment_type_ids` in the register body (Step 2-5).**",
       "item": [
         {
           "name": "Step 4-1 · GET Equipment Catalog (verify IDs)",
@@ -342,7 +342,7 @@
               "options": { "raw": { "language": "json" } }
             },
             "url": { "raw": "{{base_url}}/api/trainer/equipment", "host": ["{{base_url}}"], "path": ["api","trainer","equipment"] },
-            "description": "Send an array of catalog type IDs. Already-selected types are skipped (no duplicates).\n\nSaves `{{equipment_id}}` (the row ID, not the catalog type ID)."
+            "description": "Send an array of catalog type IDs. Already-selected types are skipped (no duplicates).\n\nSaves `{{equipment_id}}` (the row ID, not the catalog type ID).\n\n**Note:** If you already sent `equipment_type_ids` in register (Step 2-5), this step is optional — run it only to add more items."
           }
         }
       ]

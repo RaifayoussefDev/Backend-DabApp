@@ -365,7 +365,7 @@
       <div class="step-url">/api/equipment-types</div>
     </div>
     <div class="step-body">
-      <div class="box info">Admin-managed catalog. Use <code>id</code> values in <code>equipment_type_ids[]</code> during Phase 4.</div>
+      <div class="box info">Admin-managed catalog. Use <code>id</code> values in <code>equipment_type_ids[]</code> — you can send them <strong>at register (Step 2-5)</strong> OR separately in Phase 4. Both work.</div>
       <h3>Default seeded items</h3>
       <pre>{
   <span class="k">"data"</span>: [
@@ -486,7 +486,8 @@
     </div>
     <div class="step-body">
       <div class="box save"><strong>Saves:</strong> <code>{{trainer_id}}</code></div>
-      <div class="box warn"><strong>After this:</strong> Complete Phases 3 and 4 (bikes + equipment), then wait for admin approval (Phase 5). Cannot add location/courses until approved.</div>
+      <div class="box warn"><strong>After this:</strong> Complete Phase 3 (bikes). If you did <strong>not</strong> include <code>equipment_type_ids</code> below, also complete Phase 4 (equipment). Then wait for admin approval (Phase 5). Cannot add location/courses until approved.</div>
+      <div class="box info"><strong>Optional shortcut:</strong> You can include <code>equipment_type_ids[]</code> directly in this register call (IDs from Step 1-3). If you do, skip Phase 4 — equipment is already selected.</div>
       <h3>Body — all fields</h3>
       <pre>{
   <span class="k">"name"</span>:               <span class="s">"Youssef Benali"</span>,
@@ -506,7 +507,8 @@
     { <span class="k">"level_id"</span>: <span class="n">1</span>, <span class="k">"price"</span>: <span class="n">150</span> },
     { <span class="k">"level_id"</span>: <span class="n">2</span>, <span class="k">"price"</span>: <span class="n">220</span> },
     { <span class="k">"level_id"</span>: <span class="n">3</span>, <span class="k">"price"</span>: <span class="n">350</span> }
-  ]
+  ],
+  <span class="k">"equipment_type_ids"</span>: [<span class="n">1</span>, <span class="n">2</span>, <span class="n">5</span>, <span class="n">6</span>]  <span class="c">// optional — from Step 1-3. If sent, skip Phase 4.</span>
 }</pre>
       <h3>Field reference</h3>
       <table>
@@ -522,6 +524,7 @@
           <tr><td>certification_files</td><td class="opt">optional</td><td>Paths returned by Step 2-4</td></tr>
           <tr><td>level_prices[].level_id</td><td class="req">required</td><td>Level ID from Step 1-1</td></tr>
           <tr><td>level_prices[].price</td><td class="req">required</td><td>Your requested price. Admin sets the final approved price.</td></tr>
+          <tr><td>equipment_type_ids[]</td><td class="opt">optional</td><td>Catalog IDs from Step 1-3. If sent here, Phase 4 can be skipped.</td></tr>
         </tbody>
       </table>
     </div>
@@ -648,7 +651,7 @@
     <div class="ph-icon ph-trainer">4</div>
     <div>
       <div class="ph-title">Trainer — Equipment Selection</div>
-      <div class="ph-sub">Select from the admin catalog which gear you provide to students. Names/icons are copied from catalog automatically.</div>
+      <div class="ph-sub">Select from the admin catalog which gear you provide to students. Names/icons are copied from catalog automatically. <strong>Skip if you already sent <code>equipment_type_ids</code> in Step 2-5.</strong></div>
     </div>
   </div>
 
@@ -674,6 +677,7 @@
     <div class="step-body">
       <div class="box save"><strong>Saves:</strong> <code>{{equipment_id}}</code></div>
       <div class="box info">Already-selected types are skipped (idempotent). One call selects multiple items.</div>
+      <div class="box warn"><strong>Note:</strong> If you already included <code>equipment_type_ids</code> in the register body (Step 2-5), this step is optional — run it only to add more items.</div>
       <h3>Body</h3>
       <pre>{
   <span class="k">"equipment_type_ids"</span>: [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>, <span class="n">6</span>]   <span class="c">// from Step 1-3</span>
