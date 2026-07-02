@@ -273,7 +273,7 @@ class TrainerCourseController extends Controller
      * @OA\Put(
      *     path="/api/trainer/courses/{id}",
      *     summary="Update a course",
-     *     description="Update any field of a draft or published course. Optionally include a 'sessions' array to bulk upsert session descriptions in the same request (same shape as course creation). Archived courses cannot be edited.",
+     *     description="Update any field of a draft course. Optionally include a 'sessions' array to bulk upsert session descriptions in the same request (same shape as course creation). Published and archived courses cannot be edited — archive a published course, delete it, and recreate it as a draft.",
      *     operationId="updateTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
@@ -306,7 +306,7 @@ class TrainerCourseController extends Controller
      *         )
      *     ),
      *     @OA\Response(response=200, description="Course updated"),
-     *     @OA\Response(response=403, description="Cannot edit an archived course"),
+     *     @OA\Response(response=403, description="Cannot edit an archived or published course"),
      *     @OA\Response(response=404, description="Course not found")
      * )
      */
@@ -324,6 +324,10 @@ class TrainerCourseController extends Controller
 
         if ($course->status === 'archived') {
             return response()->json(['success' => false, 'message' => 'Cannot edit an archived course'], 403);
+        }
+
+        if ($course->status === 'published') {
+            return response()->json(['success' => false, 'message' => 'Cannot edit a published course. Archive it first.'], 403);
         }
 
         $validated = $request->validate([
