@@ -21,8 +21,20 @@ class TrainerCourseSession extends Model
         'duration_hours' => 'integer',
     ];
 
+    protected $appends = ['localized_title', 'localized_description'];
+
     public function course()
     {
         return $this->belongsTo(TrainerCourse::class, 'course_id');
+    }
+
+    public function getLocalizedTitleAttribute(): ?string
+    {
+        return app()->getLocale() === 'ar' ? ($this->title_ar ?? $this->title) : $this->title;
+    }
+
+    public function getLocalizedDescriptionAttribute(): ?string
+    {
+        return app()->getLocale() === 'ar' ? $this->description_ar : $this->description;
     }
 }
