@@ -147,7 +147,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $course = TrainerCourse::with(['level', 'location.city'])
+        $course = TrainerCourse::with(['level', 'location.city', 'sessions'])
             ->where('trainer_id', $trainer->id)
             ->find($id);
 
@@ -273,7 +273,7 @@ class TrainerCourseController extends Controller
      * @OA\Put(
      *     path="/api/trainer/courses/{id}",
      *     summary="Update a course",
-     *     description="Update any field of a draft or published course. Archived courses cannot be edited.",
+     *     description="Update any field of a draft or published course. Optionally include a 'sessions' array to bulk upsert session descriptions in the same request (same shape as course creation). Archived courses cannot be edited.",
      *     operationId="updateTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
@@ -292,7 +292,17 @@ class TrainerCourseController extends Controller
      *             @OA\Property(property="original_price",    type="number"),
      *             @OA\Property(property="promo_price",       type="number"),
      *             @OA\Property(property="location_id",       type="integer"),
-     *             @OA\Property(property="can_travel",        type="boolean")
+     *             @OA\Property(property="can_travel",        type="boolean"),
+     *             @OA\Property(property="sessions",          type="array",   description="Optional — bulk upsert session descriptions in the same request",
+     *                 @OA\Items(type="object",
+     *                     @OA\Property(property="session_number", type="integer", example=1),
+     *                     @OA\Property(property="title",          type="string",  example="Introduction & Safety"),
+     *                     @OA\Property(property="title_ar",       type="string",  example="المقدمة والسلامة"),
+     *                     @OA\Property(property="description",    type="string",  example="Getting familiar with the bike."),
+     *                     @OA\Property(property="description_ar", type="string",  example="التعرف على الدراجة."),
+     *                     @OA\Property(property="duration_hours", type="integer", example=2)
+     *                 )
+     *             )
      *         )
      *     ),
      *     @OA\Response(response=200, description="Course updated"),
@@ -337,13 +347,31 @@ class TrainerCourseController extends Controller
             ],
             'can_travel'        => 'nullable|boolean',
             'price_per_km'      => 'nullable|numeric|min:0',
+            'sessions'                  => 'nullable|array',
+            'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
+            'sessions.*.title'          => 'nullable|string|max:255',
+            'sessions.*.title_ar'       => 'nullable|string|max:255',
+            'sessions.*.description'    => 'nullable|string|max:3000',
+            'sessions.*.description_ar' => 'nullable|string|max:3000',
+            'sessions.*.duration_hours' => 'nullable|integer|min:1|max:24',
         ]);
 
-        $course->update(array_filter($validated, fn ($v) => $v !== null));
+        $sessions = $validated['sessions'] ?? null;
+
+        $course->update(array_filter(collect($validated)->except('sessions')->toArray(), fn ($v) => $v !== null));
+
+        if (!empty($sessions)) {
+            foreach ($sessions as $sessionData) {
+                $course->sessions()->updateOrCreate(
+                    ['session_number' => $sessionData['session_number']],
+                    collect($sessionData)->except('session_number')->toArray()
+                );
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'data'    => $course->fresh()->load(['level', 'location.city']),
+            'data'    => $course->fresh()->load(['level', 'location.city', 'sessions']),
             'message' => 'Course updated successfully',
         ]);
     }
