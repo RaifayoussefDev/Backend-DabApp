@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-            AdminMenuSeeder::class,
+            AdminMenuV2Seeder::class, // SPA-compatible menu tree (real React paths + key), replaces legacy AdminMenuSeeder
+            AssistMenuSeeder::class,
+            PaymentMenuSeeder::class,
             NotificationTemplateSeeder::class,
             ServiceCategorySeeder::class,
             TowTypeSeeder::class,

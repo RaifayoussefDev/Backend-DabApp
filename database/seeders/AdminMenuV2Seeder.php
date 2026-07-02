@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\AdminMenu;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class AdminMenuV2Seeder extends Seeder
 {
@@ -286,7 +287,7 @@ class AdminMenuV2Seeder extends Seeder
                 'order' => $menu['order'],
                 'permission' => $menu['permission'] ?? null,
                 'type' => isset($menu['sub_items']) ? 'collapse' : 'item',
-                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainers']) ? ['admin', 'Manager'] : ['admin']),
+                'roles' => ($menu['key'] === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($menu['key'], ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainer']) ? ['admin', 'Manager'] : ['admin']),
                 'is_main_parent' => true,
                 'is_active' => true,
             ]);
@@ -303,13 +304,17 @@ class AdminMenuV2Seeder extends Seeder
                         'order' => $sub['order'],
                         'permission' => $sub['permission'] ?? null,
                         'type' => 'item',
-                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainers']) ? ['admin', 'Manager'] : ['admin']),
+                        'roles' => ($parent->name === 'dashboard') ? ['admin', 'Manager', 'dashboard'] : (in_array($parent->name, ['users', 'listings', 'events', 'guides', 'services', 'promo-codes', 'subscriptions', 'reports', 'pois', 'routes', 'banners', 'motorcycle', 'spare-parts', 'trainer']) ? ['admin', 'Manager'] : ['admin']),
                         'is_main_parent' => false,
                         'is_active' => true,
                     ]);
                 }
             }
         }
+
+        // truncate() bypasses model events, so bump the cache version manually
+        // to invalidate any menu tree cached before this reseed.
+        Cache::forever('admin_menu_version', time());
 
         $this->command->info('✅ New Admin Menu seeded successfully!');
     }

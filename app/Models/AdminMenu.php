@@ -214,6 +214,7 @@ class AdminMenu extends Model
     {
         $data = [
             'id' => (string)$this->id,
+            'key' => $this->name,
             'title' => $this->title ?? $this->name,
             'type' => $this->type,
             'translate' => $this->translate,
