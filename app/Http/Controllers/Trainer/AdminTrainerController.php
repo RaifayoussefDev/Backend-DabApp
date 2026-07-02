@@ -485,11 +485,27 @@ class AdminTrainerController extends Controller
             'locations',
             'schedules',
             'commissionSetting',
+            'levelApprovals.level',
+            'equipment',
+            'trainingBikes.garage.brand',
+            'trainingBikes.garage.model',
+            'trainingBikes.garage.year',
         ])->find($id);
 
         if (!$trainer) {
             return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
         }
+
+        $trainingBikes = $trainer->trainingBikes->map(fn ($b) => [
+            'brand_name'         => $b->garage?->brand?->name,
+            'model_name'         => $b->garage?->model?->name,
+            'year'               => $b->garage?->year?->year,
+            'is_primary'         => (bool) $b->is_primary,
+            'is_training_ready'  => (bool) ($b->garage
+                && $b->garage->plate_number
+                && $b->garage->insurance_expiry
+                && $b->garage->insurance_covers_training),
+        ]);
 
         $splitModel = \App\Models\PaymentSplit::where('trainer_id', $trainer->id);
 
@@ -514,6 +530,7 @@ class AdminTrainerController extends Controller
             'data'    => array_merge($trainer->append('photo_url')->toArray(), [
                 'stats'           => $stats,
                 'recent_bookings' => $recentBookings,
+                'trainingBikes'   => $trainingBikes,
             ]),
             'message' => 'Trainer profile retrieved',
         ]);
