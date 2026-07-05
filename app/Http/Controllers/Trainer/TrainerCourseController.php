@@ -22,6 +22,109 @@ class TrainerCourseController extends Controller
     }
 
     // ---------------------------------------------------------------
+    // PUBLIC — browse all courses across all trainers
+    // ---------------------------------------------------------------
+
+    /**
+     * @OA\Get(
+     *     path="/api/courses",
+     *     summary="Browse all published courses",
+     *     description="Returns a paginated list of published courses across all approved trainers. Each course includes its trainer (with equipment) so the client can view course + trainer + equipment in one call.",
+     *     operationId="listAllCourses",
+     *     tags={"Trainer - Courses"},
+     *     @OA\Parameter(name="level_id",   in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="city_id",    in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="can_travel", in="query", required=false, @OA\Schema(type="integer", enum={0,1})),
+     *     @OA\Parameter(name="min_price",  in="query", required=false, @OA\Schema(type="number", example=50)),
+     *     @OA\Parameter(name="max_price",  in="query", required=false, @OA\Schema(type="number", example=500)),
+     *     @OA\Parameter(name="search",     in="query", required=false, @OA\Schema(type="string", example="circuit")),
+     *     @OA\Parameter(name="sort_by",    in="query", required=false, @OA\Schema(type="string", enum={"newest","price_asc","price_desc"}, default="newest")),
+     *     @OA\Parameter(name="per_page",   in="query", required=false, @OA\Schema(type="integer", example=15)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Courses retrieved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="data", type="array",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="id",             type="integer", example=6),
+     *                         @OA\Property(property="title",          type="string",  example="Beginner Circuit Training"),
+     *                         @OA\Property(property="effective_price",type="number",  example=120.00),
+     *                         @OA\Property(property="can_travel",     type="boolean", example=false),
+     *                         @OA\Property(property="level",          type="object", nullable=true),
+     *                         @OA\Property(property="location",       type="object", nullable=true),
+     *                         @OA\Property(property="trainer", type="object",
+     *                             @OA\Property(property="id",               type="integer"),
+     *                             @OA\Property(property="name",             type="string"),
+     *                             @OA\Property(property="name_ar",          type="string"),
+     *                             @OA\Property(property="photo_url",        type="string"),
+     *                             @OA\Property(property="rating_average",   type="number"),
+     *                             @OA\Property(property="experience_years", type="integer"),
+     *                             @OA\Property(property="equipment", type="array",
+     *                                 @OA\Items(type="object",
+     *                                     @OA\Property(property="icon", type="string", example="helmet"),
+     *                                     @OA\Property(property="name", type="string", example="Helmet")
+     *                                 )
+     *                             )
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function browseAll(Request $request)
+    {
+        $query = TrainerCourse::with([
+                'level',
+                'location.city',
+                'trainer:id,name,name_ar,photo,rating_average,experience_years,is_available',
+                'trainer.equipment',
+            ])
+            ->published()
+            ->whereHas('trainer', fn ($q) => $q->approved());
+
+        if ($request->filled('level_id')) {
+            $query->where('level_id', $request->level_id);
+        }
+
+        if ($request->filled('city_id')) {
+            $query->whereHas('location', fn ($q) => $q->where('city_id', $request->city_id));
+        }
+
+        if ($request->has('can_travel')) {
+            $query->where('can_travel', $request->boolean('can_travel'));
+        }
+
+        if ($request->filled('min_price')) {
+            $query->where('original_price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('original_price', '<=', $request->max_price);
+        }
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $query->where(fn ($q) => $q->where('title', 'LIKE', "%{$s}%")->orWhere('title_ar', 'LIKE', "%{$s}%"));
+        }
+
+        match ($request->get('sort_by', 'newest')) {
+            'price_asc'  => $query->orderBy('original_price', 'asc'),
+            'price_desc' => $query->orderBy('original_price', 'desc'),
+            default      => $query->latest(),
+        };
+
+        return response()->json([
+            'success' => true,
+            'data'    => $query->paginate($request->get('per_page', 15)),
+            'message' => 'Courses retrieved successfully',
+        ]);
+    }
+
+    // ---------------------------------------------------------------
     // PUBLIC — browse courses for a specific trainer
     // ---------------------------------------------------------------
 

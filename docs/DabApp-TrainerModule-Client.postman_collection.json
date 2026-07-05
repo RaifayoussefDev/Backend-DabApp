@@ -1,0 +1,595 @@
+{
+  "info": {
+    "name": "DabApp – Trainer Module (Client Flow Only)",
+    "_postman_id": "dabapp-trainer-client-v1",
+    "description": "## DabApp Trainer Module — Client-side test scenario\n\nEvery API a **client** (rider booking a trainer) consumes. No trainer-management or admin endpoints included — see the full collection for those.\n\nFollow the folders in order. Variables are saved automatically via test scripts.\n\n| Phase | Purpose |\n|---|---|\n| 1 · Pre-Setup | Public reference data (no auth) |\n| 2 · Client Login | Authenticate as client |\n| 3 · Browse Trainers | Search, filter, view profiles |\n| 4 · Trainer Detail Pages | Reviews, comments, gallery, equipment, bikes, courses, sessions |\n| 5 · Availability & Pricing | Check open slots, compute travel price |\n| 6 · Book Fixed-Location Course | Book Course A (at trainer's location) |\n| 7 · Book Travel Course | Book Course B (trainer travels to client) |\n| 8 · My Bookings | List, view, cancel, retry payment |\n| 9 · Session Lifecycle (Client side) | Confirm completion / dispute |\n| 10 · Reviews & Comments | Submit review, comment, reply, delete own comment |\n| 11 · Likes & Favorites | Toggle like/favorite, list favorites |\n\n### Credentials\n| Role | Email | Password |\n|---|---|---|\n| Client | client@dabapp.com | YourClientPassword |\n\n### Variables saved automatically\n| Variable | Saved by |\n|---|---|\n| `token` | Step 2-1 Login |\n| `trainer_id` | Step 3-2 Browse trainers |\n| `location_id` | Step 4-1 Trainer detail |\n| `course_a_id` / `course_b_id` | Step 4-6 List trainer courses |\n| `booking_a_id` / `payment_url_a` | Step 6-3 Book Course A |\n| `booking_b_id` / `payment_url_b` | Step 7-2 Book Course B |\n| `comment_id` | Step 10-3 Add comment |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    { "key": "base_url",       "value": "https://be.dabapp.co", "type": "string" },
+    { "key": "token",          "value": "", "type": "string" },
+    { "key": "trainer_id",     "value": "", "type": "string" },
+    { "key": "location_id",    "value": "", "type": "string" },
+    { "key": "course_a_id",    "value": "", "type": "string" },
+    { "key": "course_b_id",    "value": "", "type": "string" },
+    { "key": "booking_a_id",   "value": "", "type": "string" },
+    { "key": "booking_b_id",   "value": "", "type": "string" },
+    { "key": "payment_url_a",  "value": "", "type": "string" },
+    { "key": "payment_url_b",  "value": "", "type": "string" },
+    { "key": "comment_id",     "value": "", "type": "string" },
+    { "key": "specialty_id",   "value": "1", "type": "string" },
+    { "key": "city_id",        "value": "1", "type": "string" }
+  ],
+
+  "item": [
+
+    {
+      "name": "Phase 1 — Pre-Setup (Public, No Auth)",
+      "description": "Reference data used to build search filters and registration-adjacent screens.",
+      "item": [
+        {
+          "name": "Step 1-1 · GET Specialties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/specialties", "host": ["{{base_url}}"], "path": ["api", "specialties"] },
+            "description": "Public. Returns all specialties (Coaching, Competition, Off-Road, Street...). Use `id` as `specialty_id` filter when browsing trainers."
+          }
+        },
+        {
+          "name": "Step 1-2 · GET Trainer Levels",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainer-levels", "host": ["{{base_url}}"], "path": ["api", "trainer-levels"] },
+            "description": "Public. Levels: 1=Beginner, 2=Intermediate, 3=Advanced. Used to filter courses by `level_id`."
+          }
+        },
+        {
+          "name": "Step 1-3 · GET Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/cities", "host": ["{{base_url}}"], "path": ["api", "cities"] },
+            "description": "Public. Use `city_id` to filter trainers/locations."
+          }
+        },
+        {
+          "name": "Step 1-4 · GET All Training Locations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainer-locations?city_id={{city_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trainer-locations"],
+              "query": [{ "key": "city_id", "value": "{{city_id}}" }]
+            },
+            "description": "Public. All training locations across all trainers, with GPS coordinates. Supports `lat`/`lng`/`radius_km` for proximity search."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 2 — Client Login",
+      "item": [
+        {
+          "name": "Step 2-1 · POST Client Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var tok = json.token || (json.data && json.data.token);",
+            "if (tok) {",
+            "  pm.collectionVariables.set('token', tok);",
+            "  console.log('client token saved');",
+            "}",
+            "pm.test('Client login OK', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"client@dabapp.com\",\n  \"password\": \"YourClientPassword\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api", "login"] },
+            "description": "Saves `{{token}}`. Every authenticated client call below sends `Authorization: Bearer {{token}}`."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 3 — Browse Trainers",
+      "item": [
+        {
+          "name": "Step 3-1 · GET List Trainers (no filters)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers", "host": ["{{base_url}}"], "path": ["api", "trainers"] },
+            "description": "Public. Paginated list of approved + available trainers."
+          }
+        },
+        {
+          "name": "Step 3-2 · GET List Trainers (filtered + saves trainer_id)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var list = (json.data && json.data.data) || json.data || [];",
+            "if (Array.isArray(list) && list.length) {",
+            "  pm.collectionVariables.set('trainer_id', String(list[0].id));",
+            "  console.log('trainer_id saved:', list[0].id);",
+            "}",
+            "pm.test('Trainers loaded', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainers?specialty_id={{specialty_id}}&city_id={{city_id}}&min_rating=0&sort_by=rating&per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trainers"],
+              "query": [
+                { "key": "specialty_id", "value": "{{specialty_id}}" },
+                { "key": "city_id",      "value": "{{city_id}}" },
+                { "key": "min_rating",   "value": "0" },
+                { "key": "sort_by",      "value": "rating" },
+                { "key": "per_page",     "value": "15" }
+              ]
+            },
+            "description": "Public. Other supported filters: `min_experience_years`, `is_available`, `search`, `lat`/`lng`/`radius_km`. Saves `{{trainer_id}}` from the first result."
+          }
+        },
+        {
+          "name": "Step 3-3 · GET Trainer Full Profile",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json().data || {};",
+            "if ((d.locations || []).length) {",
+            "  pm.collectionVariables.set('location_id', String(d.locations[0].id));",
+            "  console.log('location_id saved:', d.locations[0].id);",
+            "}",
+            "pm.test('Profile loaded', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}"] },
+            "description": "Full profile: bio, specialties, locations, schedules, gallery, equipment, approved levels, last 10 reviews, `is_liked_by_auth`, `is_favorited_by_auth` (auth optional — omit token to view as guest, those two flags just default false). Saves `{{location_id}}`."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 4 — Trainer Detail Pages",
+      "description": "Everything a client sees on a trainer's public profile page before booking.",
+      "item": [
+        {
+          "name": "Step 4-1 · GET Trainer Reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/reviews", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "reviews"] },
+            "description": "Public. Paginated approved reviews + `rating_summary` (average + 1–5 star distribution)."
+          }
+        },
+        {
+          "name": "Step 4-2 · GET Trainer Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "comments"] },
+            "description": "Public. Root comments with nested `replies`, only approved ones."
+          }
+        },
+        {
+          "name": "Step 4-3 · GET Trainer Gallery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/gallery", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "gallery"] },
+            "description": "Public. Photos the trainer uploaded of their sessions/circuit."
+          }
+        },
+        {
+          "name": "Step 4-4 · GET Trainer Equipment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/equipment", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "equipment"] },
+            "description": "Public. Gear the trainer provides (helmet, jacket, etc.) — `icon` + `name` per item."
+          }
+        },
+        {
+          "name": "Step 4-5 · GET Trainer Training Bikes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/training-bikes", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "training-bikes"] },
+            "description": "Public. Bikes available for training sessions with this trainer."
+          }
+        },
+        {
+          "name": "Step 4-6 · GET Trainer Published Courses",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var list = pm.response.json().data || [];",
+            "var fixed  = list.find(function (c) { return c.can_travel === false; });",
+            "var travel = list.find(function (c) { return c.can_travel === true; });",
+            "if (fixed)  { pm.collectionVariables.set('course_a_id', String(fixed.id));  console.log('course_a_id (fixed) saved:', fixed.id); }",
+            "if (travel) { pm.collectionVariables.set('course_b_id', String(travel.id)); console.log('course_b_id (travel) saved:', travel.id); }",
+            "pm.test('Courses loaded', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "courses"] },
+            "description": "Public. Published + active courses only. Optional `?level_id=` filter. Saves `{{course_a_id}}` (first fixed-location course found) and `{{course_b_id}}` (first travel course found)."
+          }
+        },
+        {
+          "name": "Step 4-7 · GET Course A Sessions Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_a_id}}/sessions", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "courses", "{{course_a_id}}", "sessions"] },
+            "description": "Public. Session-by-session breakdown shown before booking Course A."
+          }
+        },
+        {
+          "name": "Step 4-8 · GET Course B Sessions Preview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_b_id}}/sessions", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "courses", "{{course_b_id}}", "sessions"] },
+            "description": "Public. Session breakdown for the travel course."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 5 — Availability & Pricing",
+      "item": [
+        {
+          "name": "Step 5-1 · GET Trainer Availability (next 14 days)",
+          "event": [
+            { "listen": "prerequest", "script": { "type": "text/javascript", "exec": [
+              "var today = new Date();",
+              "pm.variables.set('from_date', today.toISOString().split('T')[0]);",
+              "var to = new Date(today.getTime() + 14 * 86400000);",
+              "pm.variables.set('to_date', to.toISOString().split('T')[0]);"
+            ] } },
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('Availability returned', function () { pm.response.to.have.status(200); });"
+            ] } }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainers/{{trainer_id}}/availability?from_date={{from_date}}&to_date={{to_date}}&location_id={{location_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trainers", "{{trainer_id}}", "availability"],
+              "query": [
+                { "key": "from_date",   "value": "{{from_date}}" },
+                { "key": "to_date",     "value": "{{to_date}}" },
+                { "key": "location_id", "value": "{{location_id}}" }
+              ]
+            },
+            "description": "Public. `location_id` is optional (omit for travel-course availability). Returns free `time_slots` per day, and whether the schedule is 'configured' or 'default'."
+          }
+        },
+        {
+          "name": "Step 5-2 · GET Calculate Travel Price (Course B, 20km)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json().data || {};",
+            "if (d.total_with_travel !== undefined) {",
+            "  console.log('Distance:', d.km, 'km | travel_cost:', d.travel_cost, '| session_price:', d.session_price, '| TOTAL:', d.total_with_travel);",
+            "}",
+            "pm.test('Travel price calculated', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainers/{{trainer_id}}/travel-price?course_id={{course_b_id}}&km=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trainers", "{{trainer_id}}", "travel-price"],
+              "query": [
+                { "key": "course_id", "value": "{{course_b_id}}" },
+                { "key": "km",        "value": "20" }
+              ]
+            },
+            "description": "Public. `total = effective_price + (km × price_per_km)`. Only works for courses with `can_travel: true`. Returns 400 if the course doesn't support travel."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 6 — Book Fixed-Location Course (Course A)",
+      "item": [
+        {
+          "name": "Step 6-1 · POST Book Course A",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json().data || {};",
+            "if (d.booking_id) {",
+            "  pm.collectionVariables.set('booking_a_id', String(d.booking_id));",
+            "  console.log('booking_a_id saved:', d.booking_id, '| total_price:', d.total_price, '| status:', d.status);",
+            "}",
+            "if (d.payment_url) {",
+            "  pm.collectionVariables.set('payment_url_a', d.payment_url);",
+            "  console.log('payment_url_a saved — open in browser to pay');",
+            "}",
+            "pm.test('Booking A created', function () { pm.response.to.have.status(201); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\":    {{course_a_id}},\n  \"booking_date\": \"2026-07-20\",\n  \"start_time\":   \"09:00\",\n  \"location_id\":  {{location_id}},\n  \"notes\":        \"Complete beginner — first time on a circuit\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "book"] },
+            "description": "Booking is created as `confirmed` immediately, `payment_status: pending`. Saves `{{booking_a_id}}` and `{{payment_url_a}}` — open the payment URL in a browser to complete payment (PayTabs sandbox)."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 7 — Book Travel Course (Course B)",
+      "item": [
+        {
+          "name": "Step 7-1 · POST Book Course B (no location_id)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json().data || {};",
+            "if (d.booking_id) {",
+            "  pm.collectionVariables.set('booking_b_id', String(d.booking_id));",
+            "  console.log('booking_b_id saved:', d.booking_id);",
+            "}",
+            "if (d.payment_url) {",
+            "  pm.collectionVariables.set('payment_url_b', d.payment_url);",
+            "  console.log('payment_url_b saved — open in browser to pay');",
+            "}",
+            "pm.test('Booking B created', function () { pm.response.to.have.status(201); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\":    {{course_b_id}},\n  \"booking_date\": \"2026-07-22\",\n  \"start_time\":   \"10:00\",\n  \"notes\":        \"I am about 20 km away\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/book", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "book"] },
+            "description": "No `location_id` for travel courses — trainer comes to the client. Saves `{{booking_b_id}}` and `{{payment_url_b}}`."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 8 — My Bookings",
+      "item": [
+        {
+          "name": "Step 8-1 · GET My Bookings (all)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings"] },
+            "description": "Optional filters: `?status=confirmed`, `?upcoming=1`, `?per_page=10`."
+          }
+        },
+        {
+          "name": "Step 8-2 · GET My Bookings (upcoming only)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/trainer/bookings?upcoming=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "trainer", "bookings"],
+              "query": [{ "key": "upcoming", "value": "1" }]
+            }
+          }
+        },
+        {
+          "name": "Step 8-3 · GET Booking A Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_a_id}}"] },
+            "description": "Includes `can_review` (true only once `status === completed` and not already reviewed)."
+          }
+        },
+        {
+          "name": "Step 8-4 · POST Retry / Initiate Payment for Booking A",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/pay", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_a_id}}", "pay"] },
+            "description": "Use if the client abandoned the first payment page. Returns 400 if already paid, or if booking isn't `confirmed`."
+          }
+        },
+        {
+          "name": "Step 8-5 · POST Cancel Booking B",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_b_id}}/cancel", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_b_id}}", "cancel"] },
+            "description": "Only the booking owner can cancel, and only while status allows it. If already paid, triggers a PayTabs refund automatically. Run this on Booking B so Booking A stays alive for Phase 9."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 9 — Session Lifecycle (Client side)",
+      "description": "Run AFTER the trainer has called `/trainer/sessions/{id}/start` then `/complete` on Booking A (see the Trainer collection) — status must be `awaiting_confirmation` before Step 9-1/9-2 will succeed.",
+      "item": [
+        {
+          "name": "Step 9-1 · POST Confirm Session Completion",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json();",
+            "console.log('can_review:', d.can_review);",
+            "pm.test('Completion confirmed', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/confirm-completion", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_a_id}}", "confirm-completion"] },
+            "description": "`awaiting_confirmation` → `completed`. Returns 400 if the booking isn't in `awaiting_confirmation`. `can_review` becomes true."
+          }
+        },
+        {
+          "name": "Step 9-2 · POST Dispute Session (alternative to confirm)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Trainer did not show up on time.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/dispute", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_a_id}}", "dispute"] },
+            "description": "Only run this INSTEAD of Step 9-1 if testing the dispute path — a booking can't be both confirmed and disputed. `awaiting_confirmation` → `disputed`, admin reviews manually."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 10 — Reviews & Comments",
+      "item": [
+        {
+          "name": "Step 10-1 · POST Submit Review for Booking A",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\":  5,\n  \"comment\": \"Excellent trainer! Very patient and professional. Highly recommend.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/bookings/{{booking_a_id}}/review", "host": ["{{base_url}}"], "path": ["api", "trainer", "bookings", "{{booking_a_id}}", "review"] },
+            "description": "Only works once `status === completed` (after Step 9-1) and not already reviewed. Review is `pending moderation` until admin approves it — won't show up in Step 4-1 until then."
+          }
+        },
+        {
+          "name": "Step 10-2 · GET Trainer Comments (refresh)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "comments"] }
+          }
+        },
+        {
+          "name": "Step 10-3 · POST Add Top-Level Comment",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Comment submitted', function () { pm.response.to.have.status(201); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Best trainer I've worked with! Very professional.\",\n  \"parent_id\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "comments"] },
+            "description": "Comment goes through moderation before appearing publicly. This endpoint doesn't return the created comment id, so `{{comment_id}}` for Step 10-5 must be fetched manually (via admin panel or DB) if you want to test deletion."
+          }
+        },
+        {
+          "name": "Step 10-4 · POST Reply to a Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"I agree, had a great experience too!\",\n  \"parent_id\": {{comment_id}}\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/comments", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "comments"] },
+            "description": "Set `{{comment_id}}` to an existing root comment's id first. Returns 422 if `parent_id` belongs to a different trainer."
+          }
+        },
+        {
+          "name": "Step 10-5 · DELETE My Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/comments/{{comment_id}}", "host": ["{{base_url}}"], "path": ["api", "trainer", "comments", "{{comment_id}}"] },
+            "description": "Only the comment owner can delete. Returns 403 otherwise."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 11 — Likes & Favorites",
+      "item": [
+        {
+          "name": "Step 11-1 · POST Toggle Like (like)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json();",
+            "console.log('liked:', d.liked, '| likes_count:', d.likes_count);",
+            "pm.test('Like toggled', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/like", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "like"] },
+            "description": "Toggle — first call likes, second call (run this request again) unlikes."
+          }
+        },
+        {
+          "name": "Step 11-2 · POST Toggle Favorite (add)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var d = pm.response.json();",
+            "console.log('favorited:', d.favorited);",
+            "pm.test('Favorite toggled', function () { pm.response.to.have.status(200); });"
+          ] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/favorite", "host": ["{{base_url}}"], "path": ["api", "trainers", "{{trainer_id}}", "favorite"] },
+            "description": "Toggle — run once to add, run again to remove."
+          }
+        },
+        {
+          "name": "Step 11-3 · GET My Favorite Trainers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/user/trainer-favorites", "host": ["{{base_url}}"], "path": ["api", "user", "trainer-favorites"] },
+            "description": "Run right after Step 11-2 (add), before toggling it off again, to see the trainer appear in the list."
+          }
+        }
+      ]
+    }
+
+  ]
+}

@@ -1784,6 +1784,7 @@ Route::get('/trainer-locations',                              [TrainerController
 Route::get('/trainer-levels',                                 [AdminTrainerLevelController::class, 'publicIndex']);
 Route::get('/equipment-types',                                [AdminEquipmentTypeController::class, 'index']);
 Route::get('/trainers/{id}/training-bikes',                       [TrainerTrainingBikeController::class, 'publicIndex']);
+Route::get('/courses',                                            [TrainerCourseController::class, 'browseAll']);
 Route::get('/trainers/{id}/courses',                              [TrainerCourseController::class, 'publicIndex']);
 Route::get('/trainers/{id}/travel-price',                         [TrainerCourseController::class, 'travelPrice']);
 Route::get('/trainers/{id}/equipment',                            [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'publicIndex']);
