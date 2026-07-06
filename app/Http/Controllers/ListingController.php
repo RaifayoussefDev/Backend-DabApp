@@ -42,6 +42,96 @@ use App\Traits\CategoryDataTrait;
 class ListingController extends Controller
 {
     use CategoryDataTrait; // ✅ Use Trait
+
+    /**
+     * Check that a listing has the minimum data required before it can be
+     * published: a real title, a price (unless it's an auction), a category,
+     * and — for spare parts — a spare part category.
+     *
+     * [audit-fix] Closes the gap where step>=3 "complete" only validated
+     * amount/promo_code, letting listings publish with no title/price/category.
+     *
+     * @return array<int, array{field: string, en: string, ar: string}> Empty when the listing is complete.
+     */
+    private function getListingCompletenessErrors(Listing $listing): array
+    {
+        $errors = [];
+
+        $title = trim((string) $listing->title);
+        $isPunctuationOnly = $title !== '' && preg_match('/^[\p{P}\p{S}\s]+$/u', $title) === 1;
+        $isCityNameOnly = $title !== '' && $listing->city
+            && mb_strtolower($title) === mb_strtolower(trim($listing->city->name));
+
+        if ($title === '' || mb_strlen($title) < 10 || $isPunctuationOnly || $isCityNameOnly) {
+            $fallback = $this->buildFallbackTitle($listing);
+
+            if ($fallback !== null) {
+                $listing->title = $fallback;
+                $listing->save();
+            } else {
+                $errors[] = [
+                    'field' => 'title',
+                    'en' => 'Title must be at least 10 characters and cannot be only a city name or punctuation.',
+                    'ar' => 'يجب أن يتكون العنوان من 10 أحرف على الأقل ولا يجوز أن يكون اسم مدينة أو علامات ترقيم فقط.',
+                ];
+            }
+        }
+
+        if (!$listing->auction_enabled && (float) ($listing->price ?? 0) <= 0) {
+            $errors[] = [
+                'field' => 'price',
+                'en' => 'Price must be greater than 0. Use the auction option if the item has no fixed price.',
+                'ar' => 'يجب أن يكون السعر أكبر من صفر. استخدم خيار المزاد إذا لم يكن للسلعة سعر ثابت.',
+            ];
+        }
+
+        if (!$listing->category_id) {
+            $errors[] = [
+                'field' => 'category_id',
+                'en' => 'Category is required.',
+                'ar' => 'التصنيف مطلوب.',
+            ];
+        } elseif ($listing->category_id == 2) {
+            $listing->loadMissing('sparePart');
+            if (!$listing->sparePart || !$listing->sparePart->bike_part_category_id) {
+                $errors[] = [
+                    'field' => 'bike_part_category_id',
+                    'en' => 'Spare part category is required.',
+                    'ar' => 'تصنيف قطعة الغيار مطلوب.',
+                ];
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Auto-generate a fallback title from brand + model + year for motorcycle
+     * listings when the seller didn't provide a usable title.
+     */
+    private function buildFallbackTitle(Listing $listing): ?string
+    {
+        if ($listing->category_id != 1 || !$listing->motorcycle) {
+            return null;
+        }
+
+        $listing->motorcycle->loadMissing(['brand', 'model', 'year']);
+
+        $parts = array_filter([
+            $listing->motorcycle->brand->name ?? null,
+            $listing->motorcycle->model->name ?? null,
+            $listing->motorcycle->year->year ?? null,
+        ]);
+
+        if (count($parts) < 2) {
+            return null;
+        }
+
+        $fallback = implode(' ', $parts);
+
+        return mb_strlen($fallback) >= 10 ? $fallback : null;
+    }
+
     /**
      * Generate PDF for a listing
      *
@@ -635,10 +725,14 @@ class ListingController extends Controller
                 $request->validate([
                     'title' => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price' => 'sometimes|nullable|numeric|min:0',
+                    'price' => 'sometimes|nullable|numeric|min:1',
                     'category_id' => 'sometimes|exists:categories,id',
                     'country_id' => 'sometimes|exists:countries,id',
                     'city_id' => 'sometimes|exists:cities,id',
+                ], [
+                    'price.min' => app()->getLocale() === 'ar'
+                        ? 'يجب أن يكون السعر أكبر من صفر. استخدم خيار المزاد إذا لم يكن للسلعة سعر ثابت.'
+                        : 'Price must be greater than 0. Use the auction option if the item has no fixed price.',
                 ]);
             }
 
@@ -700,6 +794,17 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 (avec conversion vers AED)
             if ($step >= 3) {
+                // [audit-fix] Reject publishing a listing that's missing title/price/category
+                $listing->refresh();
+                $completenessErrors = $this->getListingCompletenessErrors($listing);
+                if (!empty($completenessErrors)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Listing is missing required information before it can be published.',
+                        'errors' => $completenessErrors,
+                    ], 422);
+                }
+
                 // 🔒 SECURITY CHECK: Validate Amount against Pricing Rules
                 $requiredAmount = 0;
 
@@ -1088,10 +1193,14 @@ class ListingController extends Controller
                 $request->validate([
                     'title' => 'sometimes|string|max:255',
                     'description' => 'sometimes|string',
-                    'price' => 'sometimes|nullable|numeric|min:0',
+                    'price' => 'sometimes|nullable|numeric|min:1',
                     'category_id' => 'sometimes|exists:categories,id',
                     'country_id' => 'sometimes|exists:countries,id',
                     'city_id' => 'sometimes|exists:cities,id',
+                ], [
+                    'price.min' => app()->getLocale() === 'ar'
+                        ? 'يجب أن يكون السعر أكبر من صفر. استخدم خيار المزاد إذا لم يكن للسلعة سعر ثابت.'
+                        : 'Price must be greater than 0. Use the auction option if the item has no fixed price.',
                 ]);
             }
 
@@ -1126,6 +1235,17 @@ class ListingController extends Controller
 
             // ✅ Paiement uniquement au step 3 avec action complete
             if ($step >= 3 && $action === 'complete') {
+                // [audit-fix] Reject publishing a listing that's missing title/price/category
+                $listing->refresh();
+                $completenessErrors = $this->getListingCompletenessErrors($listing);
+                if (!empty($completenessErrors)) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => 'Listing is missing required information before it can be published.',
+                        'errors' => $completenessErrors,
+                    ], 422);
+                }
+
                 $originalAmount = $request->amount;
                 $aedAmount = $originalAmount;
                 $originalCurrency = 'AED';
@@ -1737,7 +1857,7 @@ class ListingController extends Controller
                 $validationRules = array_merge($validationRules, [
                     'basic_info.title' => 'sometimes|string|max:255',
                     'basic_info.description' => 'sometimes|string',
-                    'basic_info.price' => 'sometimes|nullable|numeric|min:0',
+                    'basic_info.price' => 'sometimes|nullable|numeric|min:1',
                     'basic_info.country_id' => 'sometimes|exists:countries,id',
                     'basic_info.city_id' => 'sometimes|exists:cities,id',
                     'basic_info.seller_type' => 'sometimes|in:owner,dealer,middleman',
@@ -1800,7 +1920,11 @@ class ListingController extends Controller
                 ]);
             }
 
-            $request->validate($validationRules);
+            $request->validate($validationRules, [
+                'basic_info.price.min' => app()->getLocale() === 'ar'
+                    ? 'يجب أن يكون السعر أكبر من صفر. استخدم خيار المزاد إذا لم يكن للسلعة سعر ثابت.'
+                    : 'Price must be greater than 0. Use the auction option if the item has no fixed price.',
+            ]);
 
             // ✅ DETERMINE FINAL AUCTION STATE
             $newAuctionEnabled = $listing->auction_enabled;
@@ -4379,11 +4503,18 @@ class ListingController extends Controller
 
     public function getBikePartCategoriesWithListingCount()
     {
-        $bike_part_categories = BikePartCategory::select('bike_part_categories.id', 'bike_part_categories.name')
+        // [audit-fix] Only count published listings, matching getTypesWithListingCount()
+        // for motorcycles — previously this counted drafts/unpaid listings too, which
+        // skewed the spare-parts filter counters relative to motorcycles.
+        $bike_part_categories = BikePartCategory::select('bike_part_categories.id', 'bike_part_categories.name', 'bike_part_categories.name_ar')
             ->leftJoin('spare_parts', 'bike_part_categories.id', '=', 'spare_parts.bike_part_category_id')
-            ->leftJoin('listings', 'spare_parts.listing_id', '=', 'listings.id')
-            ->groupBy('bike_part_categories.id', 'bike_part_categories.name')
+            ->leftJoin('listings', function ($join) {
+                $join->on('spare_parts.listing_id', '=', 'listings.id')
+                    ->where('listings.status', 'published');
+            })
+            ->groupBy('bike_part_categories.id', 'bike_part_categories.name', 'bike_part_categories.name_ar')
             ->selectRaw('COUNT(listings.id) as listings_count')
+            ->orderBy('listings_count', 'desc')
             ->get();
 
         return response()->json([
@@ -4393,11 +4524,16 @@ class ListingController extends Controller
 
     public function getBikePartBrandsWithListingCount()
     {
+        // [audit-fix] Only count published listings, matching motorcycle brand counts.
         $bike_part_brands = BikePartBrand::select('bike_part_brands.id', 'bike_part_brands.name')
             ->leftJoin('spare_parts', 'bike_part_brands.id', '=', 'spare_parts.bike_part_brand_id')
-            ->leftJoin('listings', 'spare_parts.listing_id', '=', 'listings.id')
+            ->leftJoin('listings', function ($join) {
+                $join->on('spare_parts.listing_id', '=', 'listings.id')
+                    ->where('listings.status', 'published');
+            })
             ->groupBy('bike_part_brands.id', 'bike_part_brands.name')
             ->selectRaw('COUNT(listings.id) as listings_count')
+            ->orderBy('listings_count', 'desc')
             ->get();
 
         return response()->json([
