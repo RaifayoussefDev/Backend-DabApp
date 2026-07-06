@@ -215,7 +215,7 @@ class FilterController extends Controller
                 $query->select('listing_id', 'image_url')->orderBy('id', 'asc');
             },
             'motorcycle' => function ($query) {
-                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id')
+                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'general_condition')
                     ->with(['brand:id,name', 'model:id,name', 'year:id,year', 'type:id,name']);
             },
             'country:id,name',
@@ -252,6 +252,7 @@ class FilterController extends Controller
                 'model' => $listing->motorcycle?->model?->name ?? null,
                 'year' => $listing->motorcycle?->year?->year ?? null,
                 'type' => $listing->motorcycle?->type?->name ?? null,
+                'condition' => $listing->motorcycle?->general_condition ?? null,
                 'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
                 'image' => $listing->images->first()?->image_url ?? null,
                 'seller_type' => $listing->seller_type,
