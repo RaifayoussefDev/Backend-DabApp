@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Trainer;
 use App\Models\TrainerCourse;
+use App\Models\TrainerEquipment;
+use App\Models\TrainerLevelApproval;
+use App\Models\TrainerTrainingBike;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -29,7 +32,7 @@ class TrainerCourseController extends Controller
      * @OA\Get(
      *     path="/api/courses",
      *     summary="Browse all published courses",
-     *     description="Returns a paginated list of published courses across all approved trainers. Each course includes its trainer (with equipment) so the client can view course + trainer + equipment in one call.",
+     *     description="Returns a paginated list of published courses across all approved trainers. Each course includes its own equipment and training bikes selection.",
      *     operationId="listAllCourses",
      *     tags={"Trainer - Courses"},
      *     @OA\Parameter(name="level_id",   in="query", required=false, @OA\Schema(type="integer", example=1)),
@@ -51,22 +54,25 @@ class TrainerCourseController extends Controller
      *                         @OA\Property(property="id",             type="integer", example=6),
      *                         @OA\Property(property="title",          type="string",  example="Beginner Circuit Training"),
      *                         @OA\Property(property="effective_price",type="number",  example=120.00),
+     *                         @OA\Property(property="price_per_hour", type="number",  example=120.00),
+     *                         @OA\Property(property="price_per_session", type="string", example="240.00"),
      *                         @OA\Property(property="can_travel",     type="boolean", example=false),
      *                         @OA\Property(property="level",          type="object", nullable=true),
      *                         @OA\Property(property="location",       type="object", nullable=true),
+     *                         @OA\Property(property="equipment", type="array",
+     *                             @OA\Items(type="object",
+     *                                 @OA\Property(property="icon", type="string", example="helmet"),
+     *                                 @OA\Property(property="name", type="string", example="Helmet")
+     *                             )
+     *                         ),
+     *                         @OA\Property(property="trainingBikes", type="array", @OA\Items(type="object")),
      *                         @OA\Property(property="trainer", type="object",
      *                             @OA\Property(property="id",               type="integer"),
      *                             @OA\Property(property="name",             type="string"),
      *                             @OA\Property(property="name_ar",          type="string"),
      *                             @OA\Property(property="photo_url",        type="string"),
      *                             @OA\Property(property="rating_average",   type="number"),
-     *                             @OA\Property(property="experience_years", type="integer"),
-     *                             @OA\Property(property="equipment", type="array",
-     *                                 @OA\Items(type="object",
-     *                                     @OA\Property(property="icon", type="string", example="helmet"),
-     *                                     @OA\Property(property="name", type="string", example="Helmet")
-     *                                 )
-     *                             )
+     *                             @OA\Property(property="experience_years", type="integer")
      *                         )
      *                     )
      *                 )
@@ -81,7 +87,8 @@ class TrainerCourseController extends Controller
                 'level',
                 'location.city',
                 'trainer:id,name,name_ar,photo,rating_average,experience_years,is_available',
-                'trainer.equipment',
+                'equipment',
+                'trainingBikes',
             ])
             ->published()
             ->whereHas('trainer', fn ($q) => $q->approved());
@@ -148,15 +155,19 @@ class TrainerCourseController extends Controller
      *                     @OA\Property(property="title",             type="string",  example="Beginner Circuit Training"),
      *                     @OA\Property(property="hours_per_session", type="integer", example=2),
      *                     @OA\Property(property="total_sessions",    type="integer", example=5),
-     *                     @OA\Property(property="session_date",      type="string",  format="date",    example="2026-07-10", nullable=true),
+     *                     @OA\Property(property="start_date",        type="string",  format="date",    example="2026-07-10", nullable=true),
      *                     @OA\Property(property="session_time",      type="string",  format="time",    example="09:00:00",   nullable=true),
      *                     @OA\Property(property="original_price",    type="number",  example=150.00),
      *                     @OA\Property(property="promo_price",       type="number",  example=120.00,   nullable=true),
      *                     @OA\Property(property="effective_price",   type="number",  example=120.00),
+     *                     @OA\Property(property="price_per_hour",    type="number",  example=120.00, description="Same as effective_price"),
+     *                     @OA\Property(property="price_per_session", type="string",  example="240.00", description="price_per_hour × hours_per_session"),
      *                     @OA\Property(property="total_price",       type="string",  example="1200.00"),
      *                     @OA\Property(property="can_travel",        type="boolean", example=false),
      *                     @OA\Property(property="level",             type="object",  nullable=true),
-     *                     @OA\Property(property="location",          type="object",  nullable=true)
+     *                     @OA\Property(property="location",          type="object",  nullable=true),
+     *                     @OA\Property(property="equipment",         type="array",   @OA\Items(type="object")),
+     *                     @OA\Property(property="trainingBikes",     type="array",   @OA\Items(type="object"))
      *                 )
      *             )
      *         )
@@ -171,7 +182,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
         }
 
-        $query = TrainerCourse::with(['level', 'location.city'])
+        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes'])
             ->where('trainer_id', $trainer->id)
             ->published();
 
@@ -250,7 +261,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $course = TrainerCourse::with(['level', 'location.city', 'sessions'])
+        $course = TrainerCourse::with(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes'])
             ->where('trainer_id', $trainer->id)
             ->find($id);
 
@@ -259,6 +270,76 @@ class TrainerCourseController extends Controller
         }
 
         return response()->json(['success' => true, 'data' => $course, 'message' => 'Course retrieved successfully']);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/trainer/courses/price-preview",
+     *     summary="Preview the auto-calculated price for a level (price_type=per_hour courses)",
+     *     description="Returns the trainer's approved price for a given level, so the app can display it in the original_price field before creating a 'per_hour'-priced course. Optionally pass hours_per_session and total_sessions to also get the per-session and total price breakdown, using the same formula the course will use. Not applicable to 'total'-priced courses, where original_price/promo_price are entered directly as the whole package price.",
+     *     operationId="previewTrainerCoursePrice",
+     *     tags={"Trainer - Courses"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="level_id",          in="query", required=true,  @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="hours_per_session",  in="query", required=false, @OA\Schema(type="integer", example=2)),
+     *     @OA\Parameter(name="total_sessions",     in="query", required=false, @OA\Schema(type="integer", example=5)),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Price breakdown",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="level_id",          type="integer", example=1),
+     *                 @OA\Property(property="original_price",    type="number", example=150.00, description="Auto-calculated — display this in the original_price field"),
+     *                 @OA\Property(property="price_per_hour",     type="number", example=150.00),
+     *                 @OA\Property(property="price_per_session",  type="string", example="300.00", nullable=true, description="Only returned when hours_per_session is passed"),
+     *                 @OA\Property(property="total_price",        type="string", example="1500.00", nullable=true, description="Only returned when hours_per_session and total_sessions are passed")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=403, description="No trainer profile found"),
+     *     @OA\Response(response=422, description="This level is not approved for your account yet")
+     * )
+     */
+    public function pricePreview(Request $request)
+    {
+        $trainer = $this->getTrainer();
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
+        }
+
+        $validated = $request->validate([
+            'level_id'          => 'required|integer|exists:trainer_levels,id',
+            'hours_per_session' => 'nullable|integer|min:1|max:8',
+            'total_sessions'    => 'nullable|integer|min:1',
+        ]);
+
+        $approval = TrainerLevelApproval::where('trainer_id', $trainer->id)
+            ->where('level_id', $validated['level_id'])
+            ->approved()
+            ->first();
+
+        if (!$approval) {
+            return response()->json(['success' => false, 'message' => 'This level is not approved for your account yet.'], 422);
+        }
+
+        $pricePerHour = (float) $approval->approved_price;
+        $data = [
+            'level_id'       => $validated['level_id'],
+            'original_price' => $approval->approved_price,
+            'price_per_hour' => $approval->approved_price,
+        ];
+
+        if (!empty($validated['hours_per_session'])) {
+            $pricePerSession = $pricePerHour * $validated['hours_per_session'];
+            $data['price_per_session'] = number_format($pricePerSession, 2, '.', '');
+
+            if (!empty($validated['total_sessions'])) {
+                $data['total_price'] = number_format($pricePerSession * $validated['total_sessions'], 2, '.', '');
+            }
+        }
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -272,21 +353,24 @@ class TrainerCourseController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"title","hours_per_session","total_sessions","original_price"},
+     *             required={"title","hours_per_session","total_sessions","price_type","location_id","original_price"},
      *             @OA\Property(property="title",             type="string",  example="Beginner Circuit Training"),
      *             @OA\Property(property="title_ar",          type="string",  example="تدريب المبتدئين في الحلبة"),
      *             @OA\Property(property="description",       type="string",  example="Learn the basics of motorcycle control"),
      *             @OA\Property(property="description_ar",    type="string"),
-     *             @OA\Property(property="level_id",          type="integer", example=1,     description="ID of an approved level (optional)"),
+     *             @OA\Property(property="price_type",        type="string",  enum={"per_hour","total"}, example="per_hour", description="'per_hour': original_price is an hourly rate, requires an approved level_id, use GET /trainer/courses/price-preview to compute it. 'total': original_price/promo_price are the whole package price, level_id optional."),
+     *             @OA\Property(property="level_id",          type="integer", example=1,     description="Required when price_type=per_hour — must be a level approved for this trainer"),
      *             @OA\Property(property="hours_per_session", type="integer", example=2,     description="1 to 8 hours"),
      *             @OA\Property(property="total_sessions",    type="integer", example=5,     description="Number of sessions in the package"),
-     *             @OA\Property(property="session_date",      type="string",  format="date", example="2026-07-10", description="Optional fixed date"),
+     *             @OA\Property(property="start_date",        type="string",  format="date", example="2026-07-10", description="Optional fixed start date"),
      *             @OA\Property(property="session_time",      type="string",  format="time", example="09:00",     description="Optional start time"),
-     *             @OA\Property(property="original_price",    type="number",  example=150.00, description="Price per hour in SAR"),
-     *             @OA\Property(property="promo_price",       type="number",  example=120.00, description="Optional promotional price per hour"),
-     *             @OA\Property(property="location_id",       type="integer", example=2,     description="ID from trainer's locations (optional)"),
+     *             @OA\Property(property="original_price",    type="number",  example=150.00, description="per_hour: hourly rate (see price-preview). total: whole package price."),
+     *             @OA\Property(property="promo_price",       type="number",  example=120.00, description="Optional promotional price, must be less than original_price"),
+     *             @OA\Property(property="location_id",       type="integer", example=2,     description="Required — must be one of the trainer's own locations"),
      *             @OA\Property(property="can_travel",        type="boolean", example=false,  description="Trainer can go to client's location"),
      *             @OA\Property(property="price_per_km",      type="number",  example=5.00,  description="Required when can_travel=true"),
+     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — subset of the trainer's own equipment used in this course", @OA\Items(type="integer")),
+     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — subset of the trainer's own training bikes used in this course", @OA\Items(type="integer")),
      *             @OA\Property(property="sessions",          type="array",   description="Optional — create session descriptions in the same request",
      *                 @OA\Items(type="object",
      *                     @OA\Property(property="session_number", type="integer", example=1),
@@ -329,22 +413,39 @@ class TrainerCourseController extends Controller
             'title_ar'          => 'nullable|string|max:255',
             'description'       => 'nullable|string|max:3000',
             'description_ar'    => 'nullable|string|max:3000',
-            'level_id'          => 'nullable|integer|exists:trainer_levels,id',
+            'price_type'        => 'required|in:per_hour,total',
+            'level_id'          => 'required_if:price_type,per_hour|nullable|integer|exists:trainer_levels,id',
             'hours_per_session' => 'required|integer|min:1|max:8',
             'total_sessions'    => 'required|integer|min:1',
-            'session_date'      => 'nullable|date|after_or_equal:today',
+            'start_date'        => 'nullable|date|after_or_equal:today',
             'session_time'      => 'nullable|date_format:H:i',
             'original_price'    => 'required|numeric|min:0',
             'promo_price'       => 'nullable|numeric|min:0|lt:original_price',
-            'location_id'       => ['nullable', 'integer',
+            'location_id'       => ['required', 'integer',
                 function ($attr, $value, $fail) use ($trainer) {
                     if (!\App\Models\TrainerLocation::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
                         $fail('Location not found in your trainer profile.');
                     }
                 }
             ],
-            'can_travel'                => 'nullable|boolean',
-            'price_per_km'              => 'nullable|numeric|min:0',
+            'can_travel'                 => 'nullable|boolean',
+            'price_per_km'               => 'nullable|numeric|min:0',
+            'equipment_ids'              => 'nullable|array',
+            'equipment_ids.*'            => ['integer',
+                function ($attr, $value, $fail) use ($trainer) {
+                    if (!TrainerEquipment::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
+                        $fail('Equipment item not found in your trainer profile.');
+                    }
+                }
+            ],
+            'training_bike_ids'         => 'nullable|array',
+            'training_bike_ids.*'       => ['integer',
+                function ($attr, $value, $fail) use ($trainer) {
+                    if (!TrainerTrainingBike::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
+                        $fail('Training bike not found in your trainer profile.');
+                    }
+                }
+            ],
             'sessions'                  => 'nullable|array',
             'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
             'sessions.*.title'          => 'required_with:sessions|string|max:255',
@@ -354,8 +455,23 @@ class TrainerCourseController extends Controller
             'sessions.*.duration_hours' => 'nullable|integer|min:1|max:24',
         ]);
 
+        if ($validated['price_type'] === 'per_hour') {
+            $approval = TrainerLevelApproval::where('trainer_id', $trainer->id)
+                ->where('level_id', $validated['level_id'])
+                ->approved()
+                ->first();
+
+            if (!$approval) {
+                return response()->json(['success' => false, 'message' => 'This level is not approved for your account yet.'], 422);
+            }
+        }
+
+        $courseData = collect($validated)
+            ->except(['sessions', 'equipment_ids', 'training_bike_ids'])
+            ->toArray();
+
         $course = TrainerCourse::create(array_merge(
-            collect($validated)->except('sessions')->toArray(),
+            $courseData,
             ['trainer_id' => $trainer->id, 'status' => 'draft']
         ));
 
@@ -365,9 +481,12 @@ class TrainerCourseController extends Controller
             }
         }
 
+        $course->equipment()->sync($validated['equipment_ids'] ?? []);
+        $course->trainingBikes()->sync($validated['training_bike_ids'] ?? []);
+
         return response()->json([
             'success' => true,
-            'data'    => $course->load(['level', 'location.city', 'sessions']),
+            'data'    => $course->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes']),
             'message' => 'Course created successfully',
         ], 201);
     }
@@ -376,7 +495,7 @@ class TrainerCourseController extends Controller
      * @OA\Put(
      *     path="/api/trainer/courses/{id}",
      *     summary="Update a course",
-     *     description="Update any field of a draft course. Optionally include a 'sessions' array to bulk upsert session descriptions in the same request (same shape as course creation). Published and archived courses cannot be edited — archive a published course, delete it, and recreate it as a draft.",
+     *     description="Update any field of a draft course. Optionally include a 'sessions' array to bulk upsert session descriptions in the same request (same shape as course creation). Published courses cannot be edited — unpublish it first to make it editable again.",
      *     operationId="updateTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
@@ -387,15 +506,18 @@ class TrainerCourseController extends Controller
      *             @OA\Property(property="title_ar",          type="string"),
      *             @OA\Property(property="description",       type="string"),
      *             @OA\Property(property="description_ar",    type="string"),
+     *             @OA\Property(property="price_type",        type="string",  enum={"per_hour","total"}, description="Switching to per_hour requires an approved level_id (new or already on the course)"),
      *             @OA\Property(property="level_id",          type="integer"),
      *             @OA\Property(property="hours_per_session", type="integer"),
      *             @OA\Property(property="total_sessions",    type="integer"),
-     *             @OA\Property(property="session_date",      type="string", format="date"),
+     *             @OA\Property(property="start_date",        type="string", format="date"),
      *             @OA\Property(property="session_time",      type="string", format="time"),
-     *             @OA\Property(property="original_price",    type="number"),
-     *             @OA\Property(property="promo_price",       type="number"),
+     *             @OA\Property(property="original_price",    type="number", description="per_hour: hourly rate. total: whole package price."),
+     *             @OA\Property(property="promo_price",       type="number", description="Must be less than original_price"),
      *             @OA\Property(property="location_id",       type="integer"),
      *             @OA\Property(property="can_travel",        type="boolean"),
+     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — replaces the course's equipment selection", @OA\Items(type="integer")),
+     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — replaces the course's training bikes selection", @OA\Items(type="integer")),
      *             @OA\Property(property="sessions",          type="array",   description="Optional — bulk upsert session descriptions in the same request",
      *                 @OA\Items(type="object",
      *                     @OA\Property(property="session_number", type="integer", example=1),
@@ -430,7 +552,7 @@ class TrainerCourseController extends Controller
         }
 
         if ($course->status === 'published') {
-            return response()->json(['success' => false, 'message' => 'Cannot edit a published course. Archive it first.'], 403);
+            return response()->json(['success' => false, 'message' => 'Cannot edit a published course. Unpublish it first.'], 403);
         }
 
         $validated = $request->validate([
@@ -438,10 +560,11 @@ class TrainerCourseController extends Controller
             'title_ar'          => 'nullable|string|max:255',
             'description'       => 'nullable|string|max:3000',
             'description_ar'    => 'nullable|string|max:3000',
+            'price_type'        => 'nullable|in:per_hour,total',
             'level_id'          => 'nullable|integer|exists:trainer_levels,id',
             'hours_per_session' => 'nullable|integer|min:1|max:8',
             'total_sessions'    => 'nullable|integer|min:1',
-            'session_date'      => 'nullable|date',
+            'start_date'        => 'nullable|date',
             'session_time'      => 'nullable|date_format:H:i',
             'original_price'    => 'nullable|numeric|min:0',
             'promo_price'       => 'nullable|numeric|min:0',
@@ -454,6 +577,22 @@ class TrainerCourseController extends Controller
             ],
             'can_travel'        => 'nullable|boolean',
             'price_per_km'      => 'nullable|numeric|min:0',
+            'equipment_ids'              => 'nullable|array',
+            'equipment_ids.*'            => ['integer',
+                function ($attr, $value, $fail) use ($trainer) {
+                    if (!TrainerEquipment::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
+                        $fail('Equipment item not found in your trainer profile.');
+                    }
+                }
+            ],
+            'training_bike_ids'         => 'nullable|array',
+            'training_bike_ids.*'       => ['integer',
+                function ($attr, $value, $fail) use ($trainer) {
+                    if (!TrainerTrainingBike::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
+                        $fail('Training bike not found in your trainer profile.');
+                    }
+                }
+            ],
             'sessions'                  => 'nullable|array',
             'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
             'sessions.*.title'          => 'nullable|string|max:255',
@@ -464,8 +603,37 @@ class TrainerCourseController extends Controller
         ]);
 
         $sessions = $validated['sessions'] ?? null;
+        $equipmentIds = $validated['equipment_ids'] ?? null;
+        $trainingBikeIds = $validated['training_bike_ids'] ?? null;
 
-        $course->update(array_filter(collect($validated)->except('sessions')->toArray(), fn ($v) => $v !== null));
+        $effectivePriceType = $validated['price_type'] ?? $course->price_type;
+        $effectiveLevelId   = $validated['level_id'] ?? $course->level_id;
+
+        if ($effectivePriceType === 'per_hour') {
+            if (!$effectiveLevelId) {
+                return response()->json(['success' => false, 'message' => 'level_id is required for per_hour priced courses.'], 422);
+            }
+
+            $approval = TrainerLevelApproval::where('trainer_id', $trainer->id)
+                ->where('level_id', $effectiveLevelId)
+                ->approved()
+                ->first();
+
+            if (!$approval) {
+                return response()->json(['success' => false, 'message' => 'This level is not approved for your account yet.'], 422);
+            }
+        }
+
+        $promoPrice = $validated['promo_price'] ?? null;
+        $originalPrice = $validated['original_price'] ?? $course->original_price;
+        if ($promoPrice !== null && $promoPrice >= $originalPrice) {
+            return response()->json(['success' => false, 'message' => 'promo_price must be less than the course price.'], 422);
+        }
+
+        $course->update(array_filter(
+            collect($validated)->except(['sessions', 'equipment_ids', 'training_bike_ids'])->toArray(),
+            fn ($v) => $v !== null
+        ));
 
         if (!empty($sessions)) {
             foreach ($sessions as $sessionData) {
@@ -476,9 +644,17 @@ class TrainerCourseController extends Controller
             }
         }
 
+        if ($equipmentIds !== null) {
+            $course->equipment()->sync($equipmentIds);
+        }
+
+        if ($trainingBikeIds !== null) {
+            $course->trainingBikes()->sync($trainingBikeIds);
+        }
+
         return response()->json([
             'success' => true,
-            'data'    => $course->fresh()->load(['level', 'location.city', 'sessions']),
+            'data'    => $course->fresh()->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes']),
             'message' => 'Course updated successfully',
         ]);
     }
@@ -487,7 +663,7 @@ class TrainerCourseController extends Controller
      * @OA\Delete(
      *     path="/api/trainer/courses/{id}",
      *     summary="Delete a course",
-     *     description="Only draft courses can be deleted. Published courses must be archived first.",
+     *     description="Only draft courses can be deleted. Published courses must be unpublished first.",
      *     operationId="deleteTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
@@ -510,7 +686,7 @@ class TrainerCourseController extends Controller
         }
 
         if ($course->status === 'published') {
-            return response()->json(['success' => false, 'message' => 'Cannot delete a published course. Archive it first.'], 403);
+            return response()->json(['success' => false, 'message' => 'Cannot delete a published course. Unpublish it first.'], 403);
         }
 
         $course->delete();
@@ -555,19 +731,19 @@ class TrainerCourseController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/trainer/courses/{id}/archive",
-     *     summary="Archive a course",
-     *     description="Moves a published course to archived status, hiding it from clients.",
-     *     operationId="archiveTrainerCourse",
+     *     path="/api/trainer/courses/{id}/unpublish",
+     *     summary="Unpublish a course",
+     *     description="Moves a published course back to draft status, hiding it from clients and making it editable again.",
+     *     operationId="unpublishTrainerCourse",
      *     tags={"Trainer - Courses"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
-     *     @OA\Response(response=200, description="Course archived"),
-     *     @OA\Response(response=400, description="Only published courses can be archived"),
+     *     @OA\Response(response=200, description="Course unpublished"),
+     *     @OA\Response(response=400, description="Only published courses can be unpublished"),
      *     @OA\Response(response=404, description="Course not found")
      * )
      */
-    public function archive(int $id)
+    public function unpublish(int $id)
     {
         $trainer = $this->getTrainer();
         if (!$trainer) {
@@ -580,12 +756,12 @@ class TrainerCourseController extends Controller
         }
 
         if ($course->status !== 'published') {
-            return response()->json(['success' => false, 'message' => 'Only published courses can be archived'], 400);
+            return response()->json(['success' => false, 'message' => 'Only published courses can be unpublished'], 400);
         }
 
-        $course->update(['status' => 'archived', 'is_active' => false]);
+        $course->update(['status' => 'draft', 'is_active' => false]);
 
-        return response()->json(['success' => true, 'message' => 'Course archived successfully']);
+        return response()->json(['success' => true, 'data' => $course->fresh(), 'message' => 'Course unpublished — now editable as a draft']);
     }
 
     /**

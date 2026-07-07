@@ -1850,11 +1850,12 @@ Route::middleware('auth:api')->group(function () {
     // Trainer courses
     Route::get('/trainer/courses',                [TrainerCourseController::class, 'index']);
     Route::post('/trainer/courses',               [TrainerCourseController::class, 'store']);
+    Route::get('/trainer/courses/price-preview',  [TrainerCourseController::class, 'pricePreview']);
     Route::get('/trainer/courses/{id}',           [TrainerCourseController::class, 'show']);
     Route::put('/trainer/courses/{id}',           [TrainerCourseController::class, 'update']);
     Route::delete('/trainer/courses/{id}',        [TrainerCourseController::class, 'destroy']);
     Route::post('/trainer/courses/{id}/publish',  [TrainerCourseController::class, 'publish']);
-    Route::post('/trainer/courses/{id}/archive',  [TrainerCourseController::class, 'archive']);
+    Route::post('/trainer/courses/{id}/unpublish',[TrainerCourseController::class, 'unpublish']);
 
     // Course sessions (descriptions per session)
     Route::get('/trainer/courses/{courseId}/sessions',                [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'index']);

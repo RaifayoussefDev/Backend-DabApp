@@ -12,13 +12,14 @@ class TrainerCourse extends Model
     protected $fillable = [
         'trainer_id',
         'level_id',
+        'price_type',
         'title',
         'title_ar',
         'description',
         'description_ar',
         'hours_per_session',
         'total_sessions',
-        'session_date',
+        'start_date',
         'session_time',
         'original_price',
         'promo_price',
@@ -32,7 +33,7 @@ class TrainerCourse extends Model
     protected $casts = [
         'hours_per_session' => 'integer',
         'total_sessions'    => 'integer',
-        'session_date'      => 'date',
+        'start_date'        => 'date',
         'original_price'    => 'decimal:2',
         'promo_price'       => 'decimal:2',
         'can_travel'    => 'boolean',
@@ -40,7 +41,7 @@ class TrainerCourse extends Model
         'is_active'     => 'boolean',
     ];
 
-    protected $appends = ['effective_price', 'total_price', 'localized_title', 'localized_description'];
+    protected $appends = ['effective_price', 'price_per_hour', 'price_per_session', 'total_price', 'localized_title', 'localized_description'];
 
     public function trainer()
     {
@@ -62,6 +63,16 @@ class TrainerCourse extends Model
         return $this->hasMany(TrainerCourseSession::class, 'course_id')->orderBy('session_number');
     }
 
+    public function equipment()
+    {
+        return $this->belongsToMany(TrainerEquipment::class, 'trainer_course_equipment', 'course_id', 'trainer_equipment_id');
+    }
+
+    public function trainingBikes()
+    {
+        return $this->belongsToMany(TrainerTrainingBike::class, 'trainer_course_training_bikes', 'course_id', 'trainer_training_bike_id');
+    }
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published')->where('is_active', true);
@@ -73,9 +84,32 @@ class TrainerCourse extends Model
         return $this->promo_price ?? $this->original_price;
     }
 
-    /** effective_price × hours_per_session × total_sessions */
+    /** Only meaningful when price_type is 'per_hour' — null for flat 'total'-priced courses. */
+    public function getPricePerHourAttribute(): ?string
+    {
+        return $this->price_type === 'per_hour' ? $this->effective_price : null;
+    }
+
+    /** price_per_hour × hours_per_session — null for flat 'total'-priced courses. */
+    public function getPricePerSessionAttribute(): ?string
+    {
+        if ($this->price_type !== 'per_hour') {
+            return null;
+        }
+
+        return number_format((float) $this->effective_price * $this->hours_per_session, 2, '.', '');
+    }
+
+    /**
+     * 'per_hour': effective_price × hours_per_session × total_sessions.
+     * 'total': effective_price already is the whole package price.
+     */
     public function getTotalPriceAttribute(): string
     {
+        if ($this->price_type === 'total') {
+            return number_format((float) $this->effective_price, 2, '.', '');
+        }
+
         return number_format(
             (float) $this->effective_price * $this->hours_per_session * $this->total_sessions,
             2,

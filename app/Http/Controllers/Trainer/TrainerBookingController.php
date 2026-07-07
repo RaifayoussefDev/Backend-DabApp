@@ -313,6 +313,10 @@ class TrainerBookingController extends Controller
                 return response()->json(['success' => false, 'message' => 'Course not found or not published'], 404);
             }
 
+            if ($course->start_date && $validated['booking_date'] < $course->start_date->format('Y-m-d')) {
+                return response()->json(['success' => false, 'message' => "Booking date must be on or after the course's start date"], 400);
+            }
+
             $durationHours = $course->hours_per_session;
             $levelId       = $course->level_id;
             $pricePerHour  = ($course->promo_price ?? $course->original_price) / $durationHours;
