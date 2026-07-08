@@ -294,7 +294,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $query = TrainerCourse::with(['level', 'location.city'])
+        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes', 'sessions'])
             ->where('trainer_id', $trainer->id);
 
         if ($request->filled('status')) {
