@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
+use App\Models\EquipmentType;
+use App\Models\MyGarage;
 use App\Models\Trainer;
 use App\Models\TrainerCourse;
 use App\Models\TrainerEquipment;
@@ -22,6 +24,70 @@ class TrainerCourseController extends Controller
     private function getTrainer(): ?Trainer
     {
         return Trainer::where('user_id', JWTAuth::parseToken()->authenticate()->id)->first();
+    }
+
+    /**
+     * Accepts either an existing trainer_equipment.id (already on the trainer's profile)
+     * or an equipment_types.id (global catalog) — auto-provisioning the trainer_equipment
+     * row for the latter so clients can select straight from the catalog when building a course.
+     *
+     * @return int[] resolved trainer_equipment ids
+     * @throws \InvalidArgumentException
+     */
+    private function resolveEquipmentIds(Trainer $trainer, array $ids): array
+    {
+        $resolved = [];
+        foreach ($ids as $id) {
+            $owned = TrainerEquipment::where('id', $id)->where('trainer_id', $trainer->id)->first();
+            if ($owned) {
+                $resolved[] = $owned->id;
+                continue;
+            }
+
+            $type = EquipmentType::find($id);
+            if (!$type) {
+                throw new \InvalidArgumentException("Equipment item {$id} not found in your trainer profile or the equipment catalog.");
+            }
+
+            $item = TrainerEquipment::firstOrCreate(
+                ['trainer_id' => $trainer->id, 'equipment_type_id' => $type->id],
+                ['name' => $type->name, 'name_ar' => $type->name_ar, 'icon' => $type->icon, 'is_available' => true, 'sort_order' => $type->sort_order]
+            );
+            $resolved[] = $item->id;
+        }
+        return array_values(array_unique($resolved));
+    }
+
+    /**
+     * Accepts either an existing trainer_training_bikes.id (already selected as a training
+     * bike) or a my_garage.id (any bike in the trainer's own garage) — auto-provisioning the
+     * trainer_training_bikes row for the latter, same as TrainerTrainingBikeController@store.
+     *
+     * @return int[] resolved trainer_training_bikes ids
+     * @throws \InvalidArgumentException
+     */
+    private function resolveTrainingBikeIds(Trainer $trainer, array $ids): array
+    {
+        $resolved = [];
+        foreach ($ids as $id) {
+            $owned = TrainerTrainingBike::where('id', $id)->where('trainer_id', $trainer->id)->first();
+            if ($owned) {
+                $resolved[] = $owned->id;
+                continue;
+            }
+
+            $garage = MyGarage::where('id', $id)->where('user_id', $trainer->user_id)->first();
+            if (!$garage) {
+                throw new \InvalidArgumentException("Training bike {$id} not found in your training bikes or your garage.");
+            }
+
+            $bike = TrainerTrainingBike::firstOrCreate(
+                ['trainer_id' => $trainer->id, 'garage_id' => $garage->id],
+                ['is_primary' => false]
+            );
+            $resolved[] = $bike->id;
+        }
+        return array_values(array_unique($resolved));
     }
 
     // ---------------------------------------------------------------
@@ -369,8 +435,8 @@ class TrainerCourseController extends Controller
      *             @OA\Property(property="location_id",       type="integer", example=2,     description="Required — must be one of the trainer's own locations"),
      *             @OA\Property(property="can_travel",        type="boolean", example=false,  description="Trainer can go to client's location"),
      *             @OA\Property(property="price_per_km",      type="number",  example=5.00,  description="Required when can_travel=true"),
-     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — subset of the trainer's own equipment used in this course", @OA\Items(type="integer")),
-     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — subset of the trainer's own training bikes used in this course", @OA\Items(type="integer")),
+     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — accepts either an existing trainer_equipment id, or an equipment_types catalog id (auto-added to your equipment list)", @OA\Items(type="integer")),
+     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — accepts either an existing trainer_training_bikes id, or a my_garage id (auto-added as a training bike)", @OA\Items(type="integer")),
      *             @OA\Property(property="sessions",          type="array",   description="Optional — create session descriptions in the same request",
      *                 @OA\Items(type="object",
      *                     @OA\Property(property="session_number", type="integer", example=1),
@@ -431,21 +497,9 @@ class TrainerCourseController extends Controller
             'can_travel'                 => 'nullable|boolean',
             'price_per_km'               => 'nullable|numeric|min:0',
             'equipment_ids'              => 'nullable|array',
-            'equipment_ids.*'            => ['integer',
-                function ($attr, $value, $fail) use ($trainer) {
-                    if (!TrainerEquipment::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
-                        $fail('Equipment item not found in your trainer profile.');
-                    }
-                }
-            ],
-            'training_bike_ids'         => 'nullable|array',
-            'training_bike_ids.*'       => ['integer',
-                function ($attr, $value, $fail) use ($trainer) {
-                    if (!TrainerTrainingBike::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
-                        $fail('Training bike not found in your trainer profile.');
-                    }
-                }
-            ],
+            'equipment_ids.*'            => 'integer',
+            'training_bike_ids'          => 'nullable|array',
+            'training_bike_ids.*'        => 'integer',
             'sessions'                  => 'nullable|array',
             'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
             'sessions.*.title'          => 'required_with:sessions|string|max:255',
@@ -466,6 +520,13 @@ class TrainerCourseController extends Controller
             }
         }
 
+        try {
+            $equipmentIds = $this->resolveEquipmentIds($trainer, $validated['equipment_ids'] ?? []);
+            $trainingBikeIds = $this->resolveTrainingBikeIds($trainer, $validated['training_bike_ids'] ?? []);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
         $courseData = collect($validated)
             ->except(['sessions', 'equipment_ids', 'training_bike_ids'])
             ->toArray();
@@ -481,8 +542,8 @@ class TrainerCourseController extends Controller
             }
         }
 
-        $course->equipment()->sync($validated['equipment_ids'] ?? []);
-        $course->trainingBikes()->sync($validated['training_bike_ids'] ?? []);
+        $course->equipment()->sync($equipmentIds);
+        $course->trainingBikes()->sync($trainingBikeIds);
 
         return response()->json([
             'success' => true,
@@ -516,8 +577,8 @@ class TrainerCourseController extends Controller
      *             @OA\Property(property="promo_price",       type="number", description="Must be less than original_price"),
      *             @OA\Property(property="location_id",       type="integer"),
      *             @OA\Property(property="can_travel",        type="boolean"),
-     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — replaces the course's equipment selection", @OA\Items(type="integer")),
-     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — replaces the course's training bikes selection", @OA\Items(type="integer")),
+     *             @OA\Property(property="equipment_ids",     type="array",   description="Optional — replaces the course's equipment selection. Accepts trainer_equipment ids or equipment_types catalog ids.", @OA\Items(type="integer")),
+     *             @OA\Property(property="training_bike_ids", type="array",   description="Optional — replaces the course's training bikes selection. Accepts trainer_training_bikes ids or my_garage ids.", @OA\Items(type="integer")),
      *             @OA\Property(property="sessions",          type="array",   description="Optional — bulk upsert session descriptions in the same request",
      *                 @OA\Items(type="object",
      *                     @OA\Property(property="session_number", type="integer", example=1),
@@ -578,21 +639,9 @@ class TrainerCourseController extends Controller
             'can_travel'        => 'nullable|boolean',
             'price_per_km'      => 'nullable|numeric|min:0',
             'equipment_ids'              => 'nullable|array',
-            'equipment_ids.*'            => ['integer',
-                function ($attr, $value, $fail) use ($trainer) {
-                    if (!TrainerEquipment::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
-                        $fail('Equipment item not found in your trainer profile.');
-                    }
-                }
-            ],
-            'training_bike_ids'         => 'nullable|array',
-            'training_bike_ids.*'       => ['integer',
-                function ($attr, $value, $fail) use ($trainer) {
-                    if (!TrainerTrainingBike::where('id', $value)->where('trainer_id', $trainer->id)->exists()) {
-                        $fail('Training bike not found in your trainer profile.');
-                    }
-                }
-            ],
+            'equipment_ids.*'            => 'integer',
+            'training_bike_ids'          => 'nullable|array',
+            'training_bike_ids.*'        => 'integer',
             'sessions'                  => 'nullable|array',
             'sessions.*.session_number' => 'required_with:sessions|integer|min:1',
             'sessions.*.title'          => 'nullable|string|max:255',
@@ -603,8 +652,13 @@ class TrainerCourseController extends Controller
         ]);
 
         $sessions = $validated['sessions'] ?? null;
-        $equipmentIds = $validated['equipment_ids'] ?? null;
-        $trainingBikeIds = $validated['training_bike_ids'] ?? null;
+
+        try {
+            $equipmentIds = isset($validated['equipment_ids']) ? $this->resolveEquipmentIds($trainer, $validated['equipment_ids']) : null;
+            $trainingBikeIds = isset($validated['training_bike_ids']) ? $this->resolveTrainingBikeIds($trainer, $validated['training_bike_ids']) : null;
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         $effectivePriceType = $validated['price_type'] ?? $course->price_type;
         $effectiveLevelId   = $validated['level_id'] ?? $course->level_id;

@@ -256,7 +256,8 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "trainer-list",       "path" => "/trainer/trainers",    "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 2],
                     ["key" => "trainer-bookings",   "path" => "/trainer/bookings",    "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
                     ["key" => "trainer-payouts",    "path" => "/trainer/payouts",     "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
-                    ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 5]
+                    ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 5],
+                    ["key" => "trainer-courses",    "path" => "/trainer/courses",     "label_en" => "Courses",      "label_ar" => "الدورات",       "permission" => "trainers.view",   "order" => 6, "icon" => "BookOpen"]
                 ]
             ],
             [

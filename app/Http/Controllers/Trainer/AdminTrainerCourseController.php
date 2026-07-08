@@ -25,6 +25,8 @@ class AdminTrainerCourseController extends Controller
      *     @OA\Parameter(name="trainer_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="status",     in="query", required=false, @OA\Schema(type="string", enum={"draft","published","archived"})),
      *     @OA\Parameter(name="level_id",   in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="price_type", in="query", required=false, @OA\Schema(type="string", enum={"per_hour","total"})),
+     *     @OA\Parameter(name="search",     in="query", required=false, @OA\Schema(type="string", example="circuit")),
      *     @OA\Parameter(name="per_page",   in="query", required=false, @OA\Schema(type="integer", example=20)),
      *     @OA\Response(
      *         response=200,
@@ -42,11 +44,15 @@ class AdminTrainerCourseController extends Controller
             'trainer:id,name,name_ar,status',
             'level:id,name_en,name_ar',
             'location:id,location_name,city_id',
+            'equipment',
+            'trainingBikes',
         ]);
 
         if ($request->filled('trainer_id')) { $query->where('trainer_id', $request->trainer_id); }
         if ($request->filled('status'))     { $query->where('status', $request->status); }
         if ($request->filled('level_id'))   { $query->where('level_id', $request->level_id); }
+        if ($request->filled('price_type')) { $query->where('price_type', $request->price_type); }
+        if ($request->filled('search'))     { $query->where('title', 'LIKE', '%' . $request->search . '%'); }
 
         return response()->json([
             'success' => true,
@@ -69,7 +75,7 @@ class AdminTrainerCourseController extends Controller
      */
     public function show(int $id)
     {
-        $course = TrainerCourse::with(['trainer', 'level', 'location.city'])->find($id);
+        $course = TrainerCourse::with(['trainer', 'level', 'location.city', 'equipment', 'trainingBikes', 'sessions'])->find($id);
         if (!$course) {
             return response()->json(['success' => false, 'message' => 'Course not found'], 404);
         }
