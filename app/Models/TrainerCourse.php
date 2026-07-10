@@ -17,6 +17,7 @@ class TrainerCourse extends Model
         'title_ar',
         'description',
         'description_ar',
+        'image',
         'hours_per_session',
         'total_sessions',
         'start_date',
@@ -41,7 +42,7 @@ class TrainerCourse extends Model
         'is_active'     => 'boolean',
     ];
 
-    protected $appends = ['effective_price', 'price_per_hour', 'price_per_session', 'total_price', 'localized_title', 'localized_description'];
+    protected $appends = ['image_url', 'effective_price', 'price_per_hour', 'price_per_session', 'total_price', 'localized_title', 'localized_description'];
 
     public function trainer()
     {
@@ -76,6 +77,13 @@ class TrainerCourse extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published')->where('is_active', true);
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image
+            ? asset('storage/' . $this->image)
+            : null;
     }
 
     /** Returns promo price if set, otherwise original price. */

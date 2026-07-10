@@ -1032,6 +1032,95 @@ class ImageUploadController extends Controller
     }
 
     /**
+     * @OA\Post(
+     *     path="/api/trainer/courses/upload-image",
+     *     summary="Upload a trainer course image",
+     *     description="Upload a cover image for a trainer course. Returns the stored path to pass as the 'image' string field in POST/PUT /trainer/courses.",
+     *     operationId="uploadTrainerCoursePhoto",
+     *     tags={"Trainer - Courses"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"image"},
+     *                 @OA\Property(property="image", type="string", format="binary", description="JPG / PNG / WebP — max 5 MB")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Image uploaded",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string",  example="Image uploaded successfully"),
+     *             @OA\Property(property="path",    type="string",  example="trainer-courses/images/abc123.jpg", description="Pass this value as the 'image' field when creating/updating a course"),
+     *             @OA\Property(property="url",     type="string",  example="https://be.dabapp.co/storage/trainer-courses/images/abc123.jpg")
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Validation error"),
+     *     @OA\Response(response=401, description="Unauthenticated")
+     * )
+     */
+    public function uploadTrainerCoursePhoto(Request $request)
+    {
+        try {
+            $request->validate([
+                'image' => 'required|image|mimes:jpeg,jpg,png,webp|max:5120',
+            ]);
+
+            $file     = $request->file('image');
+            $filename = Str::random(24) . '.' . strtolower($file->getClientOriginalExtension());
+            $folder   = 'trainer-courses/images';
+
+            $processed = $this->processImage($file);
+            $path      = $this->saveImage($processed, "{$folder}/{$filename}");
+
+            Log::info('Trainer course image uploaded', ['path' => $path]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Image uploaded successfully',
+                'path'    => $path,
+                'url'     => asset('storage/' . $path),
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'error' => 'Validation failed', 'details' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Trainer course image upload failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'error' => 'Upload failed', 'message' => config('app.debug') ? $e->getMessage() : 'Internal server error'], 500);
+        }
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/trainer/courses/upload-image/{filename}",
+     *     summary="Delete a trainer course image",
+     *     operationId="deleteTrainerCoursePhoto",
+     *     tags={"Trainer - Courses"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="filename", in="path", required=true, @OA\Schema(type="string", example="abc123.jpg")),
+     *     @OA\Response(response=200, description="Image deleted"),
+     *     @OA\Response(response=404, description="File not found")
+     * )
+     */
+    public function deleteTrainerCoursePhoto(string $filename)
+    {
+        $path = 'trainer-courses/images/' . $filename;
+
+        if (!Storage::disk('public')->exists($path)) {
+            return response()->json(['success' => false, 'error' => 'File not found'], 404);
+        }
+
+        Storage::disk('public')->delete($path);
+        Log::info('Trainer course image deleted', ['filename' => $filename]);
+
+        return response()->json(['success' => true, 'message' => 'Image deleted successfully']);
+    }
+
+    /**
      * @OA\Delete(
      *     path="/api/delete-image/{filename}",
      *     summary="Delete an uploaded image",

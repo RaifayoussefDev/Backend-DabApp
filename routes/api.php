@@ -197,6 +197,7 @@ Route::post('/firebase-login', [FirebaseAuthController::class, 'loginWithFirebas
 Route::get('/get-country', [AuthController::class, 'getCountry'])->name('get.country');
 Route::get('/countries', [AuthController::class, 'getAllCountries']);
 Route::post('/prospect-listings', [App\Http\Controllers\ProspectController::class, 'store']);
+Route::post('/contact-us', [App\Http\Controllers\ContactController::class, 'store'])->middleware('throttle:5,1');
 Route::post('/prospect/upload', [App\Http\Controllers\ImageUploadController::class, 'upload']);
 Route::post('/upload-icon', [App\Http\Controllers\ImageUploadController::class, 'uploadIcon']);
 Route::post('/upload-image-public', [App\Http\Controllers\ImageUploadController::class, 'uploadPublic']);
@@ -1851,6 +1852,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/trainer/courses',                [TrainerCourseController::class, 'index']);
     Route::post('/trainer/courses',               [TrainerCourseController::class, 'store']);
     Route::get('/trainer/courses/price-preview',  [TrainerCourseController::class, 'pricePreview']);
+    Route::post('/trainer/courses/upload-image',  [ImageUploadController::class, 'uploadTrainerCoursePhoto']);
+    Route::delete('/trainer/courses/upload-image/{filename}', [ImageUploadController::class, 'deleteTrainerCoursePhoto']);
     Route::get('/trainer/courses/{id}',           [TrainerCourseController::class, 'show']);
     Route::put('/trainer/courses/{id}',           [TrainerCourseController::class, 'update']);
     Route::delete('/trainer/courses/{id}',        [TrainerCourseController::class, 'destroy']);
