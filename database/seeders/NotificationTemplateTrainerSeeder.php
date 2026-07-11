@@ -142,6 +142,30 @@ class NotificationTemplateTrainerSeeder extends Seeder
                 'icon'               => 'payments',
                 'color'              => '#4CAF50',
             ],
+            [
+                'type'               => 'trainer_course_booking_created',
+                'name'               => 'Trainer Course Booked',
+                'description'        => 'Sent to trainer when a trainee books all sessions of one of their courses',
+                'title_template'     => 'New Course Booking',
+                'message_template'   => 'A trainee booked {{total_sessions}} session(s) of your course "{{course_title}}".',
+                'title_template_ar'  => 'حجز دورة جديد',
+                'message_template_ar'=> 'قام متدرب بحجز {{total_sessions}} جلسة/جلسات من دورتك "{{course_title}}".',
+                'variables'          => ['course_booking_id', 'course_id', 'course_title', 'total_sessions'],
+                'icon'               => 'event_available',
+                'color'              => '#4CAF50',
+            ],
+            [
+                'type'               => 'trainer_course_booking_completed',
+                'name'               => 'Trainer Course Completed — Review Request',
+                'description'        => 'Sent to trainee when all sessions of a booked course are completed',
+                'title_template'     => 'Course Completed — Leave a Review',
+                'message_template'   => 'You have completed all sessions of "{{course_title}}". Share your experience!',
+                'title_template_ar'  => 'اكتملت الدورة — اترك تقييمك',
+                'message_template_ar'=> 'لقد أكملت جميع جلسات "{{course_title}}". شارك تجربتك!',
+                'variables'          => ['course_booking_id', 'course_id', 'course_title'],
+                'icon'               => 'star_rate',
+                'color'              => '#FFC107',
+            ],
         ];
 
         foreach ($templates as $template) {

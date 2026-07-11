@@ -257,7 +257,8 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "trainer-bookings",   "path" => "/trainer/bookings",    "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
                     ["key" => "trainer-payouts",    "path" => "/trainer/payouts",     "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
                     ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 5],
-                    ["key" => "trainer-courses",    "path" => "/trainer/courses",     "label_en" => "Courses",      "label_ar" => "الدورات",       "permission" => "trainers.view",   "order" => 6, "icon" => "BookOpen"]
+                    ["key" => "trainer-courses",    "path" => "/trainer/courses",     "label_en" => "Courses",      "label_ar" => "الدورات",       "permission" => "trainers.view",   "order" => 6, "icon" => "BookOpen"],
+                    ["key" => "trainer-course-bookings", "path" => "/trainer/course-bookings", "label_en" => "Course Bookings", "label_ar" => "حجوزات الدورات", "permission" => "trainers.view", "order" => 7, "icon" => "CalendarCheck"]
                 ]
             ],
             [

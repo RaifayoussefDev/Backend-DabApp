@@ -11,6 +11,7 @@ class TrainerReview extends Model
 
     protected $fillable = [
         'booking_id',
+        'course_booking_id',
         'trainer_id',
         'user_id',
         'rating',
@@ -26,6 +27,11 @@ class TrainerReview extends Model
     public function booking()
     {
         return $this->belongsTo(TrainerBooking::class, 'booking_id');
+    }
+
+    public function courseBooking()
+    {
+        return $this->belongsTo(TrainerCourseBooking::class, 'course_booking_id');
     }
 
     public function trainer()

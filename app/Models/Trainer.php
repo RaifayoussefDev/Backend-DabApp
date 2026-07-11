@@ -144,6 +144,11 @@ class Trainer extends Model
         return $this->hasMany(TrainerCourse::class);
     }
 
+    public function courseBookings()
+    {
+        return $this->hasMany(TrainerCourseBooking::class);
+    }
+
     // ---------------------------------------------------------------
     // Scopes
     // ---------------------------------------------------------------

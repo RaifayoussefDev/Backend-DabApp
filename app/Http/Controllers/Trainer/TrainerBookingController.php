@@ -13,6 +13,7 @@ use App\Models\TrainerPayout;
 use App\Models\TrainerSchedule;
 use App\Services\NotificationService;
 use App\Services\PayTabsConfigService;
+use App\Traits\GeneratesTrainerSlots;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,8 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  */
 class TrainerBookingController extends Controller
 {
+    use GeneratesTrainerSlots;
+
     protected NotificationService $notifications;
 
     public function __construct(NotificationService $notifications)
@@ -962,7 +965,7 @@ class TrainerBookingController extends Controller
         $booking->update(['status' => 'awaiting_confirmation']);
 
         try {
-            $this->notifications->notifyClientConfirmSession($booking->user, $booking, $trainer);
+            $this->notifications->notifyTrainerSessionCompleted($booking->user, $booking, $trainer);
         } catch (\Exception $e) {
             Log::error('TrainerBookingController@completeSession notify failed: ' . $e->getMessage());
         }
@@ -1115,20 +1118,5 @@ class TrainerBookingController extends Controller
         $payment->update(['cart_id' => 'TRAINER_' . $booking->id]);
 
         return $data['redirect_url'];
-    }
-
-    private function generateSlots(string $start, string $end, int $durationMinutes = 120): array
-    {
-        $slots   = [];
-        $current = Carbon::createFromFormat('H:i', substr($start, 0, 5));
-        $endTime = Carbon::createFromFormat('H:i', substr($end,   0, 5));
-
-        while ($current->copy()->addMinutes($durationMinutes)->lte($endTime)) {
-            $slotEnd = $current->copy()->addMinutes($durationMinutes);
-            $slots[] = $current->format('H:i') . '-' . $slotEnd->format('H:i');
-            $current->addMinutes($durationMinutes);
-        }
-
-        return $slots;
     }
 }

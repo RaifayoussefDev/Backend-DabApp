@@ -12,6 +12,7 @@ class PaymentSplit extends Model
     protected $fillable = [
         'payment_id',
         'booking_id',
+        'course_booking_id',
         'trainer_id',
         'commission_setting_id',
         'total_amount',
@@ -39,6 +40,11 @@ class PaymentSplit extends Model
     public function booking()
     {
         return $this->belongsTo(TrainerBooking::class, 'booking_id');
+    }
+
+    public function courseBooking()
+    {
+        return $this->belongsTo(TrainerCourseBooking::class, 'course_booking_id');
     }
 
     public function trainer()

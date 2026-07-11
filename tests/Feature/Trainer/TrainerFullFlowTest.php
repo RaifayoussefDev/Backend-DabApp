@@ -741,7 +741,8 @@ class TrainerFullFlowTest extends TestCase
             ->postJson("/api/trainer/sessions/{$booking->id}/complete");
 
         $response->assertStatus(200)->assertJsonPath('success', true);
-        $this->assertDatabaseHas('trainer_bookings', ['id' => $booking->id, 'status' => 'completed']);
+        // Trainer completing only signals done — client must confirm before it's truly 'completed'.
+        $this->assertDatabaseHas('trainer_bookings', ['id' => $booking->id, 'status' => 'awaiting_confirmation']);
     }
 
     public function test_trainer_cannot_complete_non_in_progress_session()

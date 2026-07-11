@@ -215,6 +215,8 @@ class NotificationPreference extends Model
             'trainer_payout_approved'            => 'system_updates',
             'trainer_payout_rejected'            => 'system_updates',
             'trainer_payout_paid'                => 'system_updates',
+            'trainer_course_booking_created'     => 'system_updates',
+            'trainer_course_booking_completed'   => 'system_updates',
         ];
 
         $column = $map[$type] ?? $type;

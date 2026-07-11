@@ -1018,4 +1018,23 @@ class NotificationService
             'transfer_ref' => $payout->transfer_ref,
         ], ['entity' => $payout, 'priority' => 'high']);
     }
+
+    public function notifyTrainerNewCourseBooking(User $trainerUser, $courseBooking): array
+    {
+        return $this->sendToUser($trainerUser, 'trainer_course_booking_created', [
+            'course_booking_id' => $courseBooking->id,
+            'course_id'         => $courseBooking->course_id,
+            'course_title'      => $courseBooking->course->title,
+            'total_sessions'    => $courseBooking->sessions()->count(),
+        ], ['entity' => $courseBooking, 'priority' => 'high']);
+    }
+
+    public function notifyTraineeCourseCompleted(User $user, $courseBooking): array
+    {
+        return $this->sendToUser($user, 'trainer_course_booking_completed', [
+            'course_booking_id' => $courseBooking->id,
+            'course_id'         => $courseBooking->course_id,
+            'course_title'      => $courseBooking->course->title,
+        ], ['entity' => $courseBooking, 'priority' => 'normal']);
+    }
 }

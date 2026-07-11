@@ -121,7 +121,9 @@ use App\Http\Controllers\Trainer\AdminTrainerBookingController;
 use App\Http\Controllers\Trainer\AdminTrainerPaymentController;
 use App\Http\Controllers\Trainer\AdminTrainerLevelController;
 use App\Http\Controllers\Trainer\AdminTrainerCourseController;
+use App\Http\Controllers\Trainer\AdminTrainerCourseBookingController;
 use App\Http\Controllers\Trainer\TrainerCourseController;
+use App\Http\Controllers\Trainer\TrainerCourseBookingController;
 use App\Http\Controllers\Trainer\TrainerTrainingBikeController;
 use App\Http\Controllers\Services\TowServiceController;
 use App\Http\Controllers\Services\TransportRouteController;
@@ -1787,14 +1789,18 @@ Route::get('/equipment-types',                                [AdminEquipmentTyp
 Route::get('/trainers/{id}/training-bikes',                       [TrainerTrainingBikeController::class, 'publicIndex']);
 Route::get('/courses',                                            [TrainerCourseController::class, 'browseAll']);
 Route::get('/trainers/{id}/courses',                              [TrainerCourseController::class, 'publicIndex']);
+Route::get('/trainers/{id}/courses/{courseId}',                   [TrainerCourseController::class, 'publicShow']);
+Route::get('/trainers/{id}/courses/{courseId}/availability',      [TrainerCourseBookingController::class, 'availability']);
 Route::get('/trainers/{id}/travel-price',                         [TrainerCourseController::class, 'travelPrice']);
 Route::get('/trainers/{id}/equipment',                            [\App\Http\Controllers\Trainer\TrainerEquipmentController::class, 'publicIndex']);
 Route::get('/trainers/{trainerId}/courses/{courseId}/sessions',   [\App\Http\Controllers\Trainer\TrainerCourseSessionController::class, 'publicIndex']);
 
 // PayTabs webhook — no auth (server-to-server)
 Route::post('/trainer/payments/callback', [TrainerBookingController::class, 'paymentCallback']);
+Route::post('/trainer/course-bookings/payments/callback', [TrainerCourseBookingController::class, 'paymentCallback']);
 // PayTabs browser return — redirects user back to frontend after payment
 Route::get('/trainer/payments/return',   [TrainerBookingController::class, 'paymentReturn']);
+Route::get('/trainer/course-bookings/payments/return', [TrainerCourseBookingController::class, 'paymentReturn']);
 
 // Authenticated — Client actions
 Route::middleware('auth:api')->group(function () {
@@ -1805,6 +1811,14 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/bookings/{id}/cancel',[TrainerBookingController::class, 'cancel']);
     Route::post('/trainer/bookings/{id}/pay',   [TrainerBookingController::class, 'initiatePayment']);
     Route::post('/trainer/bookings/{bookingId}/review', [TrainerReviewController::class, 'store']);
+
+    // Course bookings (Trainee)
+    Route::post('/trainers/{id}/courses/{courseId}/book', [TrainerCourseBookingController::class, 'book']);
+    Route::get('/trainer/course-bookings',                 [TrainerCourseBookingController::class, 'myCourseBookings']);
+    Route::get('/trainer/course-bookings/{id}',            [TrainerCourseBookingController::class, 'showCourseBooking']);
+    Route::post('/trainer/course-bookings/{id}/cancel',    [TrainerCourseBookingController::class, 'cancel']);
+    Route::post('/trainer/course-bookings/{id}/pay',       [TrainerCourseBookingController::class, 'initiatePayment']);
+    Route::post('/trainer/course-bookings/{id}/review',    [TrainerCourseBookingController::class, 'review']);
 
     // Social
     Route::post('/trainers/{id}/like',          [TrainerLikeController::class, 'toggle']);
@@ -1835,6 +1849,12 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/sessions/{id}/complete',           [TrainerBookingController::class, 'completeSession']);
     Route::post('/trainer/bookings/{id}/confirm-completion', [TrainerBookingController::class, 'clientConfirm']);
     Route::post('/trainer/bookings/{id}/dispute',            [TrainerBookingController::class, 'clientDispute']);
+
+    // Course sessions calendar (Trainer)
+    Route::get('/trainer/course-sessions',                [TrainerCourseBookingController::class, 'mySessions']);
+    Route::get('/trainer/course-sessions/{id}',           [TrainerCourseBookingController::class, 'showSession']);
+    Route::post('/trainer/course-sessions/{id}/start',    [TrainerCourseBookingController::class, 'startSession']);
+    Route::post('/trainer/course-sessions/{id}/complete', [TrainerCourseBookingController::class, 'completeSession']);
 
     // Gallery management
     Route::post('/trainer/gallery',              [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'store']);
@@ -1915,6 +1935,11 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/trainer-courses',                           [AdminTrainerCourseController::class, 'index']);
     Route::get('/trainer-courses/{id}',                      [AdminTrainerCourseController::class, 'show']);
     Route::delete('/trainer-courses/{id}',                   [AdminTrainerCourseController::class, 'destroy']);
+
+    // Trainer course bookings (admin view)
+    Route::get('/trainer-course-bookings',                   [AdminTrainerCourseBookingController::class, 'index']);
+    Route::get('/trainer-course-bookings/{id}',               [AdminTrainerCourseBookingController::class, 'show']);
+    Route::post('/trainer-course-bookings/{id}/cancel',       [AdminTrainerCourseBookingController::class, 'cancel']);
 
     Route::get('/trainer-reviews',                   [AdminTrainerController::class, 'reviews']);
     Route::post('/trainer-reviews/{id}/approve',     [AdminTrainerController::class, 'approveReview']);

@@ -103,6 +103,7 @@ class TrainerCourseController extends Controller
      *     tags={"Trainer - Courses"},
      *     @OA\Parameter(name="level_id",   in="query", required=false, @OA\Schema(type="integer", example=1)),
      *     @OA\Parameter(name="city_id",    in="query", required=false, @OA\Schema(type="integer", example=1)),
+     *     @OA\Parameter(name="location_id",in="query", required=false, @OA\Schema(type="integer", example=1)),
      *     @OA\Parameter(name="can_travel", in="query", required=false, @OA\Schema(type="integer", enum={0,1})),
      *     @OA\Parameter(name="min_price",  in="query", required=false, @OA\Schema(type="number", example=50)),
      *     @OA\Parameter(name="max_price",  in="query", required=false, @OA\Schema(type="number", example=500)),
@@ -165,6 +166,10 @@ class TrainerCourseController extends Controller
 
         if ($request->filled('city_id')) {
             $query->whereHas('location', fn ($q) => $q->where('city_id', $request->city_id));
+        }
+
+        if ($request->filled('location_id')) {
+            $query->where('location_id', $request->location_id);
         }
 
         if ($request->has('can_travel')) {
@@ -260,6 +265,50 @@ class TrainerCourseController extends Controller
             'success' => true,
             'data'    => $query->latest()->get(),
             'message' => 'Courses retrieved successfully',
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/trainers/{id}/courses/{courseId}",
+     *     summary="Course details (public)",
+     *     description="Returns full detail for one published course — description, trainer info, duration, pricing, image, sessions, equipment and training bikes. Visible to everyone.",
+     *     operationId="getPublicCourseDetail",
+     *     tags={"Trainer - Courses"},
+     *     @OA\Parameter(name="id",       in="path", required=true, @OA\Schema(type="integer", example=1), description="Trainer ID"),
+     *     @OA\Parameter(name="courseId", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(response=200, description="Course retrieved"),
+     *     @OA\Response(response=404, description="Course not found or not published")
+     * )
+     */
+    public function publicShow(int $trainerId, int $courseId)
+    {
+        $trainer = Trainer::approved()->find($trainerId);
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
+        }
+
+        $course = TrainerCourse::with([
+                'level',
+                'location.city',
+                'sessions',
+                'equipment',
+                'trainingBikes',
+                'trainer:id,name,name_ar,photo,cover,bio,bio_ar,rating_average,experience_years,is_available',
+            ])
+            ->where('id', $courseId)
+            ->where('trainer_id', $trainer->id)
+            ->published()
+            ->first();
+
+        if (!$course) {
+            return response()->json(['success' => false, 'message' => 'Course not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $course,
+            'message' => 'Course retrieved successfully',
         ]);
     }
 
