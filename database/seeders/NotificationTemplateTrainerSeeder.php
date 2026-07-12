@@ -166,6 +166,18 @@ class NotificationTemplateTrainerSeeder extends Seeder
                 'icon'               => 'star_rate',
                 'color'              => '#FFC107',
             ],
+            [
+                'type'               => 'trainer_course_set_to_draft',
+                'name'               => 'Trainer Course Set to Draft by Admin',
+                'description'        => 'Sent to trainer when admin moves their published course back to draft with a reason',
+                'title_template'     => 'Your Course Was Set to Draft',
+                'message_template'   => 'Your course "{{course_title}}" was moved to draft by an admin. Reason: {{reason}}',
+                'title_template_ar'  => 'تم تحويل دورتك إلى مسودة',
+                'message_template_ar'=> 'تم تحويل دورتك "{{course_title}}" إلى مسودة من قبل الإدارة. السبب: {{reason}}',
+                'variables'          => ['course_id', 'course_title', 'reason'],
+                'icon'               => 'edit_note',
+                'color'              => '#F44336',
+            ],
         ];
 
         foreach ($templates as $template) {

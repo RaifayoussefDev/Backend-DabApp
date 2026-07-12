@@ -1037,4 +1037,13 @@ class NotificationService
             'course_title'      => $courseBooking->course->title,
         ], ['entity' => $courseBooking, 'priority' => 'normal']);
     }
+
+    public function notifyTrainerCourseSetToDraft(User $trainerUser, $course, string $reason): array
+    {
+        return $this->sendToUser($trainerUser, 'trainer_course_set_to_draft', [
+            'course_id'    => $course->id,
+            'course_title' => $course->title,
+            'reason'       => $reason,
+        ], ['entity' => $course, 'priority' => 'high']);
+    }
 }

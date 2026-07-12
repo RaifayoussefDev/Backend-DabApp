@@ -28,6 +28,7 @@ class TrainerCourse extends Model
         'can_travel',
         'price_per_km',
         'status',
+        'draft_reason',
         'is_active',
     ];
 

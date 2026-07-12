@@ -1935,6 +1935,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/trainer-courses',                           [AdminTrainerCourseController::class, 'index']);
     Route::get('/trainer-courses/{id}',                      [AdminTrainerCourseController::class, 'show']);
     Route::delete('/trainer-courses/{id}',                   [AdminTrainerCourseController::class, 'destroy']);
+    Route::post('/trainer-courses/{id}/set-draft',           [AdminTrainerCourseController::class, 'setDraft']);
 
     // Trainer course bookings (admin view)
     Route::get('/trainer-course-bookings',                   [AdminTrainerCourseBookingController::class, 'index']);

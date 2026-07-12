@@ -155,7 +155,7 @@ class TrainerCourseController extends Controller
                 'location.city',
                 'trainer:id,name,name_ar,photo,rating_average,experience_years,is_available',
                 'equipment',
-                'trainingBikes',
+                'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year',
             ])
             ->published()
             ->whereHas('trainer', fn ($q) => $q->approved());
@@ -253,7 +253,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
         }
 
-        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes'])
+        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year'])
             ->where('trainer_id', $trainer->id)
             ->published();
 
@@ -293,7 +293,7 @@ class TrainerCourseController extends Controller
                 'location.city',
                 'sessions',
                 'equipment',
-                'trainingBikes',
+                'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year',
                 'trainer:id,name,name_ar,photo,cover,bio,bio_ar,rating_average,experience_years,is_available',
             ])
             ->where('id', $courseId)
@@ -343,7 +343,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes', 'sessions'])
+        $query = TrainerCourse::with(['level', 'location.city', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year', 'sessions'])
             ->where('trainer_id', $trainer->id);
 
         if ($request->filled('status')) {
@@ -376,7 +376,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
 
-        $course = TrainerCourse::with(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes'])
+        $course = TrainerCourse::with(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year'])
             ->where('trainer_id', $trainer->id)
             ->find($id);
 
@@ -598,7 +598,7 @@ class TrainerCourseController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $course->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes']),
+            'data'    => $course->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year']),
             'message' => 'Course created successfully',
         ], 201);
     }
@@ -761,7 +761,7 @@ class TrainerCourseController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $course->fresh()->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes']),
+            'data'    => $course->fresh()->load(['level', 'location.city', 'sessions', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year']),
             'message' => 'Course updated successfully',
         ]);
     }
@@ -831,7 +831,7 @@ class TrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Course is already published'], 400);
         }
 
-        $course->update(['status' => 'published', 'is_active' => true]);
+        $course->update(['status' => 'published', 'is_active' => true, 'draft_reason' => null]);
 
         return response()->json(['success' => true, 'data' => $course->fresh(), 'message' => 'Course published successfully']);
     }

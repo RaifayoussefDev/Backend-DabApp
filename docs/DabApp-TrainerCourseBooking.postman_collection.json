@@ -1,0 +1,525 @@
+{
+  "info": {
+    "name": "DabApp – Trainer Course Booking (Full Scenario)",
+    "_postman_id": "dabapp-trainer-course-booking-v1",
+    "description": "## Trainer Course Booking — Full End-to-End Scenario\n\nCovers the whole multi-session course booking feature: browse → book (multiple sessions, one payment) → payment webhook → trainer starts/completes each session with the trainee's OTP → trainee reviews → admin oversight (including the force-to-draft moderation action).\n\nRun the folders **in order** (Phase 1 → 7). Phase 8 contains optional negative/edge-case tests that are NOT meant to run as part of the main sequence (see notes on each request).\n\n### Before you run this\n1. Set `base_url` (defaults to the seeded local dev DB used to build this feature — change to your own environment).\n2. Fill in `trainee_email`/`trainee_password`, `trainer_email`/`trainer_password`, `admin_email`/`admin_password` with real accounts in your environment. These cannot be pre-filled — passwords are hashed in the DB and unrecoverable.\n3. `trainer_id` / `course_id` default to `6` / `1` — the seeded test trainer + published 2-session course used while building this feature. Change these if your environment doesn't have that exact data; then re-check Phase 1 step 1-3 (Course Detail) to confirm `total_sessions`, and adjust `session_1_date` / `session_2_date` (and add more `session_N_date` variables + array entries in the booking body) to match.\n4. `session_1_date` / `session_2_date` default to two upcoming dates that match the seeded trainer's actual weekly schedule (Fri/Sat). **These will go stale over time** — once they're in the past, open Phase 1 step 1-5 (Course Availability) first and pick two fresh, distinct dates from the response.\n5. **Payments**: set `SKIP_PAYTABS=true` in the backend `.env` so booking doesn't require a live PayTabs sandbox. The booking will be created with `payment_status: pending`; Phase 4's webhook-simulation step manually flips it to `paid`, exactly like a real PayTabs callback would.\n6. **Notifications**: run `php artisan db:seed --class=NotificationTemplateTrainerSeeder` on the target environment at least once. It is NOT part of the default `php artisan db:seed` run — without it, the `trainer_course_booking_created`/`_completed`/`trainer_course_set_to_draft` notification types don't exist in `notification_templates`, so Phase 3-1, Phase 5-5 and Phase 7-5 will still succeed but silently produce no notification.\n\n### Variables saved automatically as you go\n| Variable | Saved by |\n|---|---|\n| `trainee_token` | Phase 2-1 Login |\n| `trainer_token` | Phase 2-2 Login |\n| `admin_token` | Phase 2-3 Login (if no OTP challenge in your env) |\n| `course_total_sessions` | Phase 1-3 Course Detail |\n| `course_booking_id` | Phase 3-1 Book Course |\n| `payment_url` | Phase 3-1 Book Course (null if `SKIP_PAYTABS=true`) |\n| `session_1_id` / `session_1_start_otp` / `session_1_completion_otp` | Phase 3-2 My Course Bookings |\n| `session_2_id` / `session_2_start_otp` / `session_2_completion_otp` | Phase 3-2 My Course Bookings |\n\n### Key things this scenario proves\n- Booking sends `start_time` as `HH:MM` only (not the `HH:MM-HH:MM` slot range returned by availability).\n- OTPs are only ever visible to the trainee's own endpoints — Phase 5 (trainer) and Phase 7 (admin) responses never contain `start_otp`/`completion_otp`.\n- The course booking only reaches `completed` once every session is completed — checked explicitly in Phase 6-1.\n- Admin's \"set to draft\" (Phase 7-5) requires a `reason` and notifies the trainer; Phase 7-6 undoes it so the collection stays re-runnable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+
+  "variable": [
+    { "key": "base_url",                 "value": "https://be.dabapp.co", "type": "string" },
+
+    { "key": "trainee_email",            "value": "", "type": "string" },
+    { "key": "trainee_password",         "value": "", "type": "string" },
+    { "key": "trainer_email",            "value": "", "type": "string" },
+    { "key": "trainer_password",         "value": "", "type": "string" },
+    { "key": "admin_email",              "value": "", "type": "string" },
+    { "key": "admin_password",           "value": "", "type": "string" },
+
+    { "key": "trainee_token",            "value": "", "type": "string" },
+    { "key": "trainer_token",            "value": "", "type": "string" },
+    { "key": "admin_token",              "value": "", "type": "string" },
+
+    { "key": "trainer_id",               "value": "6", "type": "string" },
+    { "key": "course_id",                "value": "1", "type": "string" },
+    { "key": "course_total_sessions",    "value": "2", "type": "string" },
+
+    { "key": "avail_from",               "value": "2026-07-13", "type": "string" },
+    { "key": "avail_to",                 "value": "2026-08-05", "type": "string" },
+
+    { "key": "session_1_date",           "value": "2026-07-17", "type": "string" },
+    { "key": "session_1_time",           "value": "09:00", "type": "string" },
+    { "key": "session_2_date",           "value": "2026-07-18", "type": "string" },
+    { "key": "session_2_time",           "value": "09:00", "type": "string" },
+
+    { "key": "course_booking_id",        "value": "", "type": "string" },
+    { "key": "payment_url",              "value": "", "type": "string" },
+
+    { "key": "session_1_id",             "value": "", "type": "string" },
+    { "key": "session_1_start_otp",      "value": "", "type": "string" },
+    { "key": "session_1_completion_otp", "value": "", "type": "string" },
+    { "key": "session_2_id",             "value": "", "type": "string" },
+    { "key": "session_2_start_otp",      "value": "", "type": "string" },
+    { "key": "session_2_completion_otp", "value": "", "type": "string" },
+
+    { "key": "admin_test_course_id",     "value": "1", "type": "string" }
+  ],
+
+  "item": [
+
+    {
+      "name": "Phase 1 — Public: Browse Courses & Availability",
+      "description": "No auth required. Confirms the browse/detail/availability endpoints and captures course_total_sessions for later phases.",
+      "item": [
+        {
+          "name": "1-1 · GET Browse All Courses",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Courses listed', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/courses?sort_by=newest&per_page=9",
+              "host": ["{{base_url}}"], "path": ["api","courses"],
+              "query": [{ "key": "sort_by", "value": "newest" }, { "key": "per_page", "value": "9" }]
+            },
+            "description": "Public course catalog. Supports level_id, city_id, location_id, min_price, max_price, search, sort_by filters."
+          }
+        },
+        {
+          "name": "1-2 · GET Trainer's Published Courses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses"] }
+          }
+        },
+        {
+          "name": "1-3 · GET Course Detail",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var data = json.data || {};",
+            "if (data.total_sessions) {",
+            "  pm.collectionVariables.set('course_total_sessions', String(data.total_sessions));",
+            "  console.log('course_total_sessions = ' + data.total_sessions + ' (hours_per_session=' + data.hours_per_session + ')');",
+            "}",
+            "pm.test('Course detail retrieved', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}"] },
+            "description": "Full public detail: description, trainer summary, pricing, image, sessions breakdown, equipment, training bikes."
+          }
+        },
+        {
+          "name": "1-4 · GET Course Session Breakdown (descriptive)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/sessions", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","sessions"] }
+          }
+        },
+        {
+          "name": "1-5 · GET Course Availability",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var slots = (json.data && json.data.available_slots) || [];",
+            "console.log('Available dates in range: ' + slots.map(function(s){return s.date;}).join(', '));",
+            "pm.test('Availability retrieved', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/availability?from_date={{avail_from}}&to_date={{avail_to}}",
+              "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","availability"],
+              "query": [{ "key": "from_date", "value": "{{avail_from}}" }, { "key": "to_date", "value": "{{avail_to}}" }]
+            },
+            "description": "Slots are sized to hours_per_session and already exclude the trainer's existing bookings. If session_1_date/session_2_date have gone stale, pick two fresh distinct dates from here — use the FIRST part of a `time_slots` entry (e.g. \"09:00\" from \"09:00-11:00\") as the start_time in the booking body, never the full range."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 2 — Login (Trainee, Trainer, Admin)",
+      "item": [
+        {
+          "name": "2-1 · POST Trainee Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "if (json.requiresOTP) { console.warn('This account requires OTP verification — complete it via /api/verify-otp, then paste the resulting token into {{trainee_token}} manually.'); }",
+            "else if (json.token) { pm.collectionVariables.set('trainee_token', json.token); console.log('trainee_token saved'); }",
+            "pm.test('Login request succeeded', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"{{trainee_email}}\",\n  \"password\": \"{{trainee_password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] }
+          }
+        },
+        {
+          "name": "2-2 · POST Trainer Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "if (json.requiresOTP) { console.warn('This account requires OTP verification — complete it via /api/verify-otp, then paste the resulting token into {{trainer_token}} manually.'); }",
+            "else if (json.token) { pm.collectionVariables.set('trainer_token', json.token); console.log('trainer_token saved'); }",
+            "pm.test('Login request succeeded', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"{{trainer_email}}\",\n  \"password\": \"{{trainer_password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/login", "host": ["{{base_url}}"], "path": ["api","login"] },
+            "description": "This must be the user account linked to the Trainer record for trainer_id (i.e. Trainer.user_id), otherwise Phase 5/7-6 will 403 with 'No trainer profile found'."
+          }
+        },
+        {
+          "name": "2-3 · POST Admin Login",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "if (json.requiresOTP) { console.warn('Admin login requires OTP in this environment. Complete /api/admin/verify-otp manually (outside this collection) and paste the resulting token into {{admin_token}}.'); }",
+            "else if (json.token) { pm.collectionVariables.set('admin_token', json.token); console.log('admin_token saved'); }",
+            "pm.test('Login request succeeded', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"login\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/admin/login", "host": ["{{base_url}}"], "path": ["api","admin","login"] },
+            "description": "Admin login can require an OTP challenge depending on environment/account flags. If `requiresOTP` comes back true, complete verification outside this collection and paste the token into {{admin_token}} manually."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 3 — Trainee: Book the Course",
+      "item": [
+        {
+          "name": "3-1 · POST Book Course (all sessions, one payment)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var data = json.data || {};",
+            "if (data.course_booking_id) { pm.collectionVariables.set('course_booking_id', String(data.course_booking_id)); console.log('course_booking_id = ' + data.course_booking_id); }",
+            "if (data.payment_url) { pm.collectionVariables.set('payment_url', data.payment_url); console.log('Open this URL in a browser to pay for real: ' + data.payment_url); }",
+            "else { console.log('No payment_url — SKIP_PAYTABS is likely enabled. Proceed to Phase 4 to simulate the webhook.'); }",
+            "pm.test('Course booked (201)', function () { pm.response.to.have.status(201); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessions\": [\n    { \"session_number\": 1, \"booking_date\": \"{{session_1_date}}\", \"start_time\": \"{{session_1_time}}\" },\n    { \"session_number\": 2, \"booking_date\": \"{{session_2_date}}\", \"start_time\": \"{{session_2_time}}\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","book"] },
+            "description": "`sessions` must have exactly `course_total_sessions` entries, `session_number` values exactly 1..N each once, and every `booking_date` distinct. `start_time` is HH:MM only — never paste a full \"HH:MM-HH:MM\" slot range here. If your course has more than 2 sessions, add more entries here (and matching session_N_date/time variables) before running."
+          }
+        },
+        {
+          "name": "3-2 · GET My Course Bookings (captures OTPs)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var data = json.data || {};",
+            "var all = (data.in_progress || []).concat(data.completed || []);",
+            "var bookingId = pm.collectionVariables.get('course_booking_id');",
+            "var booking = all.find(function (b) { return String(b.id) === String(bookingId); });",
+            "if (booking && booking.sessions) {",
+            "  var sessions = booking.sessions.slice().sort(function (a, b) { return a.session_number - b.session_number; });",
+            "  sessions.forEach(function (s, idx) {",
+            "    var n = idx + 1;",
+            "    pm.collectionVariables.set('session_' + n + '_id', String(s.id));",
+            "    pm.collectionVariables.set('session_' + n + '_start_otp', s.start_otp || '');",
+            "    pm.collectionVariables.set('session_' + n + '_completion_otp', s.completion_otp || '');",
+            "  });",
+            "  console.log('Captured ' + sessions.length + ' session(s) with their OTPs.');",
+            "} else {",
+            "  console.warn('Booking ' + bookingId + ' not found in in_progress/completed — did step 3-1 succeed?');",
+            "}",
+            "pm.test('My course bookings retrieved', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings"] },
+            "description": "Grouped into { in_progress, completed }. Only the trainee's own view ever includes start_otp/completion_otp per session."
+          }
+        },
+        {
+          "name": "3-3 · GET Course Booking Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings/{{course_booking_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings","{{course_booking_id}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 4 — Payment Webhook (simulate PayTabs)",
+      "item": [
+        {
+          "name": "4-1 · POST Payment Callback — Approve",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Payment confirmed', function () {",
+            "  pm.response.to.have.status(200);",
+            "  pm.expect(pm.response.json().success).to.eql(true);",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_ref\": \"POSTMAN-{{$timestamp}}\",\n  \"cart_id\": \"TRAINERCOURSE_{{course_booking_id}}\",\n  \"payment_result\": {\n    \"response_status\": \"A\",\n    \"response_code\": \"000\",\n    \"response_message\": \"Authorised (Postman simulation)\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings/payments/callback", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings","payments","callback"] },
+            "description": "No auth — this is exactly what PayTabs calls server-to-server. Confirms the booking, creates the commission split + payout record, and notifies the trainer. Safe to call even if you already paid for real via {{payment_url}} — it's idempotent per cart_id lookup."
+          }
+        },
+        {
+          "name": "4-2 (alt) · POST Payment Callback — Decline",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Payment declined path handled', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tran_ref\": \"POSTMAN-{{$timestamp}}\",\n  \"cart_id\": \"TRAINERCOURSE_{{course_booking_id}}\",\n  \"payment_result\": {\n    \"response_status\": \"D\",\n    \"response_code\": \"400\",\n    \"response_message\": \"Declined (Postman simulation)\"\n  }\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings/payments/callback", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings","payments","callback"] },
+            "description": "DO NOT run this as part of the main sequence — it cancels the booking and every session, which breaks Phase 5 onward. Only run this against a fresh, separate booking to verify the decline path."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 5 — Trainer: Start & Complete Sessions (OTP)",
+      "item": [
+        {
+          "name": "5-1 · GET My Course Sessions (calendar)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var body = pm.response.text();",
+            "pm.test('No OTP leaked to trainer', function () {",
+            "  pm.expect(body).to.not.include('start_otp');",
+            "  pm.expect(body).to.not.include('completion_otp');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions"] }
+          }
+        },
+        {
+          "name": "5-2 · POST Start Session 1 (correct OTP)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Session 1 started', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"{{session_1_start_otp}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_1_id}}/start", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_1_id}}","start"] },
+            "description": "In real use, the trainee reads this code off their own \"My Courses\" screen and tells it to the trainer in person."
+          }
+        },
+        {
+          "name": "5-3 · POST Complete Session 1 (correct OTP)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Session 1 completed', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"{{session_1_completion_otp}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_1_id}}/complete", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_1_id}}","complete"] }
+          }
+        },
+        {
+          "name": "5-4 · POST Start Session 2 (correct OTP)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Session 2 started', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"{{session_2_start_otp}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_2_id}}/start", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_2_id}}","start"] }
+          }
+        },
+        {
+          "name": "5-5 · POST Complete Session 2 (correct OTP — finishes the course)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Session 2 (last session) completed', function () { pm.response.to.have.status(200); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"{{session_2_completion_otp}}\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_2_id}}/complete", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_2_id}}","complete"] },
+            "description": "If this was the last non-completed session of the course booking, the whole course booking flips to `completed` and the trainee is notified with a review CTA — verified in Phase 6-1."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 6 — Trainee: Review",
+      "item": [
+        {
+          "name": "6-1 · GET My Course Bookings (verify completed)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "var completed = (json.data && json.data.completed) || [];",
+            "var bookingId = pm.collectionVariables.get('course_booking_id');",
+            "var found = completed.some(function (b) { return String(b.id) === String(bookingId); });",
+            "pm.test('Course booking is now completed', function () { pm.expect(found).to.eql(true); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings"] }
+          }
+        },
+        {
+          "name": "6-2 · POST Submit Review",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Review submitted (201)', function () { pm.response.to.have.status(201); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"rating\": 5,\n  \"comment\": \"Excellent course — clear instructions and the OTP hand-off worked perfectly.\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings/{{course_booking_id}}/review", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings","{{course_booking_id}}","review"] },
+            "description": "Goes into moderation (is_approved: false) — won't show publicly until an admin approves it."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 7 — Admin: Oversight",
+      "item": [
+        {
+          "name": "7-1 · GET List Course Bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/trainer-course-bookings", "host": ["{{base_url}}"], "path": ["api","admin","trainer-course-bookings"] },
+            "description": "Supports status, trainer_id, course_id, user_id, payment_status, date_from, date_to filters."
+          }
+        },
+        {
+          "name": "7-2 · GET Course Booking Detail (no OTPs)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var body = pm.response.text();",
+            "pm.test('Admin never sees OTPs', function () {",
+            "  pm.expect(body).to.not.include('start_otp');",
+            "  pm.expect(body).to.not.include('completion_otp');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/trainer-course-bookings/{{course_booking_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-course-bookings","{{course_booking_id}}"] }
+          }
+        },
+        {
+          "name": "7-3 · GET List Trainer Courses (catalog)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/trainer-courses", "host": ["{{base_url}}"], "path": ["api","admin","trainer-courses"] }
+          }
+        },
+        {
+          "name": "7-4 · GET Course Detail (admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/admin/trainer-courses/{{admin_test_course_id}}", "host": ["{{base_url}}"], "path": ["api","admin","trainer-courses","{{admin_test_course_id}}"] }
+          }
+        },
+        {
+          "name": "7-5 · POST Set Course to Draft (with reason)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Course set to draft', function () {",
+            "  pm.response.to.have.status(200);",
+            "  pm.expect(pm.response.json().data.status).to.eql('draft');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Testing the admin draft workflow via Postman\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/admin/trainer-courses/{{admin_test_course_id}}/set-draft", "host": ["{{base_url}}"], "path": ["api","admin","trainer-courses","{{admin_test_course_id}}","set-draft"] },
+            "description": "Hides the course from trainees and notifies the trainer with the reason. This uses admin_test_course_id (defaults to the same course_id) — run 7-6 right after to restore it to published, otherwise re-running this whole collection later will fail at Phase 1/3 with a 'not published' error."
+          }
+        },
+        {
+          "name": "7-6 · POST Publish Again (trainer, undo the draft — keeps this collection re-runnable)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Course published again', function () {",
+            "  pm.response.to.have.status(200);",
+            "  pm.expect(pm.response.json().data.status).to.eql('published');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/courses/{{admin_test_course_id}}/publish", "host": ["{{base_url}}"], "path": ["api","trainer","courses","{{admin_test_course_id}}","publish"] },
+            "description": "Also clears draft_reason on the course record."
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Phase 8 — Negative / Edge Cases (optional, run individually)",
+      "description": "These intentionally break the happy-path state (wrong OTP, wrong session count, etc.) — do NOT run this folder as part of the main sequence. Each request is self-contained.",
+      "item": [
+        {
+          "name": "8-1 · POST Book Course — wrong session count (expect 422)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Rejected with 422', function () { pm.response.to.have.status(422); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"sessions\": [\n    { \"session_number\": 1, \"booking_date\": \"{{session_1_date}}\", \"start_time\": \"{{session_1_time}}\" }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","book"] },
+            "description": "Sends only 1 session for a course that requires course_total_sessions (2 by default here)."
+          }
+        },
+        {
+          "name": "8-2 · POST Book Course — duplicate dates (expect 422)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Rejected with 422', function () { pm.response.to.have.status(422); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainee_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"sessions\": [\n    { \"session_number\": 1, \"booking_date\": \"{{session_1_date}}\", \"start_time\": \"09:00\" },\n    { \"session_number\": 2, \"booking_date\": \"{{session_1_date}}\", \"start_time\": \"11:00\" }\n  ]\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainers/{{trainer_id}}/courses/{{course_id}}/book", "host": ["{{base_url}}"], "path": ["api","trainers","{{trainer_id}}","courses","{{course_id}}","book"] }
+          }
+        },
+        {
+          "name": "8-3 · POST Start Session — wrong OTP (expect 422)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Rejected with 422 Invalid code', function () { pm.response.to.have.status(422); });"
+          ]}}],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "body": { "mode": "raw", "raw": "{\n  \"otp\": \"000000\"\n}", "options": { "raw": { "language": "json" } } },
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_1_id}}/start", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_1_id}}","start"] },
+            "description": "Only meaningful BEFORE Phase 5-2 has run (session must still be `scheduled`). Run this first if you want to see the failure case, then run Phase 5-2 with the real OTP."
+          }
+        },
+        {
+          "name": "8-4 · GET My Course Bookings — unauthenticated (expect 401)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Rejected with 401', function () { pm.response.to.have.status(401); });"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/trainer/course-bookings", "host": ["{{base_url}}"], "path": ["api","trainer","course-bookings"] }
+          }
+        }
+      ]
+    }
+  ]
+}

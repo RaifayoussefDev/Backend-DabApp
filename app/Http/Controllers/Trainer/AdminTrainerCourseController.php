@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Trainer;
 
 use App\Http\Controllers\Controller;
 use App\Models\TrainerCourse;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -14,6 +16,13 @@ use Illuminate\Http\Request;
  */
 class AdminTrainerCourseController extends Controller
 {
+    protected NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
     /**
      * @OA\Get(
      *     path="/api/admin/trainer-courses",
@@ -45,7 +54,7 @@ class AdminTrainerCourseController extends Controller
             'level:id,name_en,name_ar',
             'location:id,location_name,city_id',
             'equipment',
-            'trainingBikes',
+            'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year',
         ]);
 
         if ($request->filled('trainer_id')) { $query->where('trainer_id', $request->trainer_id); }
@@ -75,7 +84,7 @@ class AdminTrainerCourseController extends Controller
      */
     public function show(int $id)
     {
-        $course = TrainerCourse::with(['trainer', 'level', 'location.city', 'equipment', 'trainingBikes', 'sessions'])->find($id);
+        $course = TrainerCourse::with(['trainer', 'level', 'location.city', 'equipment', 'trainingBikes.garage.brand', 'trainingBikes.garage.model', 'trainingBikes.garage.year', 'sessions'])->find($id);
         if (!$course) {
             return response()->json(['success' => false, 'message' => 'Course not found'], 404);
         }
@@ -106,5 +115,59 @@ class AdminTrainerCourseController extends Controller
         $course->delete();
 
         return response()->json(['success' => true, 'message' => 'Course deleted successfully']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/trainer-courses/{id}/set-draft",
+     *     summary="Force a course to draft (Admin)",
+     *     description="Admin moves a published course back to draft, requiring a reason. The trainer is notified with the reason so they know why their course was taken down.",
+     *     operationId="adminSetTrainerCourseDraft",
+     *     tags={"Admin - Trainer Courses"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(required={"reason"}, @OA\Property(property="reason", type="string", example="Course pricing does not match approved level rates"))
+     *     ),
+     *     @OA\Response(response=200, description="Course set to draft"),
+     *     @OA\Response(response=400, description="Course is already a draft"),
+     *     @OA\Response(response=404, description="Course not found"),
+     *     @OA\Response(response=422, description="Validation error — reason is required")
+     * )
+     */
+    public function setDraft(Request $request, int $id)
+    {
+        $course = TrainerCourse::with('trainer.user')->find($id);
+        if (!$course) {
+            return response()->json(['success' => false, 'message' => 'Course not found'], 404);
+        }
+
+        if ($course->status === 'draft') {
+            return response()->json(['success' => false, 'message' => 'Course is already a draft'], 400);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        $course->update([
+            'status'       => 'draft',
+            'draft_reason' => $request->reason,
+        ]);
+
+        try {
+            if ($course->trainer?->user) {
+                $this->notifications->notifyTrainerCourseSetToDraft($course->trainer->user, $course, $request->reason);
+            }
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerCourseController@setDraft notify failed: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $course->fresh(),
+            'message' => 'Course set to draft and trainer notified',
+        ]);
     }
 }
