@@ -369,10 +369,10 @@ class TrainerCourseBookingController extends Controller
         $frontend        = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:4200')), '/');
 
         if ($courseBookingId && $tranRef) {
-            return redirect($frontend . '/trainers/course-booking-confirmation?course_booking_id=' . $courseBookingId . '&status=success');
+            return redirect($frontend . '/trainers/booking-confirmation?course_booking_id=' . $courseBookingId . '&status=success');
         }
 
-        return redirect($frontend . '/trainers/course-booking-confirmation?status=failed');
+        return redirect($frontend . '/trainers/booking-confirmation?status=failed');
     }
 
     // ---------------------------------------------------------------

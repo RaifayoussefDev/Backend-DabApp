@@ -52,7 +52,7 @@
       "description": "No auth required. Confirms the browse/detail/availability endpoints and captures course_total_sessions for later phases.",
       "item": [
         {
-          "name": "1-1 · GET Browse All Courses",
+          "name": "1-1 · GET Browse All Courses (with all filters)",
           "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
             "pm.test('Courses listed', function () { pm.response.to.have.status(200); });"
           ]}}],
@@ -60,11 +60,21 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/courses?sort_by=newest&per_page=9",
+              "raw": "{{base_url}}/api/courses?sort_by=newest&per_page=9&level_id=3&city_id=1&location_id=1&can_travel=true&min_price=100&max_price=5000&search=circuit",
               "host": ["{{base_url}}"], "path": ["api","courses"],
-              "query": [{ "key": "sort_by", "value": "newest" }, { "key": "per_page", "value": "9" }]
+              "query": [
+                { "key": "sort_by",     "value": "newest", "description": "Enum: newest (default) | price_asc | price_desc" },
+                { "key": "per_page",    "value": "9",       "description": "Pagination page size, default 15" },
+                { "key": "level_id",    "value": "3",       "description": "Filter by trainer level. Real IDs in this env: 1=Beginner, 2=Intermediate, 3=Advanced. Disabled below — enable to test.", "disabled": true },
+                { "key": "city_id",     "value": "1",       "description": "Filter by course location's city (e.g. 1=Riyadh in this env). Disabled below — enable to test.", "disabled": true },
+                { "key": "location_id","value": "1",        "description": "Filter by exact location (e.g. 1=Marrakech Circuit in this env). Disabled below — enable to test.", "disabled": true },
+                { "key": "can_travel",  "value": "true",    "description": "Boolean — true = only courses where the trainer travels to the client. Disabled below — enable to test.", "disabled": true },
+                { "key": "min_price",   "value": "100",     "description": "Minimum original_price. Disabled below — enable to test.", "disabled": true },
+                { "key": "max_price",   "value": "5000",    "description": "Maximum original_price. Disabled below — enable to test.", "disabled": true },
+                { "key": "search",      "value": "circuit", "description": "Case-insensitive LIKE match against title (title_ar too). Disabled below — enable to test.", "disabled": true }
+              ]
             },
-            "description": "Public course catalog. Supports level_id, city_id, location_id, min_price, max_price, search, sort_by filters."
+            "description": "Public course catalog — every query param below is optional and can be combined freely.\n\n| Param | Type | Example | Notes |\n|---|---|---|---|\n| `sort_by` | string enum | `newest` (default) / `price_asc` / `price_desc` | |\n| `per_page` | int | `15` (default) | |\n| `level_id` | int | `1`=Beginner, `2`=Intermediate, `3`=Advanced | Real IDs for this env — call your levels lookup endpoint to confirm per-environment |\n| `city_id` | int | `1`=Riyadh (this env) | Filters by the course's location's city |\n| `location_id` | int | `1`=Marrakech Circuit (this env) | Filters by exact location, more specific than city_id |\n| `can_travel` | bool | `true` / `false` | true = trainer comes to the client |\n| `min_price` / `max_price` | decimal | `100` / `5000` | Both inclusive, compared against `original_price` |\n| `search` | string | `circuit` | Matches `title` OR `title_ar` |\n\nAll params in the query list above are enabled by default except the filters (unchecked/disabled) — check the ones you want to test, uncheck the rest."
           }
         },
         {
