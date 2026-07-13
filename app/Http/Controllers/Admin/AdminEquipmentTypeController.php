@@ -21,7 +21,7 @@ class AdminEquipmentTypeController extends Controller
         $validated = $request->validate([
             'name'       => 'required|string|max:100|unique:equipment_types,name',
             'name_ar'    => 'nullable|string|max:100',
-            'icon'       => 'nullable|string|max:100',
+            'icon'       => 'nullable|string|max:255',
             'sort_order' => 'nullable|integer|min:0',
             'is_active'  => 'nullable|boolean',
         ]);
@@ -44,7 +44,7 @@ class AdminEquipmentTypeController extends Controller
         $validated = $request->validate([
             'name'       => 'sometimes|string|max:100|unique:equipment_types,name,' . $id,
             'name_ar'    => 'nullable|string|max:100',
-            'icon'       => 'nullable|string|max:100',
+            'icon'       => 'nullable|string|max:255',
             'sort_order' => 'sometimes|integer|min:0',
             'is_active'  => 'sometimes|boolean',
         ]);
