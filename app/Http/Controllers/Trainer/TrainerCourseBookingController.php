@@ -854,7 +854,7 @@ class TrainerCourseBookingController extends Controller
             'cart_currency'=> $config['currency'] ?? 'SAR',
             'cart_amount'  => (float) $payment->amount,
             'cart_description' => "DabApp — Course \"{$course->title}\" with {$trainer->name} ({$course->total_sessions} session(s))",
-            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/course-booking-confirmation?course_booking_id=' . $courseBooking->id . '&status=success',
+            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/booking-confirmation?course_booking_id=' . $courseBooking->id . '&status=success',
             'callback'     => rtrim(config('app.url'), '/') . '/api/trainer/course-bookings/payments/callback',
             'customer_details' => [
                 'name'   => $user->first_name . ' ' . $user->last_name,
