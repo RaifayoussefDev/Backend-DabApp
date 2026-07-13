@@ -600,6 +600,46 @@ class TrainerCourseBookingController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/trainer/my-course-bookings",
+     *     summary="My course bookings (Trainer)",
+     *     description="Returns the authenticated trainer's course bookings — one row per trainee reservation (course + trainee + total price), grouped into in_progress and completed. A booking stays in in_progress until every session is completed and the course is marked completed. OTPs are never exposed here.",
+     *     operationId="myTrainerCourseBookingsAsTrainer",
+     *     tags={"Trainer Course Bookings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=200, description="Course bookings retrieved"),
+     *     @OA\Response(response=403, description="No trainer profile found")
+     * )
+     */
+    public function myTrainerCourseBookings(Request $request)
+    {
+        $user    = JWTAuth::parseToken()->authenticate();
+        $trainer = Trainer::where('user_id', $user->id)->first();
+
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
+        }
+
+        $bookings = TrainerCourseBooking::with([
+                'course:id,title,title_ar,image,price_type,original_price,promo_price,hours_per_session,total_sessions',
+                'user:id,first_name,last_name,profile_picture,phone',
+                'sessions',
+            ])
+            ->where('trainer_id', $trainer->id)
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'in_progress' => $bookings->whereIn('status', ['pending', 'confirmed', 'in_progress'])->values(),
+                'completed'   => $bookings->where('status', 'completed')->values(),
+            ],
+            'message' => 'Course bookings retrieved successfully',
+        ]);
+    }
+
     public function showSession(int $id)
     {
         $user    = JWTAuth::parseToken()->authenticate();

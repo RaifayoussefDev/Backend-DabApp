@@ -1851,6 +1851,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/bookings/{id}/dispute',            [TrainerBookingController::class, 'clientDispute']);
 
     // Course sessions calendar (Trainer)
+    Route::get('/trainer/my-course-bookings',             [TrainerCourseBookingController::class, 'myTrainerCourseBookings']);
     Route::get('/trainer/course-sessions',                [TrainerCourseBookingController::class, 'mySessions']);
     Route::get('/trainer/course-sessions/{id}',           [TrainerCourseBookingController::class, 'showSession']);
     Route::post('/trainer/course-sessions/{id}/start',    [TrainerCourseBookingController::class, 'startSession']);
