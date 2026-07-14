@@ -1850,6 +1850,9 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/bookings/{id}/confirm-completion', [TrainerBookingController::class, 'clientConfirm']);
     Route::post('/trainer/bookings/{id}/dispute',            [TrainerBookingController::class, 'clientDispute']);
 
+    // Dashboard stats (Trainer)
+    Route::get('/trainer/dashboard', [\App\Http\Controllers\Trainer\TrainerStatsController::class, 'myDashboard']);
+
     // Course sessions calendar (Trainer)
     Route::get('/trainer/my-course-bookings',             [TrainerCourseBookingController::class, 'myTrainerCourseBookings']);
     Route::get('/trainer/course-sessions',                [TrainerCourseBookingController::class, 'mySessions']);
