@@ -80,7 +80,11 @@ class TrainerController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Trainer::with(['locations.city', 'specialties'])
+        $query = Trainer::with([
+            'locations.city',
+            'specialties',
+            'levelApprovals' => fn ($q) => $q->where('status', 'approved')->with('level'),
+        ])
             ->approved()
             ->available();
 
