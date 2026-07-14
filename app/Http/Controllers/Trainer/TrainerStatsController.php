@@ -60,11 +60,22 @@ class TrainerStatsController extends Controller
                                         + (clone $course)->where('payment_status', 'pending')->count(),
         ];
 
+        // 14-day new-reservations trend (by created_at), combining both booking flows.
+        $trend = collect(range(13, 0))->map(function ($daysAgo) use ($flat, $course) {
+            $date = now()->subDays($daysAgo)->toDateString();
+            return [
+                'date'  => $date,
+                'count' => (clone $flat)->whereDate('created_at', $date)->count()
+                         + (clone $course)->whereDate('created_at', $date)->count(),
+            ];
+        })->values();
+
         return response()->json([
             'success' => true,
             'data'    => [
-                'reservations' => $reservations,
-                'payments'     => $payments,
+                'reservations'      => $reservations,
+                'payments'          => $payments,
+                'reservations_trend_14d' => $trend,
             ],
             'message' => 'Trainer dashboard stats retrieved',
         ]);
