@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\CurrencyExchangeRate;
+use Illuminate\Support\Facades\Log;
+
 class PayTabsConfigService
 {
     /**
@@ -84,5 +87,28 @@ class PayTabsConfigService
     public static function isLiveMode()
     {
         return config('paytabs.environment') === 'live';
+    }
+
+    /**
+     * Convert an amount into the merchant account's settlement currency (AED) using the
+     * currency_exchange_rates table, where exchange_rate means "1 AED = {rate} {local currency}".
+     * Prices throughout the trainer feature are entered/displayed in SAR, but this PayTabs
+     * account only settles in AED — sending the raw SAR number unconverted would silently
+     * charge the wrong amount. Falls back to the original amount (no conversion) if no rate
+     * is configured for the given country, rather than failing the payment outright.
+     */
+    public static function convertToSettlementCurrency(float $amount, int $countryId = 1): float
+    {
+        $rate = CurrencyExchangeRate::where('country_id', $countryId)->first();
+
+        if (!$rate || $rate->exchange_rate <= 0) {
+            Log::warning("PayTabsConfigService::convertToSettlementCurrency — no exchange rate for country_id {$countryId}, sending amount unconverted", ['amount' => $amount]);
+            return $amount;
+        }
+
+        $converted = round($amount / $rate->exchange_rate, 2);
+        Log::info("PayTabs currency conversion: {$amount} {$rate->currency_code} → {$converted} AED (1 AED = {$rate->exchange_rate} {$rate->currency_code})");
+
+        return $converted;
     }
 }
