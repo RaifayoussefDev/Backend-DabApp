@@ -31,7 +31,7 @@ class TrainerCourseBookingSession extends Model
     ];
 
     protected $casts = [
-        'booking_date'   => 'date',
+        'booking_date'   => 'date:Y-m-d',
         'session_number' => 'integer',
         'started_at'     => 'datetime',
         'completed_at'   => 'datetime',

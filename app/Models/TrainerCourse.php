@@ -35,7 +35,9 @@ class TrainerCourse extends Model
     protected $casts = [
         'hours_per_session' => 'integer',
         'total_sessions'    => 'integer',
-        'start_date'        => 'date',
+        // 'date:Y-m-d' (not bare 'date') — bare 'date' serializes to JSON via Carbon's UTC-converting
+        // toJSON(), which shifts midnight Asia/Riyadh back to the previous day (APP_TIMEZONE is UTC+3).
+        'start_date'        => 'date:Y-m-d',
         'original_price'    => 'decimal:2',
         'promo_price'       => 'decimal:2',
         'can_travel'    => 'boolean',

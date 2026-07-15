@@ -32,7 +32,7 @@ class TrainerBooking extends Model
     ];
 
     protected $casts = [
-        'booking_date'   => 'date',
+        'booking_date'   => 'date:Y-m-d',
         'duration_hours' => 'integer',
         'price'          => 'decimal:2',
         'confirmed_at'   => 'datetime',

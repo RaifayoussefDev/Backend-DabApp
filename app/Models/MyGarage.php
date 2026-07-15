@@ -31,7 +31,7 @@ class MyGarage extends Model
         'created_at'                => 'datetime',
         'updated_at'                => 'datetime',
         'is_default'                => 'boolean',
-        'insurance_expiry'          => 'date',
+        'insurance_expiry'          => 'date:Y-m-d',
         'insurance_covers_training' => 'boolean',
     ];
 
