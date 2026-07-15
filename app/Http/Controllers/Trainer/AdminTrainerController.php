@@ -525,6 +525,12 @@ class AdminTrainerController extends Controller
             ->limit(5)
             ->get(['id', 'user_id', 'booking_date', 'status', 'price', 'session_type']);
 
+        // Drop the raw eager-loaded relation before serializing — toArray() auto-includes it under
+        // the snake_cased key "training_bikes", which collided with the flat "trainingBikes" computed
+        // above and won on the frontend's `training_bikes ?? trainingBikes` fallback, always showing
+        // undefined brand/model/is_training_ready.
+        $trainer->unsetRelation('trainingBikes');
+
         return response()->json([
             'success' => true,
             'data'    => array_merge($trainer->append('photo_url')->toArray(), [

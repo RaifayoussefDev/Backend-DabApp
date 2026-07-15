@@ -137,6 +137,10 @@ class TrainerTrainingBikeController extends Controller
             return response()->json(['success' => false, 'message' => 'This bike is already added as a training bike'], 409);
         }
 
+        if (!$garage->plate_number || !$garage->insurance_expiry || !$garage->insurance_covers_training) {
+            return response()->json(['success' => false, 'message' => 'Add the plate number and insurance info for this bike before using it for training.'], 422);
+        }
+
         // Unset other primary bikes if this is primary
         if ($request->boolean('is_primary')) {
             TrainerTrainingBike::where('trainer_id', $trainer->id)->update(['is_primary' => false]);
