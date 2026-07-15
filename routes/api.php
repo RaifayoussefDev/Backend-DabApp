@@ -173,6 +173,7 @@ use App\Http\Controllers\AdminRouteTagController;
 use App\Http\Controllers\AdminRouteWarningController;
 use App\Http\Controllers\AdminRouteWaypointController;
 use App\Http\Controllers\AppVersionController;
+use App\Http\Controllers\ContactInfoController;
 // ============================================
 // ============================================
 // PUBLIC ROUTES (NO AUTHENTICATION)
@@ -184,6 +185,9 @@ use App\Http\Controllers\AppVersionController;
 // ============================================
 // App Version configuration
 Route::get('/app-version', [AppVersionController::class, 'index']);
+
+// Site contact info (address, phone, email, working hours)
+Route::get('/contact-info', [ContactInfoController::class, 'index']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->name('login');
@@ -229,6 +233,10 @@ Route::prefix('admin')->group(function () {
         // App Version Configuration
         Route::get('/app-version', [\App\Http\Controllers\AdminAppVersionController::class, 'show']);
         Route::put('/app-version', [\App\Http\Controllers\AdminAppVersionController::class, 'update']);
+
+        // Site Contact Info
+        Route::get('/contact-info', [\App\Http\Controllers\AdminContactInfoController::class, 'show']);
+        Route::put('/contact-info', [\App\Http\Controllers\AdminContactInfoController::class, 'update']);
 
         // Authentication & Session
         Route::get('/me', [AuthAdminController::class, 'me']);

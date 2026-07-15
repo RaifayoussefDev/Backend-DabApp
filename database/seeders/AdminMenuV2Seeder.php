@@ -275,7 +275,8 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "settings-app-version", "path" => "/settings/app-version", "label_en" => "App Version", "label_ar" => "إصدار التطبيق", "permission" => "settings.view", "order" => 2],
                     ["key" => "settings-roles", "path" => "/settings/roles", "label_en" => "Roles & Permissions", "label_ar" => "الأدوار والصلاحيات", "permission" => "roles.view", "order" => 3],
                     ["key" => "settings-menus", "path" => "/settings/menus", "label_en" => "Menu Management", "label_ar" => "إدارة القوائم", "permission" => "settings.view", "order" => 4],
-                    ["key" => "settings-permissions", "path" => "/settings/permissions", "label_en" => "System Permissions", "label_ar" => "صلاحيات النظام", "permission" => "roles.view", "order" => 5]
+                    ["key" => "settings-permissions", "path" => "/settings/permissions", "label_en" => "System Permissions", "label_ar" => "صلاحيات النظام", "permission" => "roles.view", "order" => 5],
+                    ["key" => "settings-contact-info", "path" => "/settings/contact-info", "label_en" => "Contact Info", "label_ar" => "معلومات الاتصال", "permission" => "settings.view", "order" => 6]
                 ]
             ]
         ];
