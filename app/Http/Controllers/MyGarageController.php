@@ -247,6 +247,9 @@ class MyGarageController extends Controller
                 'title' => 'nullable|string|max:255',
                 'description' => 'nullable|string|max:1000',
                 'picture' => 'nullable|string|url',
+                'plate_number' => 'nullable|string|max:50',
+                'insurance_expiry' => 'nullable|date|after_or_equal:today',
+                'insurance_covers_training' => 'nullable|boolean',
             ]);
 
             // Verify that model belongs to the brand
@@ -281,6 +284,9 @@ class MyGarageController extends Controller
                 'title' => $validated['title'] ?? null,
                 'description' => $validated['description'] ?? null,
                 'picture' => $validated['picture'] ?? null,
+                'plate_number' => $validated['plate_number'] ?? null,
+                'insurance_expiry' => $validated['insurance_expiry'] ?? null,
+                'insurance_covers_training' => $validated['insurance_covers_training'] ?? null,
             ]);
 
             $garageItem->load(['brand', 'model', 'year']);
@@ -504,10 +510,40 @@ class MyGarageController extends Controller
             }
 
             $validated = $request->validate([
+                'brand_id' => 'sometimes|integer|exists:motorcycle_brands,id',
+                'model_id' => 'sometimes|integer|exists:motorcycle_models,id',
+                'year_id' => 'sometimes|integer|exists:motorcycle_years,id',
                 'title' => 'sometimes|nullable|string|max:255',
                 'description' => 'sometimes|nullable|string|max:1000',
                 'picture' => 'sometimes|nullable|string|url',
+                'plate_number' => 'sometimes|nullable|string|max:50',
+                'insurance_expiry' => 'sometimes|nullable|date|after_or_equal:today',
+                'insurance_covers_training' => 'sometimes|nullable|boolean',
             ]);
+
+            $brandId = $validated['brand_id'] ?? $garageItem->brand_id;
+            $modelId = $validated['model_id'] ?? $garageItem->model_id;
+            $yearId = $validated['year_id'] ?? $garageItem->year_id;
+
+            if (isset($validated['model_id']) || isset($validated['brand_id'])) {
+                $model = MotorcycleModel::where('id', $modelId)->where('brand_id', $brandId)->first();
+                if (!$model) {
+                    return response()->json([
+                        'error' => 'Validation failed',
+                        'message' => 'The selected model does not belong to the selected brand.'
+                    ], 422);
+                }
+            }
+
+            if (isset($validated['year_id']) || isset($validated['model_id'])) {
+                $year = MotorcycleYear::where('id', $yearId)->where('model_id', $modelId)->first();
+                if (!$year) {
+                    return response()->json([
+                        'error' => 'Validation failed',
+                        'message' => 'The selected year does not belong to the selected model.'
+                    ], 422);
+                }
+            }
 
             $garageItem->update($validated);
             $garageItem->load(['brand', 'model', 'year']);

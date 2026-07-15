@@ -523,6 +523,9 @@ class TrainerCourseController extends Controller
         if (!$trainer) {
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 403);
         }
+        if ($trainer->status !== 'approved') {
+            return response()->json(['success' => false, 'message' => 'Your trainer profile is not approved yet. You can create courses once an admin approves your profile.'], 403);
+        }
 
         $validated = $request->validate([
             'title'             => 'required|string|max:255',
