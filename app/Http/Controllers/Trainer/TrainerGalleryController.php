@@ -77,6 +77,33 @@ class TrainerGalleryController extends Controller
     }
 
     // ---------------------------------------------------------------
+    // ADMIN — List gallery for any trainer (pending/rejected/suspended included)
+    // ---------------------------------------------------------------
+
+    /**
+     * Same as index(), but not restricted to approved() trainers — admins need to
+     * review a pending trainer's gallery before deciding to approve them.
+     */
+    public function adminIndex(int $id)
+    {
+        $trainer = Trainer::find($id);
+        if (!$trainer) {
+            return response()->json(['success' => false, 'message' => 'Trainer not found'], 404);
+        }
+
+        $gallery = TrainerGallery::where('trainer_id', $trainer->id)
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $gallery,
+            'count'   => $gallery->count(),
+        ]);
+    }
+
+    // ---------------------------------------------------------------
     // TRAINER — Upload gallery images
     // ---------------------------------------------------------------
 

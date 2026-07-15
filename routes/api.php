@@ -1908,7 +1908,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::post('/specialties/reorder',              [\App\Http\Controllers\Trainer\SpecialtyController::class, 'reorder']);
 
     // ── Gallery Admin ────────────────────────────────────────────────
-    Route::get('/trainers/{id}/gallery',             [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'index']);
+    Route::get('/trainers/{id}/gallery',             [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'adminIndex']);
     Route::delete('/trainer-gallery/{id}',           [\App\Http\Controllers\Trainer\TrainerGalleryController::class, 'adminDestroy']);
 
     // ── Dashboard & Stats ────────────────────────────────────────────
