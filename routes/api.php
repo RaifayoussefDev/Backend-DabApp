@@ -624,8 +624,6 @@ Route::get('/brands/{brandId}/models-with-listings', [ListingController::class, 
 Route::get('/brands/{brandId}/models/{modelId}/years-with-listings', [ListingController::class, 'getYearsWithListingsByBrandAndModel']);
 Route::get('/categorie/listings-count', [ListingController::class, 'getTypesWithListingCount']);
 Route::get('/categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])->where('categoryId', '[1-3]');
-Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
-Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);
 
 // ============================================
 // FILTERS (PUBLIC)
@@ -641,6 +639,14 @@ Route::get('/filter-license-plates', [FilterController::class, 'filterLicensePla
 // ============================================
 Route::apiResource('bike-part-brands', BikePartBrandController::class);
 Route::apiResource('bike-part-categories', BikePartCategoryController::class);
+
+// Registered after the apiResource calls above so these win for the exact same
+// GET path — Laravel lets the last-registered route for an identical method+URI
+// shadow earlier ones, which is why these count-aware routes were previously dead
+// code (registered before the apiResource, so BikePartBrandController@index — with
+// no listings_count — silently won instead, showing empty "()" on every filter).
+Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
+Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);
 
 // ============================================
 // LICENSE PLATES (PUBLIC)
