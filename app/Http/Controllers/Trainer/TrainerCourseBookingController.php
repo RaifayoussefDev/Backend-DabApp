@@ -894,7 +894,9 @@ class TrainerCourseBookingController extends Controller
             'cart_currency'=> $config['currency'] ?? 'AED',
             'cart_amount'  => PayTabsConfigService::convertToSettlementCurrency((float) $payment->amount),
             'cart_description' => "DabApp — Course \"{$course->title}\" with {$trainer->name} ({$course->total_sessions} session(s))",
-            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/booking-confirmation?course_booking_id=' . $courseBooking->id . '&status=success',
+            // No status param here — PayTabs redirects here regardless of outcome, so the
+            // frontend determines success/failure itself from the booking's payment_status.
+            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/booking-confirmation?course_booking_id=' . $courseBooking->id,
             'callback'     => rtrim(config('app.url'), '/') . '/api/trainer/course-bookings/payments/callback',
             'customer_details' => [
                 'name'   => $user->first_name . ' ' . $user->last_name,
