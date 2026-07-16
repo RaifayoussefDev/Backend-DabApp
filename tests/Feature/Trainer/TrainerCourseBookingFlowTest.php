@@ -287,7 +287,7 @@ class TrainerCourseBookingFlowTest extends TestCase
         $this->assertDatabaseHas('trainer_payouts', ['trainer_id' => $this->trainer->id]);
     }
 
-    public function test_payment_webhook_decline_cancels_booking_and_sessions()
+    public function test_payment_webhook_decline_keeps_booking_held_for_retry()
     {
         $courseBooking = $this->createConfirmedCourseBooking(2);
         $courseBooking->update(['payment_status' => 'pending', 'status' => 'confirmed']);
@@ -299,9 +299,18 @@ class TrainerCourseBookingFlowTest extends TestCase
             'payment_result' => ['response_status' => 'D', 'response_code' => '400', 'response_message' => 'Declined'],
         ]);
 
+        // A declined payment gives the client a 2-hour retry window instead of
+        // cancelling outright — the booking (and its sessions' slots) stay held.
         $response->assertStatus(200)->assertJsonPath('success', true);
-        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'cancelled']);
-        $this->assertDatabaseHas('trainer_course_booking_sessions', ['course_booking_id' => $courseBooking->id, 'status' => 'cancelled']);
+        $this->assertDatabaseHas('trainer_course_bookings', [
+            'id'             => $courseBooking->id,
+            'status'         => 'confirmed',
+            'payment_status' => 'failed',
+        ]);
+        $this->assertDatabaseMissing('trainer_course_booking_sessions', [
+            'course_booking_id' => $courseBooking->id,
+            'status'             => 'cancelled',
+        ]);
     }
 
     // ================================================================

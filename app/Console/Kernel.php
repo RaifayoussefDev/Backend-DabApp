@@ -51,6 +51,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('soom:auto-mark-sold')
             ->daily()
             ->withoutOverlapping();
+
+        // Cancel trainer bookings left unpaid for 2 hours (gives clients a retry window)
+        $schedule->command('trainer-bookings:expire-unpaid')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping();
     }
 
     /**

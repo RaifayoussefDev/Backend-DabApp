@@ -522,15 +522,15 @@ class TrainerBookingController extends Controller
                 DB::commit();
                 return response()->json(['success' => true, 'message' => 'Payment confirmed. Booking status: confirmed']);
             } else {
-                // Payment declined
+                // Payment declined — keep the booking (and its slot) held so the
+                // client can retry; trainer-bookings:expire-unpaid cancels it if
+                // still unpaid 2 hours after creation.
                 $booking->update([
-                    'status'         => 'cancelled',
                     'payment_status' => 'failed',
-                    'cancelled_at'   => now(),
                 ]);
 
                 DB::commit();
-                return response()->json(['success' => true, 'message' => 'Payment declined. Booking cancelled.']);
+                return response()->json(['success' => true, 'message' => 'Payment declined. You can retry payment within 2 hours before the booking is automatically cancelled.']);
             }
         } catch (\Exception $e) {
             DB::rollBack();

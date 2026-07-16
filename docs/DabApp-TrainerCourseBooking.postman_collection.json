@@ -361,6 +361,43 @@
             "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_2_id}}/complete", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_2_id}}","complete"] },
             "description": "If this was the last non-completed session of the course booking, the whole course booking flips to `completed` and the trainee is notified with a review CTA — verified in Phase 6-1."
           }
+        },
+        {
+          "name": "5-6 · GET My Course Bookings (Trainer, grouped)",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "var json = pm.response.json();",
+            "pm.test('Returns in_progress and completed groups', function () {",
+            "  pm.expect(json.data).to.have.property('in_progress');",
+            "  pm.expect(json.data).to.have.property('completed');",
+            "});",
+            "var body = pm.response.text();",
+            "pm.test('No OTP leaked to trainer', function () {",
+            "  pm.expect(body).to.not.include('start_otp');",
+            "  pm.expect(body).to.not.include('completion_otp');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/my-course-bookings", "host": ["{{base_url}}"], "path": ["api","trainer","my-course-bookings"] },
+            "description": "Trainer's view of every course booked with them — one row per trainee reservation (course + trainee + total price + its sessions), grouped into in_progress/completed. This is the \"courses booked\" list for the mobile trainer app."
+          }
+        },
+        {
+          "name": "5-7 · GET Course Session Detail",
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Session detail retrieved (200)', function () { pm.response.to.have.status(200); });",
+            "var body = pm.response.text();",
+            "pm.test('No OTP leaked to trainer', function () {",
+            "  pm.expect(body).to.not.include('start_otp');",
+            "  pm.expect(body).to.not.include('completion_otp');",
+            "});"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{trainer_token}}" }],
+            "url": { "raw": "{{base_url}}/api/trainer/course-sessions/{{session_2_id}}", "host": ["{{base_url}}"], "path": ["api","trainer","course-sessions","{{session_2_id}}"] }
+          }
         }
       ]
     },

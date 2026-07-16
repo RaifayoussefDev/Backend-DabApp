@@ -345,15 +345,15 @@ class TrainerCourseBookingController extends Controller
                 return response()->json(['success' => true, 'message' => 'Payment confirmed. Course booking status: confirmed']);
             }
 
+            // Payment declined — keep the booking (and its sessions' slots) held so
+            // the client can retry; trainer-bookings:expire-unpaid cancels it if
+            // still unpaid 2 hours after creation.
             $courseBooking->update([
-                'status'         => 'cancelled',
                 'payment_status' => 'failed',
-                'cancelled_at'   => now(),
             ]);
-            $courseBooking->sessions()->update(['status' => 'cancelled', 'cancelled_at' => now()]);
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Payment declined. Course booking cancelled.']);
+            return response()->json(['success' => true, 'message' => 'Payment declined. You can retry payment within 2 hours before the booking is automatically cancelled.']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Trainer course booking PayTabs callback processing failed', ['error' => $e->getMessage()]);
