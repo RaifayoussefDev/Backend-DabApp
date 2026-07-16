@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CurrencyExchangeRate;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class PayTabsConfigService
@@ -110,5 +111,76 @@ class PayTabsConfigService
         Log::info("PayTabs currency conversion: {$amount} {$rate->currency_code} → {$converted} AED (1 AED = {$rate->exchange_rate} {$rate->currency_code})");
 
         return $converted;
+    }
+
+    /**
+     * Query PayTabs for a transaction's real status — used by mobile-SDK payment flows
+     * that need to verify a `tran_ref` themselves rather than waiting on the async
+     * server-to-server webhook. Tries the BACKEND profile first, then the MOBILE profile
+     * (the app's native SDK may have opened the transaction under either), retrying on
+     * "Transaction Not Found" (PayTabs can be briefly behind after the SDK reports success).
+     * Returns the raw PayTabs response array, or null if verification could not be confirmed
+     * with either profile.
+     */
+    public static function verifyTransaction(string $tranRef, int $retries = 3): ?array
+    {
+        $backendConfig = self::getConfig();
+        $result = self::tryVerifyWithProfile($tranRef, $backendConfig['profile_id'], $backendConfig['server_key'], 'BACKEND', $retries);
+        if ($result) {
+            return $result;
+        }
+
+        $mobileConfig = config('paytabs.mobile');
+        if ($mobileConfig && !empty($mobileConfig['profile_id'])) {
+            $result = self::tryVerifyWithProfile($tranRef, $mobileConfig['profile_id'], $mobileConfig['server_key'], 'MOBILE', $retries);
+            if ($result) {
+                return $result;
+            }
+        }
+
+        Log::error('PayTabsConfigService::verifyTransaction — failed with all configurations', ['tran_ref' => $tranRef]);
+        return null;
+    }
+
+    private static function tryVerifyWithProfile(string $tranRef, $profileId, $serverKey, string $configType, int $retries): ?array
+    {
+        $baseUrl = self::getBaseUrl();
+        $attempt = 0;
+
+        while ($attempt < $retries) {
+            $attempt++;
+            try {
+                $response = Http::timeout(15)->withHeaders([
+                    'Authorization' => $serverKey,
+                    'Content-Type'  => 'application/json',
+                    'Accept'        => 'application/json',
+                ])->post($baseUrl . 'payment/query', [
+                    'profile_id' => (int) $profileId,
+                    'tran_ref'   => $tranRef,
+                ]);
+
+                if ($response->successful()) {
+                    return $response->json();
+                }
+
+                $error = $response->json();
+                $errorMessage = $error['message'] ?? 'Unknown error';
+
+                if ($attempt < $retries && strpos($errorMessage, 'Transaction Not Found') !== false) {
+                    sleep(2 * $attempt);
+                    continue;
+                }
+
+                return null;
+            } catch (\Exception $e) {
+                Log::error("PayTabsConfigService::verifyTransaction exception ({$configType})", [
+                    'tran_ref' => $tranRef,
+                    'error'    => $e->getMessage(),
+                ]);
+                return null;
+            }
+        }
+
+        return null;
     }
 }

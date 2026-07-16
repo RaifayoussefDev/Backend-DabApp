@@ -253,6 +253,7 @@ class TrainerCourseBookingController extends Controller
                 'status'            => $courseBooking->status,
                 'payment_url'       => $paymentUrl,
                 'total_price'       => $totalPrice,
+                'total_price_aed'   => PayTabsConfigService::convertToSettlementCurrency($totalPrice),
                 'sessions'          => $sessions,
             ],
         ], 201);
@@ -305,42 +306,8 @@ class TrainerCourseBookingController extends Controller
             ]);
 
             if ($status === 'A') {
-                $courseBooking->update([
-                    'status'         => 'confirmed',
-                    'payment_status' => 'paid',
-                    'confirmed_at'   => now(),
-                ]);
-
-                $commissionPct = $courseBooking->trainer->getEffectiveCommissionPercentage();
-                $split         = PaymentSplit::calculate((float) $courseBooking->total_price, $commissionPct);
-
-                $paymentSplit = PaymentSplit::create([
-                    'payment_id'            => $courseBooking->payment_id,
-                    'course_booking_id'     => $courseBooking->id,
-                    'trainer_id'            => $courseBooking->trainer_id,
-                    'total_amount'          => $courseBooking->total_price,
-                    'commission_percentage' => $commissionPct,
-                    'commission_amount'     => $split['commission_amount'],
-                    'trainer_amount'        => $split['trainer_amount'],
-                    'currency'              => $courseBooking->payment->currency ?? 'SAR',
-                    'status'                => 'pending',
-                ]);
-
-                TrainerPayout::create([
-                    'trainer_id'       => $courseBooking->trainer_id,
-                    'payment_split_id' => $paymentSplit->id,
-                    'amount'           => $split['trainer_amount'],
-                    'currency'         => $courseBooking->payment->currency ?? 'SAR',
-                    'status'           => 'pending',
-                ]);
-
+                $this->completeCourseBookingPayment($courseBooking);
                 DB::commit();
-
-                try {
-                    $this->notifications->notifyTrainerNewCourseBooking($courseBooking->trainer->user, $courseBooking);
-                } catch (\Exception $e) {
-                    Log::error('TrainerCourseBookingController@paymentCallback notify failed: ' . $e->getMessage());
-                }
 
                 return response()->json(['success' => true, 'message' => 'Payment confirmed. Course booking status: confirmed']);
             }
@@ -359,6 +326,179 @@ class TrainerCourseBookingController extends Controller
             Log::error('Trainer course booking PayTabs callback processing failed', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Callback processing failed'], 500);
         }
+    }
+
+    /**
+     * Marks a course booking as paid — creates the payment split + payout and notifies
+     * the trainer. Idempotent: safe to call twice (the async webhook and a mobile-SDK
+     * verify — see verifyPayment() below — can race to confirm the same booking).
+     */
+    private function completeCourseBookingPayment(TrainerCourseBooking $courseBooking): void
+    {
+        $alreadyProcessed = $courseBooking->payment_status === 'paid'
+            && PaymentSplit::where('course_booking_id', $courseBooking->id)->exists();
+
+        $courseBooking->update([
+            'status'         => 'confirmed',
+            'payment_status' => 'paid',
+            'confirmed_at'   => $courseBooking->confirmed_at ?? now(),
+        ]);
+
+        if ($alreadyProcessed) {
+            return;
+        }
+
+        $commissionPct = $courseBooking->trainer->getEffectiveCommissionPercentage();
+        $split         = PaymentSplit::calculate((float) $courseBooking->total_price, $commissionPct);
+
+        $paymentSplit = PaymentSplit::create([
+            'payment_id'            => $courseBooking->payment_id,
+            'course_booking_id'     => $courseBooking->id,
+            'trainer_id'            => $courseBooking->trainer_id,
+            'total_amount'          => $courseBooking->total_price,
+            'commission_percentage' => $commissionPct,
+            'commission_amount'     => $split['commission_amount'],
+            'trainer_amount'        => $split['trainer_amount'],
+            'currency'              => $courseBooking->payment->currency ?? 'SAR',
+            'status'                => 'pending',
+        ]);
+
+        TrainerPayout::create([
+            'trainer_id'       => $courseBooking->trainer_id,
+            'payment_split_id' => $paymentSplit->id,
+            'amount'           => $split['trainer_amount'],
+            'currency'         => $courseBooking->payment->currency ?? 'SAR',
+            'status'           => 'pending',
+        ]);
+
+        try {
+            $this->notifications->notifyTrainerNewCourseBooking($courseBooking->trainer->user, $courseBooking);
+        } catch (\Exception $e) {
+            Log::error('TrainerCourseBookingController@completeCourseBookingPayment notify failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/trainer/course-bookings/verify-payment",
+     *     summary="Verify a mobile-SDK PayTabs payment (Trainee)",
+     *     description="For the mobile app's native PayTabs SDK flow (no browser redirect, so the async webhook is the only other signal). Queries PayTabs directly for the transaction's real status and confirms/declines the booking accordingly — mirrors the listings' /paytabs/verify-and-publish endpoint. Do not call this from the web app, which already gets its result via the webhook + booking-confirmation page.",
+     *     operationId="verifyTrainerCourseBookingPayment",
+     *     tags={"Trainer Course Bookings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"course_booking_id","tran_ref"},
+     *             @OA\Property(property="course_booking_id", type="integer", example=42),
+     *             @OA\Property(property="tran_ref", type="string", example="TST2026071500001"),
+     *             @OA\Property(property="skip_verification", type="boolean", example=false, description="Trust the SDK's own success report instead of calling PayTabs — used only if the query API is unreachable.")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Payment verified (paid, already-paid, or SDK-trusted)"),
+     *     @OA\Response(response=400, description="Payment was declined"),
+     *     @OA\Response(response=403, description="Not your booking"),
+     *     @OA\Response(response=404, description="Course booking not found")
+     * )
+     */
+    public function verifyPayment(Request $request)
+    {
+        $request->validate([
+            'course_booking_id' => 'required|integer|exists:trainer_course_bookings,id',
+            'tran_ref'          => 'required|string',
+            'skip_verification' => 'sometimes|boolean',
+        ]);
+
+        $user          = JWTAuth::parseToken()->authenticate();
+        $courseBooking = TrainerCourseBooking::with(['trainer.user', 'payment'])->find($request->course_booking_id);
+
+        if (!$courseBooking) {
+            return response()->json(['success' => false, 'message' => 'Course booking not found'], 404);
+        }
+        if ($courseBooking->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($courseBooking->payment_status === 'paid') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment already verified',
+                'data'    => ['course_booking_id' => $courseBooking->id, 'status' => $courseBooking->status, 'payment_status' => 'paid'],
+            ]);
+        }
+
+        $skipVerification   = $request->boolean('skip_verification');
+        $verified            = false;
+        $verificationMethod  = 'none';
+
+        if (!$skipVerification) {
+            $result = PayTabsConfigService::verifyTransaction($request->tran_ref);
+
+            if ($result) {
+                $status  = $result['payment_result']['response_status'] ?? '';
+                $code    = $result['payment_result']['response_code'] ?? '';
+                $message = $result['payment_result']['response_message'] ?? '';
+
+                if ($status === 'A') {
+                    $verified = true;
+                    $verificationMethod = 'paytabs_api';
+                } elseif (in_array($status, ['D', 'F', 'E'])) {
+                    $courseBooking->payment->update([
+                        'tran_ref'       => $request->tran_ref,
+                        'resp_code'      => $code,
+                        'resp_message'   => $message,
+                        'payment_status' => 'failed',
+                    ]);
+                    $courseBooking->update(['payment_status' => 'failed']);
+
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Payment was declined. You can retry payment within 2 hours before the booking is automatically cancelled.',
+                        'data'    => ['course_booking_id' => $courseBooking->id, 'error_code' => $code, 'error_message' => $message],
+                    ], 400);
+                }
+            }
+        }
+
+        // Fallback: trust the mobile SDK's own success report if the verify API is
+        // unreachable or skipped — same escape hatch listings' verify-and-publish uses.
+        if (!$verified && ($skipVerification || !isset($result))) {
+            Log::info('TrainerCourseBookingController@verifyPayment: trusting mobile SDK', ['course_booking_id' => $courseBooking->id]);
+            $verified = true;
+            $verificationMethod = 'sdk_trust';
+        }
+
+        if (!$verified) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not verify payment yet — please try again shortly.',
+            ], 400);
+        }
+
+        DB::beginTransaction();
+        try {
+            $courseBooking->payment->update([
+                'tran_ref'       => $request->tran_ref,
+                'payment_status' => 'paid',
+            ]);
+            $this->completeCourseBookingPayment($courseBooking);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('TrainerCourseBookingController@verifyPayment processing failed: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Verification processing failed'], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment verified. Course booking status: confirmed',
+            'data'    => [
+                'course_booking_id'   => $courseBooking->id,
+                'status'              => $courseBooking->status,
+                'payment_status'      => 'paid',
+                'verification_method' => $verificationMethod,
+            ],
+        ]);
     }
 
     public function paymentReturn(Request $request)

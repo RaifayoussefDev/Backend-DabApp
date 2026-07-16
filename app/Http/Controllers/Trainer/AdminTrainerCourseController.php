@@ -112,6 +112,13 @@ class AdminTrainerCourseController extends Controller
             return response()->json(['success' => false, 'message' => 'Course not found'], 404);
         }
 
+        // course_id cascades at the DB level — without this check, deleting a course with
+        // active bookings would silently wipe the trainee's booking/session rows (no
+        // cancellation, no refund, and the linked payment is left orphaned but still 'paid').
+        if ($course->bookings()->whereNotIn('status', ['cancelled'])->exists()) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete a course with active bookings. Cancel them first.'], 400);
+        }
+
         $course->delete();
 
         return response()->json(['success' => true, 'message' => 'Course deleted successfully']);

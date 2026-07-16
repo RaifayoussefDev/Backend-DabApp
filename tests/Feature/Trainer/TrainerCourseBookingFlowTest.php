@@ -199,7 +199,11 @@ class TrainerCourseBookingFlowTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonPath('success', true)
-            ->assertJsonStructure(['data' => ['course_booking_id', 'payment_url', 'total_price', 'sessions']]);
+            ->assertJsonStructure(['data' => ['course_booking_id', 'payment_url', 'total_price', 'total_price_aed', 'sessions']]);
+
+        // 300 SAR / 1.02 (1 AED = 1.02 SAR) = 294.12 AED — the mobile PayTabs SDK
+        // needs this since it always settles in AED regardless of display currency.
+        $this->assertEquals(294.12, $response->json('data.total_price_aed'));
 
         $sessions = $response->json('data.sessions');
         $this->assertCount(2, $sessions);
@@ -211,6 +215,16 @@ class TrainerCourseBookingFlowTest extends TestCase
             'course_id'   => $course->id,
             'total_price' => 300.00,
         ]);
+    }
+
+    public function test_course_detail_includes_price_in_aed()
+    {
+        $course = $this->createCourse(2);
+
+        $response = $this->getJson("/api/trainers/{$this->trainer->id}/courses/{$course->id}");
+
+        $response->assertStatus(200)->assertJsonPath('success', true);
+        $this->assertEquals(294.12, (float) $response->json('data.total_price_aed'));
     }
 
     public function test_booking_rejects_wrong_session_count()
@@ -311,6 +325,128 @@ class TrainerCourseBookingFlowTest extends TestCase
             'course_booking_id' => $courseBooking->id,
             'status'             => 'cancelled',
         ]);
+    }
+
+    // ================================================================
+    // SCENARIO 2b — Mobile SDK payment verification (no browser redirect)
+    // ================================================================
+
+    public function test_verify_payment_already_paid_is_idempotent()
+    {
+        // Simulate the webhook having already confirmed payment (creating the split)
+        // before the mobile SDK's own verify-payment call races in behind it.
+        $courseBooking = $this->createConfirmedCourseBooking(2);
+        $courseBooking->update(['payment_status' => 'pending', 'status' => 'confirmed']);
+        $courseBooking->payment->update(['payment_status' => 'pending', 'cart_id' => 'TRAINERCOURSE_' . $courseBooking->id]);
+        PaymentSplit::where('course_booking_id', $courseBooking->id)->delete();
+
+        $this->postJson('/api/trainer/course-bookings/payments/callback', [
+            'tran_ref' => 'TST-WEBHOOK-FIRST',
+            'cart_id'  => 'TRAINERCOURSE_' . $courseBooking->id,
+            'payment_result' => ['response_status' => 'A', 'response_code' => '100', 'response_message' => 'Approved'],
+        ])->assertStatus(200);
+        $this->assertEquals(1, PaymentSplit::where('course_booking_id', $courseBooking->id)->count());
+
+        $response = $this->withHeaders($this->auth($this->clientToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id' => $courseBooking->id,
+                'tran_ref'          => 'TST-WEBHOOK-FIRST',
+            ]);
+
+        $response->assertStatus(200)->assertJsonPath('success', true)->assertJsonPath('data.payment_status', 'paid');
+        // Must not create a second payment split now that the SDK verify races in.
+        $this->assertEquals(1, PaymentSplit::where('course_booking_id', $courseBooking->id)->count());
+    }
+
+    public function test_verify_payment_confirms_via_paytabs_api()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(2);
+        $courseBooking->update(['payment_status' => 'pending', 'status' => 'confirmed']);
+        $courseBooking->payment->update(['payment_status' => 'pending']);
+        PaymentSplit::where('course_booking_id', $courseBooking->id)->delete();
+
+        Http::fake([
+            '*payment/query*' => Http::response([
+                'payment_result' => ['response_status' => 'A', 'response_code' => '100', 'response_message' => 'Approved'],
+            ], 200),
+        ]);
+
+        $response = $this->withHeaders($this->auth($this->clientToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id' => $courseBooking->id,
+                'tran_ref'          => 'TST-SDK-APPROVED',
+            ]);
+
+        $response->assertStatus(200)->assertJsonPath('success', true)->assertJsonPath('data.verification_method', 'paytabs_api');
+        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'confirmed', 'payment_status' => 'paid']);
+        $this->assertDatabaseHas('payment_splits', ['course_booking_id' => $courseBooking->id]);
+    }
+
+    public function test_verify_payment_declined_via_paytabs_api()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(2);
+        $courseBooking->update(['payment_status' => 'pending', 'status' => 'confirmed']);
+        $courseBooking->payment->update(['payment_status' => 'pending']);
+        PaymentSplit::where('course_booking_id', $courseBooking->id)->delete();
+
+        Http::fake([
+            '*payment/query*' => Http::response([
+                'payment_result' => ['response_status' => 'D', 'response_code' => '400', 'response_message' => 'Declined'],
+            ], 200),
+        ]);
+
+        $response = $this->withHeaders($this->auth($this->clientToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id' => $courseBooking->id,
+                'tran_ref'          => 'TST-SDK-DECLINED',
+            ]);
+
+        $response->assertStatus(400)->assertJsonPath('success', false);
+        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'payment_status' => 'failed']);
+    }
+
+    public function test_verify_payment_trusts_sdk_when_skip_verification_is_true()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(2);
+        $courseBooking->update(['payment_status' => 'pending', 'status' => 'confirmed']);
+        $courseBooking->payment->update(['payment_status' => 'pending']);
+        PaymentSplit::where('course_booking_id', $courseBooking->id)->delete();
+
+        $response = $this->withHeaders($this->auth($this->clientToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id'  => $courseBooking->id,
+                'tran_ref'           => 'TST-SDK-TRUST',
+                'skip_verification'  => true,
+            ]);
+
+        $response->assertStatus(200)->assertJsonPath('success', true)->assertJsonPath('data.verification_method', 'sdk_trust');
+        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'confirmed', 'payment_status' => 'paid']);
+    }
+
+    public function test_verify_payment_rejects_another_users_booking()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(2);
+        $otherUser = User::factory()->create(['role_id' => 2, 'is_active' => true, 'email' => 'other_' . uniqid() . '@test.local']);
+        $otherToken = JWTAuth::fromUser($otherUser);
+
+        $response = $this->withHeaders($this->auth($otherToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id' => $courseBooking->id,
+                'tran_ref'          => 'TST-OTHER-USER',
+            ]);
+
+        $response->assertStatus(403);
+        $otherUser->delete();
+    }
+
+    public function test_verify_payment_returns_404_for_unknown_booking()
+    {
+        $this->withHeaders($this->auth($this->clientToken))
+            ->postJson('/api/trainer/course-bookings/verify-payment', [
+                'course_booking_id' => 999999999,
+                'tran_ref'          => 'TST-UNKNOWN',
+            ])
+            ->assertStatus(422); // fails the 'exists:trainer_course_bookings,id' validation rule
     }
 
     // ================================================================
@@ -465,5 +601,68 @@ class TrainerCourseBookingFlowTest extends TestCase
         ]);
 
         $response->assertStatus(401);
+    }
+
+    // ================================================================
+    // SCENARIO 6 — Deleting a course must not silently destroy active bookings
+    // ================================================================
+
+    public function test_trainer_can_delete_draft_course_without_bookings()
+    {
+        $course = $this->createCourse(1);
+        $course->update(['status' => 'draft']);
+
+        $response = $this->withHeaders($this->auth($this->trainerToken))
+            ->deleteJson("/api/trainer/courses/{$course->id}");
+
+        $response->assertStatus(200)->assertJsonPath('success', true);
+        $this->assertDatabaseMissing('trainer_courses', ['id' => $course->id]);
+    }
+
+    public function test_trainer_cannot_delete_course_with_active_bookings()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(1);
+        $courseBooking->course->update(['status' => 'draft']);
+
+        $response = $this->withHeaders($this->auth($this->trainerToken))
+            ->deleteJson("/api/trainer/courses/{$courseBooking->course_id}");
+
+        $response->assertStatus(400)->assertJsonPath('success', false);
+        // Must not have cascaded — the course and its booking are both still there.
+        $this->assertDatabaseHas('trainer_courses', ['id' => $courseBooking->course_id]);
+        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id]);
+    }
+
+    public function test_trainer_can_delete_course_once_its_bookings_are_cancelled()
+    {
+        Http::fake(['*paytabs*' => Http::response(['payment_status' => 'Refunded'], 200)]);
+
+        $courseBooking = $this->createConfirmedCourseBooking(1);
+        $courseId = $courseBooking->course_id;
+        $courseBooking->course->update(['status' => 'draft']);
+
+        $this->withHeaders($this->auth($this->clientToken))
+            ->postJson("/api/trainer/course-bookings/{$courseBooking->id}/cancel")
+            ->assertStatus(200);
+
+        $response = $this->withHeaders($this->auth($this->trainerToken))
+            ->deleteJson("/api/trainer/courses/{$courseId}");
+
+        $response->assertStatus(200)->assertJsonPath('success', true);
+        $this->assertDatabaseMissing('trainer_courses', ['id' => $courseId]);
+    }
+
+    public function test_admin_cannot_delete_course_with_active_bookings()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(1);
+        $admin = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
+        $adminToken = JWTAuth::fromUser($admin);
+
+        $response = $this->withHeaders($this->auth($adminToken))
+            ->deleteJson("/api/admin/trainer-courses/{$courseBooking->course_id}");
+
+        $response->assertStatus(400)->assertJsonPath('success', false);
+        $this->assertDatabaseHas('trainer_courses', ['id' => $courseBooking->course_id]);
+        $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id]);
     }
 }

@@ -1833,6 +1833,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/course-bookings/{id}/cancel',    [TrainerCourseBookingController::class, 'cancel']);
     Route::post('/trainer/course-bookings/{id}/pay',       [TrainerCourseBookingController::class, 'initiatePayment']);
     Route::post('/trainer/course-bookings/{id}/review',    [TrainerCourseBookingController::class, 'review']);
+    Route::post('/trainer/course-bookings/verify-payment', [TrainerCourseBookingController::class, 'verifyPayment']);
 
     // Social
     Route::post('/trainers/{id}/like',          [TrainerLikeController::class, 'toggle']);

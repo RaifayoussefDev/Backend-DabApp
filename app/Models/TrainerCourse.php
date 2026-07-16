@@ -45,7 +45,7 @@ class TrainerCourse extends Model
         'is_active'     => 'boolean',
     ];
 
-    protected $appends = ['image_url', 'effective_price', 'price_per_hour', 'price_per_session', 'total_price', 'localized_title', 'localized_description'];
+    protected $appends = ['image_url', 'effective_price', 'price_per_hour', 'price_per_session', 'total_price', 'total_price_aed', 'localized_title', 'localized_description'];
 
     public function trainer()
     {
@@ -65,6 +65,11 @@ class TrainerCourse extends Model
     public function sessions()
     {
         return $this->hasMany(TrainerCourseSession::class, 'course_id')->orderBy('session_number');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(TrainerCourseBooking::class, 'course_id');
     }
 
     public function equipment()
@@ -123,6 +128,21 @@ class TrainerCourse extends Model
 
         return number_format(
             (float) $this->effective_price * $this->hours_per_session * $this->total_sessions,
+            2,
+            '.',
+            ''
+        );
+    }
+
+    /**
+     * total_price converted to AED — the mobile app's PayTabs SDK settles in AED
+     * regardless of the course's display currency, so it needs this to initiate
+     * the native payment sheet with the correct charge amount.
+     */
+    public function getTotalPriceAedAttribute(): string
+    {
+        return number_format(
+            \App\Services\PayTabsConfigService::convertToSettlementCurrency((float) $this->total_price),
             2,
             '.',
             ''
