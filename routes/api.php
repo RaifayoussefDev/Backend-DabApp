@@ -1959,6 +1959,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/trainer-course-bookings',                   [AdminTrainerCourseBookingController::class, 'index']);
     Route::get('/trainer-course-bookings/{id}',               [AdminTrainerCourseBookingController::class, 'show']);
     Route::post('/trainer-course-bookings/{id}/cancel',       [AdminTrainerCourseBookingController::class, 'cancel']);
+    Route::delete('/trainer-course-bookings/{id}',            [AdminTrainerCourseBookingController::class, 'destroy']);
 
     Route::get('/trainer-reviews',                   [AdminTrainerController::class, 'reviews']);
     Route::post('/trainer-reviews/{id}/approve',     [AdminTrainerController::class, 'approveReview']);

@@ -147,6 +147,28 @@ class AdminTrainerCourseBookingTest extends TestCase
             ->assertStatus(400);
     }
 
+    public function test_admin_can_delete_course_booking()
+    {
+        $booking = $this->createBooking();
+        $sessionIds = TrainerCourseBookingSession::where('course_booking_id', $booking->id)->pluck('id');
+
+        $response = $this->withHeaders($this->auth($this->adminToken))
+            ->deleteJson("/api/admin/trainer-course-bookings/{$booking->id}");
+
+        $response->assertStatus(200)->assertJsonPath('success', true);
+        $this->assertDatabaseMissing('trainer_course_bookings', ['id' => $booking->id]);
+        foreach ($sessionIds as $sessionId) {
+            $this->assertDatabaseMissing('trainer_course_booking_sessions', ['id' => $sessionId]);
+        }
+    }
+
+    public function test_admin_delete_course_booking_returns_404_for_unknown()
+    {
+        $this->withHeaders($this->auth($this->adminToken))
+            ->deleteJson('/api/admin/trainer-course-bookings/99999999')
+            ->assertStatus(404);
+    }
+
     public function test_unauthenticated_cannot_access_admin_course_bookings()
     {
         $this->getJson('/api/admin/trainer-course-bookings')->assertStatus(401);

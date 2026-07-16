@@ -163,4 +163,30 @@ class AdminTrainerCourseBookingController extends Controller
             'message' => 'Course booking cancelled by admin',
         ]);
     }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/admin/trainer-course-bookings/{id}",
+     *     summary="Permanently delete a course booking (Admin)",
+     *     description="Hard-deletes the course booking row along with its sessions, payment split and review (all cascade at the DB level). Use for cleaning up test/junk data — for a real trainee booking, prefer force-cancel instead.",
+     *     operationId="adminDeleteTrainerCourseBooking",
+     *     tags={"Admin - Trainer Course Bookings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\Response(response=200, description="Course booking deleted"),
+     *     @OA\Response(response=404, description="Course booking not found")
+     * )
+     */
+    public function destroy(int $id)
+    {
+        $booking = TrainerCourseBooking::find($id);
+
+        if (!$booking) {
+            return response()->json(['success' => false, 'message' => 'Course booking not found'], 404);
+        }
+
+        $booking->delete();
+
+        return response()->json(['success' => true, 'message' => 'Course booking deleted successfully']);
+    }
 }
