@@ -808,20 +808,18 @@ class TrainerCourseBookingController extends Controller
     /**
      * @OA\Post(
      *     path="/api/trainer/course-sessions/{id}/start",
-     *     summary="Start a course session (OTP-gated)",
-     *     description="Trainer enters the Start OTP the trainee showed them in person.",
+     *     summary="Start a course session",
+     *     description="Trainer marks the session as started. Not OTP-gated — only session completion requires the trainee's Completion OTP.",
      *     operationId="startTrainerCourseSession",
      *     tags={"Trainer Course Bookings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
-     *     @OA\RequestBody(required=true, @OA\JsonContent(required={"otp"}, @OA\Property(property="otp", type="string", example="482913"))),
      *     @OA\Response(response=200, description="Session started"),
      *     @OA\Response(response=400, description="Session not in a startable state / booking not paid"),
-     *     @OA\Response(response=403, description="Not your session"),
-     *     @OA\Response(response=422, description="Invalid code")
+     *     @OA\Response(response=403, description="Not your session")
      * )
      */
-    public function startSession(Request $request, int $id)
+    public function startSession(int $id)
     {
         $user    = JWTAuth::parseToken()->authenticate();
         $trainer = Trainer::where('user_id', $user->id)->first();
@@ -838,12 +836,6 @@ class TrainerCourseBookingController extends Controller
         }
         if ($session->status !== 'scheduled') {
             return response()->json(['success' => false, 'message' => 'Session must be scheduled before it can start'], 400);
-        }
-
-        $validated = $request->validate(['otp' => 'required|string']);
-
-        if (!$session->verifyStartOtp($validated['otp'])) {
-            return response()->json(['success' => false, 'message' => 'Invalid code'], 422);
         }
 
         $session->update(['status' => 'in_progress', 'started_at' => now()]);

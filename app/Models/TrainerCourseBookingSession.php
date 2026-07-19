@@ -65,11 +65,6 @@ class TrainerCourseBookingSession extends Model
         return str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
-    public function verifyStartOtp(string $otp): bool
-    {
-        return $this->start_otp !== null && hash_equals($this->start_otp, $otp);
-    }
-
     public function verifyCompletionOtp(string $otp): bool
     {
         return $this->completion_otp !== null && hash_equals($this->completion_otp, $otp);

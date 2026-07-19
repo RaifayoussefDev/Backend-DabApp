@@ -24,7 +24,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
  * Scenarios:
  *  1. Book all sessions of a course (PayTabs mocked) + wrong session count / duplicate dates / bad slot rejected
  *  2. Payment webhook: approve (confirms + payout chain + trainer notified) / decline (cancels + cascades sessions)
- *  3. Trainer session lifecycle: start (OTP) → complete (OTP), last session completes the whole course booking
+ *  3. Trainer session lifecycle: start (no OTP) → complete (OTP), last session completes the whole course booking
  *  4. Trainer never sees OTPs in any response
  *  5. Cancel course booking (+ refund) / review after completion
  */
@@ -450,20 +450,16 @@ class TrainerCourseBookingFlowTest extends TestCase
     }
 
     // ================================================================
-    // SCENARIO 3 — Session lifecycle (OTP-gated)
+    // SCENARIO 3 — Session lifecycle (start: no OTP, complete: OTP-gated)
     // ================================================================
 
-    public function test_trainer_can_start_and_complete_session_with_correct_otp()
+    public function test_trainer_can_start_without_otp_and_complete_session_with_correct_otp()
     {
         $courseBooking = $this->createConfirmedCourseBooking(1);
         $session = $courseBooking->sessions()->first();
 
-        $wrongStart = $this->withHeaders($this->auth($this->trainerToken))
-            ->postJson("/api/trainer/course-sessions/{$session->id}/start", ['otp' => '000000']);
-        $wrongStart->assertStatus(422);
-
         $start = $this->withHeaders($this->auth($this->trainerToken))
-            ->postJson("/api/trainer/course-sessions/{$session->id}/start", ['otp' => $session->start_otp]);
+            ->postJson("/api/trainer/course-sessions/{$session->id}/start");
         $start->assertStatus(200)->assertJsonPath('success', true);
         $this->assertDatabaseHas('trainer_course_booking_sessions', ['id' => $session->id, 'status' => 'in_progress']);
         $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'in_progress']);
@@ -488,7 +484,7 @@ class TrainerCourseBookingFlowTest extends TestCase
 
         foreach ($sessions as $session) {
             $this->withHeaders($this->auth($this->trainerToken))
-                ->postJson("/api/trainer/course-sessions/{$session->id}/start", ['otp' => $session->start_otp])
+                ->postJson("/api/trainer/course-sessions/{$session->id}/start")
                 ->assertStatus(200);
         }
 
@@ -514,7 +510,7 @@ class TrainerCourseBookingFlowTest extends TestCase
         $otherToken = JWTAuth::fromUser($otherUser);
 
         $response = $this->withHeaders($this->auth($otherToken))
-            ->postJson("/api/trainer/course-sessions/{$session->id}/start", ['otp' => $session->start_otp]);
+            ->postJson("/api/trainer/course-sessions/{$session->id}/start");
 
         $response->assertStatus(403);
         $otherUser->delete();
@@ -570,7 +566,7 @@ class TrainerCourseBookingFlowTest extends TestCase
         $session = $courseBooking->sessions()->first();
 
         $this->withHeaders($this->auth($this->trainerToken))
-            ->postJson("/api/trainer/course-sessions/{$session->id}/start", ['otp' => $session->start_otp])
+            ->postJson("/api/trainer/course-sessions/{$session->id}/start")
             ->assertStatus(200);
         $this->withHeaders($this->auth($this->trainerToken))
             ->postJson("/api/trainer/course-sessions/{$session->id}/complete", ['otp' => $session->completion_otp])
