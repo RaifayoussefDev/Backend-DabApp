@@ -643,6 +643,12 @@ Route::get('/filter-options-license-plates', [FilterController::class, 'getLicen
 Route::get('/filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
 // ============================================
+// SEARCH (PUBLIC) — header search bar: motorcycles, spare parts, plates
+// ============================================
+Route::get('/search/suggest', [\App\Http\Controllers\SearchController::class, 'suggest']);
+Route::get('/search', [\App\Http\Controllers\SearchController::class, 'search']);
+
+// ============================================
 // BIKE PARTS (PUBLIC)
 // ============================================
 Route::apiResource('bike-part-brands', BikePartBrandController::class);
