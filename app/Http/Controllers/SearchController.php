@@ -55,13 +55,6 @@ class SearchController extends Controller
         // codebase filters on status directly for the same reason.
         $query = Listing::query()->where('status', 'published');
 
-        $categoryId = $request->input('category_id');
-        if ($this->hasValue($categoryId)) {
-            $query->where('category_id', (int) $categoryId);
-        } else {
-            $query->whereIn('category_id', array_keys(self::CATEGORY_TYPES));
-        }
-
         if ($this->hasValue($term)) {
             $this->applySearchTerm($query, $term);
         }
@@ -86,6 +79,38 @@ class SearchController extends Controller
         }
 
         return $query;
+    }
+
+    /** baseQuery() plus the category_id restriction — the actual listing query. */
+    private function categoryQuery(Request $request, string $term)
+    {
+        $query = $this->baseQuery($request, $term);
+
+        $categoryId = $request->input('category_id');
+        if ($this->hasValue($categoryId)) {
+            $query->where('category_id', (int) $categoryId);
+        } else {
+            $query->whereIn('category_id', array_keys(self::CATEGORY_TYPES));
+        }
+
+        return $query;
+    }
+
+    /**
+     * Per-category match counts and a total — always across all 3 categories,
+     * ignoring any category_id filter, so the UI can render "switch category" tabs.
+     */
+    private function computeCounts(Request $request, string $term): array
+    {
+        $counts = [];
+        foreach (self::CATEGORY_TYPES as $categoryId => $type) {
+            $counts[$type] = (clone $this->baseQuery($request, $term))
+                ->where('category_id', $categoryId)
+                ->count();
+        }
+        $counts['total'] = array_sum($counts);
+
+        return $counts;
     }
 
     private function loadRelations($collection): void
@@ -177,16 +202,9 @@ class SearchController extends Controller
 
         $term  = trim($request->input('q'));
         $limit = min((int) $request->input('limit', 8), 20);
+        $counts = $this->computeCounts($request, $term);
 
-        $counts = [];
-        foreach (self::CATEGORY_TYPES as $categoryId => $type) {
-            $counts[$type] = (clone $this->baseQuery($request, $term))
-                ->where('category_id', $categoryId)
-                ->count();
-        }
-        $counts['total'] = array_sum($counts);
-
-        $listings = $this->baseQuery($request, $term)
+        $listings = $this->categoryQuery($request, $term)
             ->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'allow_submission', 'created_at', 'country_id', 'city_id', 'category_id'])
             ->orderByDesc('created_at')
             ->limit($limit)
@@ -230,7 +248,7 @@ class SearchController extends Controller
         $term    = trim($request->input('q'));
         $perPage = min((int) $request->input('per_page', 15), 100);
 
-        $query = $this->baseQuery($request, $term)
+        $query = $this->categoryQuery($request, $term)
             ->select(['id', 'title', 'description', 'price', 'auction_enabled', 'minimum_bid', 'allow_submission', 'created_at', 'country_id', 'city_id', 'category_id'])
             ->orderByDesc('created_at');
 
@@ -246,6 +264,7 @@ class SearchController extends Controller
             'current_page' => $results->currentPage(),
             'per_page'     => $results->perPage(),
             'last_page'    => $results->lastPage(),
+            'counts'       => $this->computeCounts($request, $term),
             'data'         => $collection->map(fn ($listing) => $this->formatListing($listing))->values(),
         ]);
     }
