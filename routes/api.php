@@ -267,6 +267,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
         Route::apiResource('report-types', \App\Http\Controllers\Admin\ReportTypeController::class);
         Route::apiResource('reports', \App\Http\Controllers\Admin\ReportController::class)->only(['index', 'show', 'update']);
+        Route::apiResource('contact-submissions', \App\Http\Controllers\Admin\ContactSubmissionController::class)->only(['index', 'show', 'update']);
 
         // ─────────────────────────────────────────────────────────────
         // Reporting & Export (PDF / Excel / CSV)

@@ -18,6 +18,7 @@ class ReportTypeSeeder extends Seeder
             ['code' => 'listing', 'name_en' => 'Listing', 'name_ar' => 'إعلان'],
             ['code' => 'event', 'name_en' => 'Event', 'name_ar' => 'حدث'],
             ['code' => 'comment', 'name_en' => 'Comment', 'name_ar' => 'تعليق'],
+            ['code' => 'trainer', 'name_en' => 'Trainer', 'name_ar' => 'مدرب'],
         ];
 
         foreach ($types as $type) {

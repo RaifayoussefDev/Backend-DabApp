@@ -146,8 +146,10 @@ class AdminMenuV2Seeder extends Seeder
                 "order" => 10,
                 "sub_items" => [
                     ["key" => "reports-all", "path" => "/reports", "label_en" => "All Reports", "label_ar" => "كل التقارير", "permission" => "reports.view", "order" => 1],
-                    ["key" => "reports-types", "path" => "/reports/types", "label_en" => "Report Types", "label_ar" => "أنواع التقارير", "permission" => "reports.resolve", "order" => 2],
-                    ["key" => "reports-reasons", "path" => "/reports/reasons", "label_en" => "Report Reasons", "label_ar" => "أسباب التقارير", "permission" => "reports.resolve", "order" => 3]
+                    ["key" => "reports-trainer", "path" => "/reports/trainer", "label_en" => "Trainer Reports", "label_ar" => "تقارير المدربين", "icon" => "GraduationCap", "permission" => "reports.view", "order" => 2],
+                    ["key" => "reports-contact-us", "path" => "/reports/contact-us", "label_en" => "Contact Us", "label_ar" => "اتصل بنا", "icon" => "Mail", "permission" => "reports.view", "order" => 3],
+                    ["key" => "reports-types", "path" => "/reports/types", "label_en" => "Report Types", "label_ar" => "أنواع التقارير", "permission" => "reports.resolve", "order" => 4],
+                    ["key" => "reports-reasons", "path" => "/reports/reasons", "label_en" => "Report Reasons", "label_ar" => "أسباب التقارير", "permission" => "reports.resolve", "order" => 5]
                 ]
             ],
             [

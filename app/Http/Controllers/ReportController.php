@@ -156,8 +156,9 @@ class ReportController extends Controller
             'plate' => 'App\Models\Listing', // Listing type alias
             'event' => 'App\Models\Event',
             'user' => 'App\Models\User',
-            'comment' => 'App\Models\GuideComment', 
-            'review' => 'App\Models\EventReview', 
+            'comment' => 'App\Models\GuideComment',
+            'review' => 'App\Models\EventReview',
+            'trainer' => 'App\Models\Trainer',
             'default' => null, // Default type has no model
         ];
 

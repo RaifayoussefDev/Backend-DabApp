@@ -39,7 +39,14 @@ class ReportReasonSeeder extends Seeder
                 ['label_en' => 'Harassment', 'label_ar' => 'مضايقة'],
                 ['label_en' => 'Spam', 'label_ar' => 'محتوى غير مرغوب فيه'],
                 ['label_en' => 'Other', 'label_ar' => 'أخرى'],
-            ]
+            ],
+            'trainer' => [
+                ['label_en' => 'No-Show', 'label_ar' => 'لم يحضر للجلسة'],
+                ['label_en' => 'Unprofessional Behavior', 'label_ar' => 'سلوك غير مهني'],
+                ['label_en' => 'Safety Concern', 'label_ar' => 'مخاوف تتعلق بالسلامة'],
+                ['label_en' => 'Misleading Course Information', 'label_ar' => 'معلومات مضللة عن الدورة'],
+                ['label_en' => 'Other', 'label_ar' => 'أخرى'],
+            ],
         ];
 
         foreach ($reasons as $code => $items) {
