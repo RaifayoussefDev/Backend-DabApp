@@ -60,7 +60,11 @@ class AdminContactInfoController extends Controller
      *             @OA\Property(property="phone", type="string", example="+966 12 345 6789"),
      *             @OA\Property(property="email", type="string", example="support@dabapp.co"),
      *             @OA\Property(property="hours_en", type="string", example="Sun - Thu: 9:00 AM - 6:00 PM"),
-     *             @OA\Property(property="hours_ar", type="string", example="الأحد - الخميس: 9:00 صباحاً - 6:00 مساءً")
+     *             @OA\Property(property="hours_ar", type="string", example="الأحد - الخميس: 9:00 صباحاً - 6:00 مساءً"),
+     *             @OA\Property(property="address_visible", type="boolean", example=true, description="Show/hide the address block on the public page"),
+     *             @OA\Property(property="phone_visible", type="boolean", example=true),
+     *             @OA\Property(property="email_visible", type="boolean", example=true),
+     *             @OA\Property(property="hours_visible", type="boolean", example=true)
      *         )
      *     ),
      *     @OA\Response(
@@ -83,6 +87,10 @@ class AdminContactInfoController extends Controller
             'email' => 'required|email|max:255',
             'hours_en' => 'required|string|max:255',
             'hours_ar' => 'required|string|max:255',
+            'address_visible' => 'nullable|boolean',
+            'phone_visible' => 'nullable|boolean',
+            'email_visible' => 'nullable|boolean',
+            'hours_visible' => 'nullable|boolean',
         ]);
 
         $contactInfo = ContactInfo::first();

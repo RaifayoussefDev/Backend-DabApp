@@ -237,6 +237,8 @@ Route::prefix('admin')->group(function () {
         // Site Contact Info
         Route::get('/contact-info', [\App\Http\Controllers\AdminContactInfoController::class, 'show']);
         Route::put('/contact-info', [\App\Http\Controllers\AdminContactInfoController::class, 'update']);
+        Route::apiResource('contact-info-items', \App\Http\Controllers\AdminContactInfoItemController::class)->only(['index', 'store', 'update', 'destroy']);
+        Route::post('/contact-info-items/{id}/toggle', [\App\Http\Controllers\AdminContactInfoItemController::class, 'toggleStatus']);
 
         // Authentication & Session
         Route::get('/me', [AuthAdminController::class, 'me']);
