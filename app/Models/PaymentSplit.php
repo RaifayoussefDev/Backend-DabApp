@@ -14,6 +14,7 @@ class PaymentSplit extends Model
         'booking_id',
         'course_booking_id',
         'trainer_id',
+        'payout_id',
         'commission_setting_id',
         'total_amount',
         'commission_percentage',
@@ -57,9 +58,21 @@ class PaymentSplit extends Model
         return $this->belongsTo(CommissionSetting::class);
     }
 
+    /** The monthly consolidated payout this split has been assigned to (new model). */
     public function payout()
     {
+        return $this->belongsTo(TrainerPayout::class, 'payout_id');
+    }
+
+    /** Legacy one-to-one link from the old "one payout per booking" model. */
+    public function legacyPayout()
+    {
         return $this->hasOne(TrainerPayout::class, 'payment_split_id');
+    }
+
+    public function scopeUnassigned($query)
+    {
+        return $query->whereNull('payout_id');
     }
 
     public static function calculate(float $total, float $commissionPct): array

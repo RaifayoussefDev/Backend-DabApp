@@ -84,7 +84,7 @@ class AdminPayoutController extends Controller
     {
         $query = TrainerPayout::with([
             'trainer:id,name,name_ar',
-            'split:id,total_amount,commission_percentage,commission_amount,trainer_amount',
+            'splits:id,payout_id,total_amount,commission_percentage,commission_amount,trainer_amount',
         ]);
 
         if ($request->filled('status')) {
@@ -303,7 +303,7 @@ class AdminPayoutController extends Controller
     {
         $payout = TrainerPayout::with([
             'trainer:id,name,name_ar,specialty',
-            'split',
+            'splits',
         ])->find($id);
 
         if (!$payout) {
@@ -404,8 +404,8 @@ class AdminPayoutController extends Controller
             'paid_at'        => now(),
         ]);
 
-        // Mark the payment split as settled
-        $payout->split()->update(['status' => 'settled', 'settled_at' => now()]);
+        // Mark every payment split this payout consolidates as settled
+        $payout->splits()->update(['status' => 'settled', 'settled_at' => now()]);
 
         try {
             $this->notifications->notifyTrainerPayoutPaid($payout->trainer->user, $payout->fresh());

@@ -201,7 +201,7 @@ class ServiceProviderController extends Controller
                 $q->where('is_approved', true)
                   ->latest()
                   ->limit(10)
-                  ->with('user:id,first_name,last_name,avatar');
+                  ->with('user:id,first_name,last_name,profile_picture');
             }
         ])->find($id);
 

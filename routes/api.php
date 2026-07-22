@@ -1867,6 +1867,11 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/trainer/schedule',            [TrainerScheduleController::class, 'upsert']);
     Route::get('/trainer/sessions',                [TrainerBookingController::class, 'mySessions']);
     Route::get('/trainer/sessions/{id}',           [TrainerBookingController::class, 'showSession']);
+
+    // Payouts (Trainer) — check balance, request the monthly consolidated payout
+    Route::get('/trainer/payouts/balance',      [\App\Http\Controllers\Trainer\TrainerPayoutController::class, 'balance']);
+    Route::get('/trainer/payouts',              [\App\Http\Controllers\Trainer\TrainerPayoutController::class, 'index']);
+    Route::post('/trainer/payouts/request',     [\App\Http\Controllers\Trainer\TrainerPayoutController::class, 'store']);
     Route::post('/trainer/sessions/{id}/accept',   [TrainerBookingController::class, 'acceptBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/reject',   [TrainerBookingController::class, 'rejectBooking']);   // deprecated → 410
     Route::post('/trainer/sessions/{id}/start',              [TrainerBookingController::class, 'startSession']);

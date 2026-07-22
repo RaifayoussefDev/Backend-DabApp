@@ -36,6 +36,13 @@ class TrainerPayout extends Model
         return $this->belongsTo(Trainer::class);
     }
 
+    /** New model: one payout can consolidate many bookings' payment splits. */
+    public function splits()
+    {
+        return $this->hasMany(PaymentSplit::class, 'payout_id');
+    }
+
+    /** Legacy one-to-one link from the old "one payout per booking" model. */
     public function split()
     {
         return $this->belongsTo(PaymentSplit::class, 'payment_split_id');

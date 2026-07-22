@@ -278,7 +278,7 @@ class TrainerCourseBookingFlowTest extends TestCase
     // SCENARIO 2 — Payment webhook
     // ================================================================
 
-    public function test_payment_webhook_approval_confirms_and_creates_payout_chain()
+    public function test_payment_webhook_approval_confirms_and_creates_payment_split()
     {
         $course = $this->createCourse(1);
         $payment = TrainerPayment::create(['user_id' => $this->clientUser->id, 'amount' => 300.00, 'payment_status' => 'pending']);
@@ -297,8 +297,14 @@ class TrainerCourseBookingFlowTest extends TestCase
         $response->assertStatus(200)->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'confirmed', 'payment_status' => 'paid']);
-        $this->assertDatabaseHas('payment_splits', ['course_booking_id' => $courseBooking->id]);
-        $this->assertDatabaseHas('trainer_payouts', ['trainer_id' => $this->trainer->id]);
+        // Trainer's share is recorded as an unassigned payment_split — no payout is
+        // auto-created anymore; the trainer must request their monthly payout explicitly
+        // (see TrainerPayoutController).
+        $this->assertDatabaseHas('payment_splits', [
+            'course_booking_id' => $courseBooking->id,
+            'trainer_id'        => $this->trainer->id,
+            'payout_id'         => null,
+        ]);
     }
 
     public function test_payment_webhook_decline_keeps_booking_held_for_retry()

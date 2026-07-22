@@ -447,7 +447,7 @@ class ServiceBookingController extends Controller
 
         $query = ServiceBooking::with([
             'service.category',
-            'user:id,first_name,last_name,email,phone,avatar',
+            'user:id,first_name,last_name,email,phone,profile_picture',
             'payment'
         ])->where('provider_id', $user->serviceProvider->id);
 
@@ -503,7 +503,7 @@ class ServiceBookingController extends Controller
 
         $booking = ServiceBooking::with([
             'service.category',
-            'user:id,first_name,last_name,email,phone,avatar',
+            'user:id,first_name,last_name,email,phone,profile_picture',
             'payment',
             'review',
             'chatSession'

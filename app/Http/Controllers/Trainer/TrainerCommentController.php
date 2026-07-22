@@ -70,8 +70,8 @@ class TrainerCommentController extends Controller
             ->rootOnly()
             ->approved()
             ->with([
-                'user:id,first_name,last_name,avatar',
-                'replies.user:id,first_name,last_name,avatar',
+                'user:id,first_name,last_name,profile_picture',
+                'replies.user:id,first_name,last_name,profile_picture',
             ])
             ->latest()
             ->paginate($request->get('per_page', 10));

@@ -9,7 +9,6 @@ use App\Models\TrainerCourse;
 use App\Models\TrainerLocation;
 use App\Models\TrainerPayment;
 use App\Models\PaymentSplit;
-use App\Models\TrainerPayout;
 use App\Models\TrainerSchedule;
 use App\Services\NotificationService;
 use App\Services\PayTabsConfigService;
@@ -496,7 +495,10 @@ class TrainerBookingController extends Controller
                 $commissionPct = $booking->trainer->getEffectiveCommissionPercentage();
                 $split         = PaymentSplit::calculate($booking->price, $commissionPct);
 
-                $paymentSplit = PaymentSplit::create([
+                // Trainer's share sits here, unassigned, until they request their monthly
+                // consolidated payout (see Trainer\TrainerPayoutController) — no per-booking
+                // payout is auto-created anymore.
+                PaymentSplit::create([
                     'payment_id'            => $booking->payment_id,
                     'booking_id'            => $booking->id,
                     'trainer_id'            => $booking->trainer_id,
@@ -506,15 +508,6 @@ class TrainerBookingController extends Controller
                     'trainer_amount'        => $split['trainer_amount'],
                     'currency'              => $booking->payment->currency ?? 'SAR',
                     'status'                => 'pending',
-                ]);
-
-                // Create payout record (pending admin approval)
-                TrainerPayout::create([
-                    'trainer_id'       => $booking->trainer_id,
-                    'payment_split_id' => $paymentSplit->id,
-                    'amount'           => $split['trainer_amount'],
-                    'currency'         => $booking->payment->currency ?? 'SAR',
-                    'status'           => 'pending',
                 ]);
 
                 $booking->trainer->incrementTotalSessions();

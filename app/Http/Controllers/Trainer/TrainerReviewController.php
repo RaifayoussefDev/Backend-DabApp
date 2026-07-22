@@ -73,7 +73,7 @@ class TrainerReviewController extends Controller
 
         $reviews = TrainerReview::where('trainer_id', $trainer->id)
             ->approved()
-            ->with('user:id,first_name,last_name,avatar')
+            ->with('user:id,first_name,last_name,profile_picture')
             ->latest()
             ->paginate($request->get('per_page', 10));
 

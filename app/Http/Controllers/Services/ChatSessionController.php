@@ -329,7 +329,7 @@ class ChatSessionController extends Controller
     {
         $user = JWTAuth::parseToken()->authenticate();
 
-        $session = ChatSession::with(['booking.service', 'user:id,first_name,last_name,avatar', 'provider'])->find($sessionId);
+        $session = ChatSession::with(['booking.service', 'user:id,first_name,last_name,profile_picture', 'provider'])->find($sessionId);
 
         if (!$session) {
             return response()->json([
@@ -490,7 +490,7 @@ class ChatSessionController extends Controller
 
         $query = ChatSession::with([
             'booking.service',
-            'user:id,first_name,last_name,avatar',
+            'user:id,first_name,last_name,profile_picture',
             'provider'
         ])
         ->where(function($q) use ($user) {
