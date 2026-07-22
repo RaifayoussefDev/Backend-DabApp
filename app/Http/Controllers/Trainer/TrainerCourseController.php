@@ -843,6 +843,12 @@ class TrainerCourseController extends Controller
 
         $course->update(['status' => 'published', 'is_active' => true, 'draft_reason' => null]);
 
+        try {
+            app(\App\Services\NotificationService::class)->notifyUsersInCityNewCourse($course->fresh()->load('location'));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('TrainerCourseController@publish city-notify failed: ' . $e->getMessage());
+        }
+
         return response()->json(['success' => true, 'data' => $course->fresh(), 'message' => 'Course published successfully']);
     }
 

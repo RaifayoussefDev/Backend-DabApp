@@ -257,11 +257,12 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "trainer-dashboard",  "path" => "/trainer",             "label_en" => "Dashboard",    "label_ar" => "لوحة المدربين", "permission" => "trainers.view",   "order" => 1],
                     ["key" => "trainer-list",       "path" => "/trainer/trainers",    "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 2],
                     ["key" => "trainer-bookings",   "path" => "/trainer/bookings",    "label_en" => "Bookings",     "label_ar" => "الحجوزات",      "permission" => "trainers.view",   "order" => 3],
-                    ["key" => "trainer-payouts",    "path" => "/trainer/payouts",     "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 4],
-                    ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 5],
-                    ["key" => "trainer-courses",    "path" => "/trainer/courses",     "label_en" => "Courses",      "label_ar" => "الدورات",       "permission" => "trainers.view",   "order" => 6, "icon" => "BookOpen"],
-                    ["key" => "trainer-course-bookings", "path" => "/trainer/course-bookings", "label_en" => "Course Bookings", "label_ar" => "حجوزات الدورات", "permission" => "trainers.view", "order" => 7, "icon" => "CalendarCheck"],
-                    ["key" => "equipment-types",    "path" => "/equipment-types",     "label_en" => "Equipment Types", "label_ar" => "أنواع المعدات", "permission" => "trainers.manage", "order" => 8, "icon" => "ShieldCheck"]
+                    ["key" => "trainer-reviews",    "path" => "/trainer/reviews",     "label_en" => "Reviews & Comments", "label_ar" => "التقييمات والتعليقات", "permission" => "trainers.view", "order" => 4, "icon" => "Star"],
+                    ["key" => "trainer-payouts",    "path" => "/trainer/payouts",     "label_en" => "Payouts",      "label_ar" => "المدفوعات",     "permission" => "trainers.manage", "order" => 5],
+                    ["key" => "trainer-commission", "path" => "/trainer/commission",  "label_en" => "Commission",   "label_ar" => "العمولة",       "permission" => "trainers.manage", "order" => 6],
+                    ["key" => "trainer-courses",    "path" => "/trainer/courses",     "label_en" => "Courses",      "label_ar" => "الدورات",       "permission" => "trainers.view",   "order" => 7, "icon" => "BookOpen"],
+                    ["key" => "trainer-course-bookings", "path" => "/trainer/course-bookings", "label_en" => "Course Bookings", "label_ar" => "حجوزات الدورات", "permission" => "trainers.view", "order" => 8, "icon" => "CalendarCheck"],
+                    ["key" => "equipment-types",    "path" => "/equipment-types",     "label_en" => "Equipment Types", "label_ar" => "أنواع المعدات", "permission" => "trainers.manage", "order" => 9, "icon" => "ShieldCheck"]
                 ]
             ],
             [

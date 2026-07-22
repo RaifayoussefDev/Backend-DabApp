@@ -921,6 +921,76 @@ class NotificationService
 
     // ==================== TRAINER ====================
 
+    /**
+     * Notification: New Trainer in City (Mass Notification)
+     */
+    public function notifyUsersInCityNewTrainer($trainer): void
+    {
+        $location = $trainer->locations()->whereNotNull('city_id')->first();
+        if (!$location) {
+            return;
+        }
+
+        User::whereHas('listings', function ($q) use ($location) {
+            $q->where('city_id', $location->city_id);
+        })
+            ->where('id', '!=', $trainer->user_id)
+            ->where('is_active', true)
+            ->chunk(100, function ($users) use ($trainer, $location) {
+                foreach ($users as $user) {
+                    try {
+                        $this->sendToUser($user, 'new_trainer_in_city', [
+                            'trainer_id' => $trainer->id,
+                            'trainer_name' => $trainer->name,
+                            'city_name' => $location->city->name ?? 'Your City',
+                            'city_name_ar' => $location->city->name_ar ?? $location->city->name ?? 'Your City',
+                        ], [
+                            'entity' => $trainer,
+                            'priority' => 'normal',
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to notify user {$user->id} for new trainer {$trainer->id}: " . $e->getMessage());
+                    }
+                }
+            });
+    }
+
+    /**
+     * Notification: New Course in City, with price (Mass Notification)
+     */
+    public function notifyUsersInCityNewCourse($course): void
+    {
+        $location = $course->location;
+        if (!$location || !$location->city_id) {
+            return;
+        }
+
+        $price = $course->promo_price ?? $course->original_price;
+
+        User::whereHas('listings', function ($q) use ($location) {
+            $q->where('city_id', $location->city_id);
+        })
+            ->where('is_active', true)
+            ->chunk(100, function ($users) use ($course, $location, $price) {
+                foreach ($users as $user) {
+                    try {
+                        $this->sendToUser($user, 'new_course_in_city', [
+                            'course_id' => $course->id,
+                            'course_title' => $course->title,
+                            'city_name' => $location->city->name ?? 'Your City',
+                            'city_name_ar' => $location->city->name_ar ?? $location->city->name ?? 'Your City',
+                            'price' => $price,
+                        ], [
+                            'entity' => $course,
+                            'priority' => 'normal',
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error("Failed to notify user {$user->id} for new course {$course->id}: " . $e->getMessage());
+                    }
+                }
+            });
+    }
+
     public function notifyTrainerApproved(User $user, $trainer): array
     {
         return $this->sendToUser($user, 'trainer_approved', [

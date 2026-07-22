@@ -200,6 +200,12 @@ class AdminTrainerController extends Controller
             Log::error('AdminTrainerController@approve notify failed: ' . $e->getMessage());
         }
 
+        try {
+            $this->notifications->notifyUsersInCityNewTrainer($trainer);
+        } catch (\Exception $e) {
+            Log::error('AdminTrainerController@approve city-notify failed: ' . $e->getMessage());
+        }
+
         return response()->json(['success' => true, 'message' => 'Trainer approved successfully']);
     }
 

@@ -56,6 +56,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('trainer-bookings:expire-unpaid')
             ->everyFifteenMinutes()
             ->withoutOverlapping();
+
+        // Auto-approve trainer reviews an admin hasn't moderated within 24 hours
+        $schedule->command('trainer-reviews:auto-approve')
+            ->hourly()
+            ->withoutOverlapping();
     }
 
     /**

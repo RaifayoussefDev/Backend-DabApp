@@ -178,6 +178,30 @@ class NotificationTemplateTrainerSeeder extends Seeder
                 'icon'               => 'edit_note',
                 'color'              => '#F44336',
             ],
+            [
+                'type'               => 'new_trainer_in_city',
+                'name'               => 'New Trainer in Your City',
+                'description'        => 'Sent to users in a city when a new trainer is approved there',
+                'title_template'     => 'New Trainer Near You',
+                'message_template'   => '{{trainer_name}} just joined as a trainer in {{city_name}}. Check them out!',
+                'title_template_ar'  => 'مدرب جديد بالقرب منك',
+                'message_template_ar'=> 'انضم {{trainer_name}} كمدرب في {{city_name}}. اكتشف ملفه الشخصي!',
+                'variables'          => ['trainer_id', 'trainer_name', 'city_name'],
+                'icon'               => 'person_add',
+                'color'              => '#2196F3',
+            ],
+            [
+                'type'               => 'new_course_in_city',
+                'name'               => 'New Course in Your City',
+                'description'        => 'Sent to users in a city when a trainer publishes a new course there',
+                'title_template'     => 'New Course in {{city_name}}',
+                'message_template'   => '"{{course_title}}" is now available in {{city_name}} for {{price}} SAR.',
+                'title_template_ar'  => 'دورة جديدة في {{city_name}}',
+                'message_template_ar'=> '"{{course_title}}" متاحة الآن في {{city_name}} بسعر {{price}} ريال.',
+                'variables'          => ['course_id', 'course_title', 'city_name', 'price'],
+                'icon'               => 'school',
+                'color'              => '#9C27B0',
+            ],
         ];
 
         foreach ($templates as $template) {
