@@ -121,6 +121,9 @@ class NotificationPreference extends Model
         'promotional',
         'newsletter',
         'admin_custom',
+        // Trainer city-wide broadcasts
+        'new_trainer_in_city',
+        'new_course_in_city',
         // Canaux
         'push_enabled',
         'in_app_enabled',
@@ -177,6 +180,8 @@ class NotificationPreference extends Model
         'promotional' => 'boolean',
         'newsletter' => 'boolean',
         'admin_custom' => 'boolean',
+        'new_trainer_in_city' => 'boolean',
+        'new_course_in_city' => 'boolean',
         'push_enabled' => 'boolean',
         'in_app_enabled' => 'boolean',
         'email_enabled' => 'boolean',
@@ -263,63 +268,25 @@ class NotificationPreference extends Model
         return $this->sms_enabled;
     }
 
+    /** Every togglable preference field except config-only ones (user_id, quiet hours, push_priority). */
+    protected static function togglableFields(): array
+    {
+        return array_diff(
+            (new static())->getFillable(),
+            ['user_id', 'quiet_hours_start', 'quiet_hours_end', 'push_priority']
+        );
+    }
+
     public function enableAll(): void
     {
-        $this->update([
-            'listing_approved' => true,
-            'listing_rejected' => true,
-            'listing_expired' => true,
-            'listing_sold' => true,
-            'bid_placed' => true,
-            'bid_accepted' => true,
-            'bid_rejected' => true,
-            'bid_outbid' => true,
-            'auction_ending_soon' => true,
-            'soom_new_negotiation' => true,
-            'soom_counter_offer' => true,
-            'soom_accepted' => true,
-            'soom_rejected' => true,
-            'dealer_approved' => true,
-            'payment_success' => true,
-            'payment_failed' => true,
-            'payment_pending' => true,
-            'wishlist_price_drop' => true,
-            'wishlist_item_sold' => true,
-            'new_message' => true,
-            'event_created' => true,
-            'event_published' => true,
-            'push_enabled' => true,
-            'in_app_enabled' => true,
-        ]);
+        $data = array_fill_keys(static::togglableFields(), true);
+        // Enabling every notification type shouldn't also switch on quiet-hours muting.
+        $data['quiet_hours_enabled'] = false;
+        $this->update($data);
     }
 
     public function disableAll(): void
     {
-        $this->update([
-            'listing_approved' => false,
-            'listing_rejected' => false,
-            'listing_expired' => false,
-            'listing_sold' => false,
-            'bid_placed' => false,
-            'bid_accepted' => false,
-            'bid_rejected' => false,
-            'bid_outbid' => false,
-            'auction_ending_soon' => false,
-            'soom_new_negotiation' => false,
-            'soom_counter_offer' => false,
-            'soom_accepted' => false,
-            'soom_rejected' => false,
-            'dealer_approved' => false,
-            'payment_success' => false,
-            'payment_failed' => false,
-            'payment_pending' => false,
-            'wishlist_price_drop' => false,
-            'wishlist_item_sold' => false,
-            'new_message' => false,
-            'event_created' => false,
-            'event_published' => false,
-            'push_enabled' => false,
-            'in_app_enabled' => false,
-        ]);
+        $this->update(array_fill_keys(static::togglableFields(), false));
     }
 }

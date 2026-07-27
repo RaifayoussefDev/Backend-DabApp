@@ -31,6 +31,9 @@ class TrainerPayout extends Model
         'paid_at'     => 'datetime',
     ];
 
+    /** Exposed on every serialization (trainer app, admin panel, mobile) so the receipt link is always available. */
+    protected $appends = ['transfer_proof_url'];
+
     public function trainer()
     {
         return $this->belongsTo(Trainer::class);

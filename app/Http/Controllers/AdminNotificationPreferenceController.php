@@ -78,6 +78,10 @@ class AdminNotificationPreferenceController extends Controller
             'newsletter',
             'admin_custom'
         ],
+        'trainer' => [
+            'new_trainer_in_city',
+            'new_course_in_city',
+        ],
         'channels' => [
             'push_enabled',
             'in_app_enabled',
@@ -432,6 +436,42 @@ class AdminNotificationPreferenceController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Disabled all notifications for {$count} records",
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/notification-preferences/mass-enable-category",
+     *     tags={"Admin Notification Preferences"},
+     *     summary="Enable a category of notifications for ALL users",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="category", type="string", example="trainer")
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Done")
+     * )
+     */
+    public function massEnableCategory(Request $request): JsonResponse
+    {
+        $request->validate(['category' => 'required|string']);
+        $category = $request->category;
+
+        if (!isset($this->categories[$category])) {
+            return response()->json(['success' => false, 'message' => 'Invalid category'], 400);
+        }
+
+        $fields = $this->categories[$category];
+        $data = array_fill_keys($fields, true);
+
+        $count = NotificationPreference::query()->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Enabled category '{$category}' for {$count} records",
+            'fields_updated' => $fields
         ]);
     }
 

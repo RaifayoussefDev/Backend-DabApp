@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\CountryHelper;
 use App\Models\Authentication;
+use App\Models\AuthLog;
 use App\Models\NotificationToken;
 use Illuminate\Http\Request;
 use App\Models\User;
@@ -281,6 +282,8 @@ class AuthController extends Controller
             ]);
         }
 
+        AuthLog::record('register', true, $user->id, null, $request->email);
+
         // Generate and send OTP
         $otp = rand(1000, 9999);
 
@@ -296,6 +299,7 @@ class AuthController extends Controller
 
         // Send OTP to both WhatsApp and email based on config
         $otpSentVia = $this->sendOtpDynamic($user, $otp);
+        $this->logOtpEvent($user->id, $otpSentVia, $request->email);
 
         if ($otpSentVia === 'failed') {
             Log::error('Failed to send OTP during registration', [
@@ -481,6 +485,7 @@ class AuthController extends Controller
                 'login' => $login,
                 'user_found' => $user ? true : false
             ]);
+            AuthLog::record('login', false, $user?->id, $isEmailLogin ? 'email' : 'phone', $login, 'Invalid credentials');
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
@@ -539,6 +544,7 @@ class AuthController extends Controller
 
             // ⭐ ENVOYER OTP SELON LE TYPE DE LOGIN
             $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
+            $this->logOtpEvent($user->id, $otpSentVia, $login);
 
             Log::info('OTP sent for incomplete registration user', [
                 'user_id' => $user->id,
@@ -562,12 +568,15 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'email' => $user->email
             ]);
+            AuthLog::record('login', false, $user->id, $isEmailLogin ? 'email' : 'phone', $login, 'Account inactive');
             return response()->json(['error' => 'User is inactive'], 403);
         }
 
         $user->is_online = 1;
         $user->last_login = now();
         $user->save();
+
+        AuthLog::record('login', true, $user->id, $isEmailLogin ? 'email' : 'phone', $login);
 
         Log::info('User logged in successfully', [
             'user_id' => $user->id,
@@ -594,6 +603,7 @@ class AuthController extends Controller
 
             // ⭐ ENVOYER OTP 2FA SELON LE TYPE DE LOGIN
             $otpSentVia = $this->sendOtpBasedOnLoginMethod($user, $otp, $isEmailLogin);
+            $this->logOtpEvent($user->id, $otpSentVia, $login);
 
             if ($otpSentVia === 'failed') {
                 Log::error('Failed to send OTP during login', [
@@ -670,7 +680,7 @@ class AuthController extends Controller
         $emailOk    = false;
 
         if ($whatsappEnabled && !empty($user->phone)) {
-            $whatsappOk = $this->sendWhatsAppOtp($user->phone, $otp);
+            $whatsappOk = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
             Log::info('OTP dynamic: WhatsApp attempt', [
                 'user_id' => $user->id,
                 'success' => $whatsappOk,
@@ -701,7 +711,7 @@ class AuthController extends Controller
     {
         // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
-            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
 
             if ($whatsappSent) {
                 Log::info('OTP sent via WhatsApp', [
@@ -746,7 +756,7 @@ class AuthController extends Controller
     {
         // Try WhatsApp first if user has phone number
         if (!empty($user->phone)) {
-            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
 
             if ($whatsappSent) {
                 Log::info('OTP sent via WhatsApp', [
@@ -780,9 +790,28 @@ class AuthController extends Controller
     }
 
     /**
-     * Send OTP via WhatsApp (AiSensy)
+     * Log the otp_email side of a given $otpSentVia outcome ('whatsapp'|'email'|'both'
+     * |'failed'|'skipped', as returned by the various sendOtp* helpers below).
+     * otp_whatsapp is deliberately NOT logged here — sendWhatsAppOtp() already logs its
+     * own attempt at the single choke point every flow routes through, so logging it
+     * again here from the aggregate result would double it up. 'skipped' means no
+     * channel was attempted at all, so nothing is logged for it.
      */
-    private function sendWhatsAppOtp($phone, $otp)
+    private function logOtpEvent(?int $userId, string $otpSentVia, ?string $identifier = null): void
+    {
+        match ($otpSentVia) {
+            'email', 'both' => AuthLog::record('otp_email', true, $userId, 'email', $identifier),
+            'failed' => AuthLog::record('otp_email', false, $userId, 'email', $identifier),
+            default => null, // 'whatsapp' (logged inside sendWhatsAppOtp already) or 'skipped'
+        };
+    }
+
+    /**
+     * Send OTP via WhatsApp (AiSensy). Logs the attempt here — the single choke point
+     * every OTP flow (register/login/resend) goes through — so a failure is always
+     * captured even when a higher-level caller silently falls back to email afterward.
+     */
+    private function sendWhatsAppOtp($phone, $otp, ?int $userId = null)
     {
         try {
             $rawPhone = trim($phone);
@@ -831,17 +860,29 @@ class AuthController extends Controller
 
             if ($curlErr) {
                 Log::error('AiSensy cURL error', ['error' => $curlErr]);
+                AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $destination, $curlErr);
                 return false;
             }
 
             Log::info('AiSensy OTP response', ['status' => $httpCode, 'body' => json_decode($raw, true)]);
 
-            return $httpCode >= 200 && $httpCode < 300;
+            $success = $httpCode >= 200 && $httpCode < 300;
+            AuthLog::record(
+                'otp_whatsapp',
+                $success,
+                $userId,
+                'whatsapp',
+                $destination,
+                $success ? null : "AiSensy HTTP {$httpCode}"
+            );
+
+            return $success;
         } catch (\Exception $e) {
             Log::error('WhatsApp OTP send failed', [
                 'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
+            AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $phone, $e->getMessage());
             return false;
         }
     }
@@ -990,7 +1031,7 @@ class AuthController extends Controller
 
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
             // User specifically requested WhatsApp
-            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
             if ($whatsappSent) {
                 $otpSentVia = 'whatsapp';
             } else {
@@ -1024,7 +1065,7 @@ class AuthController extends Controller
 
                 // Fallback to WhatsApp if email fails
                 if (!empty($user->phone)) {
-                    $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp);
+                    $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
                     if ($whatsappSent) {
                         $otpSentVia = 'whatsapp';
                         Log::info('Resend OTP via WhatsApp (email fallback)', [
@@ -1038,6 +1079,8 @@ class AuthController extends Controller
             // No specific method requested, use WhatsApp first fallback
             $otpSentVia = $this->sendOtpWithWhatsAppFirst($user, $otp);
         }
+
+        $this->logOtpEvent($user->id, $otpSentVia, $request->login);
 
         if ($otpSentVia === 'failed') {
             return response()->json([
@@ -1154,6 +1197,8 @@ class AuthController extends Controller
             $user->notify(new SendOtpNotification($otp));
             $otpSentVia = 'email';
 
+            AuthLog::record('otp_email', true, $user->id, 'email', $request->login);
+
             Log::info('OTP sent via Email for resendOtpEmail', [
                 'user_id' => $user->id,
                 'email' => $user->email
@@ -1163,6 +1208,8 @@ class AuthController extends Controller
                 'user_id' => $user->id,
                 'error' => $e->getMessage()
             ]);
+
+            AuthLog::record('otp_email', false, $user->id, 'email', $request->login, $e->getMessage());
 
             return response()->json([
                 'error' => 'Failed to send OTP via email. Please try again later.'
@@ -1563,6 +1610,10 @@ class AuthController extends Controller
             }
             // SINON: Ne rien faire avec les tokens FCM
             // Le web logout n'affecte pas les apps mobiles ✅
+        }
+
+        if ($user) {
+            AuthLog::record('logout', true, $user->id, null, $user->email);
         }
 
         auth()->logout();

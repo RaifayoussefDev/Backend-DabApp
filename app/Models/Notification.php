@@ -14,6 +14,7 @@ class Notification extends Model
 
     protected $fillable = [
         'user_id',
+        'batch_id',
         'type',
         'title',
         'message',
@@ -69,6 +70,11 @@ class Notification extends Model
     public function admin(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sent_by_admin');
+    }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(NotificationBatch::class, 'batch_id');
     }
 
     public function actions(): HasMany

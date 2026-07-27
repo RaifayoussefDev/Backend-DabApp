@@ -61,6 +61,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('trainer-reviews:auto-approve')
             ->hourly()
             ->withoutOverlapping();
+
+        // Fire admin broadcast notifications scheduled for a future date/time
+        $schedule->command('notifications:dispatch-scheduled')
+            ->everyMinute()
+            ->withoutOverlapping();
     }
 
     /**

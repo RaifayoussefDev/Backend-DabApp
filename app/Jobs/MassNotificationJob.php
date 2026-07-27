@@ -8,6 +8,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use App\Models\User;
+use App\Models\NotificationBatch;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
 
@@ -15,58 +16,59 @@ class MassNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $filters;
-    protected $content;
-    protected $channels;
+    protected int $batchId;
+    protected array $filters;
+    protected array $content;
+    protected array $channels;
+    protected ?int $adminId;
 
     /**
-     * Create a new job instance.
-     *
-     * @param array $filters ['city_id', 'category_id', 'date_from', 'date_to']
-     * @param array $content ['title', 'title_ar', 'body', 'body_ar']
+     * @param int $batchId The NotificationBatch row already created by the controller (holds aggregate counters).
+     * @param array $filters ['country_id', 'category_id', 'date_from', 'date_to', ...]
+     * @param array $content ['title_en', 'title_ar', 'body_en', 'body_ar', 'type']
      * @param array $channels ['push', 'email']
+     * @param int|null $adminId The admin who triggered the send — auth()->id() is unavailable once this runs on a queue worker.
      */
-    public function __construct(array $filters, array $content, array $channels)
+    public function __construct(int $batchId, array $filters, array $content, array $channels, ?int $adminId = null)
     {
+        $this->batchId = $batchId;
         $this->filters = $filters;
         $this->content = $content;
         $this->channels = $channels;
+        $this->adminId = $adminId;
     }
 
     /**
-     * Execute the job.
+     * Execute the job. Never accumulates a per-user list in memory — only running counts,
+     * flushed to the NotificationBatch row once per chunk so this scales to any user count.
      */
     public function handle(NotificationService $notificationService)
     {
-        Log::info("Starting Mass Notification Job", ['filters' => $this->filters]);
-
-        $query = User::query()->applyFilters($this->filters);
-
-        $totalUsers = $query->count();
-        Log::info("Found {$totalUsers} users for mass notification.");
-
-        if ($totalUsers === 0) {
-            Log::warning("MassNotificationJob: No users found matching the criteria.");
-            return [
-                'total' => 0,
-                'sent' => 0,
-                'failed' => 0,
-                'message' => 'No users found matching the criteria'
-            ];
+        $batch = NotificationBatch::find($this->batchId);
+        if (!$batch) {
+            Log::error("MassNotificationJob: batch {$this->batchId} not found, aborting.");
+            return;
         }
 
-        $summary = [
-            'total' => $totalUsers,
-            'sent' => 0,
-            'failed' => 0,
-            'failed_details' => []
-        ];
+        $batch->update(['status' => 'processing']);
 
-        // Process in chunks to avoid memory issues
-        $query->chunk(100, function ($users) use ($notificationService, &$summary) {
+        $query = User::query()->applyFilters($this->filters);
+        $totalUsers = $query->count();
+
+        if ($totalUsers === 0) {
+            $batch->update(['status' => 'completed', 'total_targeted' => 0, 'completed_at' => now()]);
+            return;
+        }
+
+        Log::info("MassNotificationJob: starting batch {$batch->id} for {$totalUsers} users.");
+
+        // Process in chunks to bound memory regardless of how many users match the filter.
+        $query->chunk(200, function ($users) use ($notificationService, $batch) {
+            $sentInChunk = 0;
+            $failedInChunk = 0;
+
             foreach ($users as $user) {
                 try {
-                    // Determine title and message based on user preference
                     $lang = $user->language ?? 'en';
                     $title = ($lang === 'ar' && !empty($this->content['title_ar']))
                         ? $this->content['title_ar']
@@ -78,41 +80,44 @@ class MassNotificationJob implements ShouldQueue
 
                     $data = [
                         'type' => $this->content['type'] ?? 'info',
-                        'original_content' => $this->content
+                        'original_content' => $this->content,
                     ];
 
                     $result = $notificationService->sendCustomNotification($user, $title, $message, $data, [
                         'channels' => $this->channels,
-                        'priority' => 'high'
+                        'priority' => 'high',
+                        'batch_id' => $batch->id,
+                        'sent_by_admin' => $this->adminId,
                     ]);
 
-                    // Check push results for accurate summary
                     $pushSent = isset($result['push_results']['sent']) && $result['push_results']['sent'] > 0;
-                    $emailSent = isset($result['email_result']) && $result['email_result'] === 'sent';
+                    $emailSent = ($result['email_result'] ?? null) === 'sent';
 
                     if ($pushSent || $emailSent) {
-                        $summary['sent']++;
+                        $sentInChunk++;
                     } else {
-                        $summary['failed']++;
-                        $summary['failed_details'][] = [
-                            'user_id' => $user->id,
-                            'error' => $result['push_results']['message'] ?? ($result['email_result'] ?? 'No delivery channel succeeded')
-                        ];
+                        $failedInChunk++;
                     }
-
                 } catch (\Exception $e) {
-                    $summary['failed']++;
-                    $summary['failed_details'][] = [
-                        'user_id' => $user->id,
-                        'error' => $e->getMessage()
-                    ];
-                    Log::error("Failed to send mass notification to user {$user->id}: " . $e->getMessage());
+                    $failedInChunk++;
+                    Log::error("MassNotificationJob: failed to notify user {$user->id}: " . $e->getMessage());
                 }
             }
+
+            // One UPDATE per chunk (200 users), never one per user.
+            $batch->increment('sent_count', $sentInChunk);
+            $batch->increment('failed_count', $failedInChunk);
         });
 
-        Log::info("Mass Notification Job Completed.", ['summary' => $summary]);
+        $batch->update([
+            'total_targeted' => $totalUsers,
+            'status' => 'completed',
+            'completed_at' => now(),
+        ]);
 
-        return $summary;
+        Log::info("MassNotificationJob: batch {$batch->id} completed.", [
+            'sent' => $batch->fresh()->sent_count,
+            'failed' => $batch->fresh()->failed_count,
+        ]);
     }
 }

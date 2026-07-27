@@ -255,14 +255,22 @@ Route::prefix('admin')->group(function () {
 
         // Notifications
         Route::get('/notifications', [AdminNotificationController::class, 'index']);
+        Route::get('/notifications/batches', [AdminNotificationController::class, 'batches']);
+        Route::get('/notifications/batches/{id}', [AdminNotificationController::class, 'batchShow']);
+        Route::post('/notifications/batches/{id}/cancel', [AdminNotificationController::class, 'cancelBatch']);
         Route::post('/notifications/mass-send', [AdminNotificationController::class, 'sendMassNotification']);
         Route::post('notification-preferences/mass-enable-all', [AdminNotificationPreferenceController::class, 'massEnableAll']);
         Route::post('notification-preferences/mass-disable-all', [AdminNotificationPreferenceController::class, 'massDisableAll']);
+        Route::post('notification-preferences/mass-enable-category', [AdminNotificationPreferenceController::class, 'massEnableCategory']);
         Route::post('notification-preferences/mass-disable-category', [AdminNotificationPreferenceController::class, 'massDisableCategory']);
         Route::patch('notification-preferences/{id}/enable-all', [AdminNotificationPreferenceController::class, 'enableAll']);
         Route::patch('notification-preferences/{id}/disable-all', [AdminNotificationPreferenceController::class, 'disableAll']);
         Route::get('notification-preferences/user/{userId}', [AdminNotificationPreferenceController::class, 'getByUserId']);
         Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);
+
+        // Authentication logs (register / login / logout / OTP delivery)
+        Route::get('/auth-logs', [\App\Http\Controllers\Admin\AuthLogController::class, 'index']);
+        Route::get('/auth-logs/summary', [\App\Http\Controllers\Admin\AuthLogController::class, 'summary']);
 
         // Report Reasons & Types
         Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
@@ -2015,6 +2023,7 @@ Route::middleware('auth:api')->prefix('admin')->group(function () {
     Route::get('/payouts/{id}',                      [AdminPayoutController::class, 'show']);
     Route::post('/payouts/{id}/approve',             [AdminPayoutController::class, 'approve']);
     Route::post('/payouts/{id}/mark-paid',           [AdminPayoutController::class, 'markPaid']);
+    Route::post('/payouts/{id}/proof',               [AdminPayoutController::class, 'uploadProof']);
     Route::post('/payouts/{id}/reject',              [AdminPayoutController::class, 'reject']);
 });
 

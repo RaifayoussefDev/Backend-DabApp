@@ -384,6 +384,7 @@ class NotificationService
         // Créer la notification
         $notification = Notification::create([
             'user_id' => $user->id,
+            'batch_id' => $options['batch_id'] ?? null,
             'type' => 'admin_custom',
             'title' => $title,
             'message' => $message,
@@ -397,27 +398,44 @@ class NotificationService
             'priority' => $options['priority'] ?? 'normal',
             'image_url' => $data['image_url'] ?? null,
             'is_custom' => true,
-            'sent_by_admin' => auth()->id(),
+            // auth()->id() is only meaningful on the request that triggered this — a queued
+            // mass-send job runs with no authenticated session, so the admin id must be passed in explicitly.
+            'sent_by_admin' => $options['sent_by_admin'] ?? auth()->id(),
         ]);
 
         // Envoyer le push
         $preferences = $user->notificationPreference;
-        $pushResults = [];
+        $channels = $options['channels'] ?? null;
+        $wantsPush = $channels === null || in_array('push', $channels, true);
+        $wantsEmail = $channels === null ? false : in_array('email', $channels, true);
 
-        if ($preferences && $preferences->canSendPush()) {
+        $pushResults = [];
+        if ($wantsPush && $preferences && $preferences->canSendPush()) {
             $pushResults = $this->sendPushNotification($user, $notification, $options);
         } else {
             $pushResults = [
                 'success' => false,
                 'sent' => 0,
-                'message' => !$preferences ? 'No notification preferences found' : 'Push disabled or quiet hours'
+                'message' => !$preferences ? 'No notification preferences found' : ($wantsPush ? 'Push disabled or quiet hours' : 'Push channel not requested'),
             ];
+        }
+
+        $emailResult = null;
+        if ($wantsEmail && $preferences && $preferences->canSendEmail() && $user->email) {
+            try {
+                Mail::to($user->email)->send(new NotificationMail($notification, $message, $data));
+                $emailResult = 'sent';
+            } catch (\Exception $e) {
+                $emailResult = 'failed: ' . $e->getMessage();
+                Log::error("sendCustomNotification: failed to email {$user->email}: " . $e->getMessage());
+            }
         }
 
         return [
             'success' => true,
             'notification_id' => $notification->id,
             'push_results' => $pushResults,
+            'email_result' => $emailResult,
         ];
     }
 
@@ -1086,6 +1104,7 @@ class NotificationService
             'amount'       => $payout->amount,
             'currency'     => $payout->currency ?? 'SAR',
             'transfer_ref' => $payout->transfer_ref,
+            'action_url'   => $payout->transfer_proof_url ?: 'https://dabapp.co/trainers/my-payouts',
         ], ['entity' => $payout, 'priority' => 'high']);
     }
 

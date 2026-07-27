@@ -420,4 +420,67 @@ class AdminPayoutController extends Controller
             'transfer_proof_url' => $payout->fresh()->transfer_proof_url,
         ]);
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/payouts/{id}/proof",
+     *     summary="Attach or replace the transfer receipt",
+     *     description="Uploads (or replaces) the transfer proof/receipt for a payout that has already been marked as paid — for cases where the receipt wasn't attached at mark-paid time, or needs correcting.",
+     *     operationId="adminUploadPayoutProof",
+     *     tags={"Admin - Payouts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 required={"transfer_proof"},
+     *                 @OA\Property(property="transfer_proof", type="string", format="binary",
+     *                     description="Screenshot or receipt of the transfer (image or PDF, max 5MB)")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Receipt uploaded",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success",             type="boolean", example=true),
+     *             @OA\Property(property="message",             type="string",  example="Receipt uploaded"),
+     *             @OA\Property(property="transfer_proof_url",  type="string",  example="https://example.com/storage/payouts/proofs/receipt.jpg")
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Payout must be paid before attaching a receipt"),
+     *     @OA\Response(response=404, description="Payout not found"),
+     *     @OA\Response(response=422, description="Validation error")
+     * )
+     */
+    public function uploadProof(Request $request, int $id)
+    {
+        $payout = TrainerPayout::find($id);
+
+        if (!$payout) {
+            return response()->json(['success' => false, 'message' => 'Payout not found'], 404);
+        }
+
+        if ($payout->status !== 'paid') {
+            return response()->json(['success' => false, 'message' => 'Payout must be paid before attaching a receipt'], 400);
+        }
+
+        $request->validate([
+            'transfer_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        if ($payout->transfer_proof) {
+            Storage::disk('public')->delete($payout->transfer_proof);
+        }
+
+        $payout->update([
+            'transfer_proof' => $request->file('transfer_proof')->store('payouts/proofs', 'public'),
+        ]);
+
+        return response()->json([
+            'success'            => true,
+            'message'            => 'Receipt uploaded',
+            'transfer_proof_url' => $payout->fresh()->transfer_proof_url,
+        ]);
+    }
 }
