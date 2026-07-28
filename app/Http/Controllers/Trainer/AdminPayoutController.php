@@ -61,11 +61,13 @@ class AdminPayoutController extends Controller
      *                             @OA\Property(property="id",   type="integer"),
      *                             @OA\Property(property="name", type="string")
      *                         ),
-     *                         @OA\Property(property="split", type="object",
-     *                             @OA\Property(property="total_amount",          type="number", format="float", example=150.00),
-     *                             @OA\Property(property="commission_percentage", type="number", format="float", example=20.00),
-     *                             @OA\Property(property="commission_amount",     type="number", format="float", example=30.00),
-     *                             @OA\Property(property="trainer_amount",        type="number", format="float", example=120.00)
+     *                         @OA\Property(property="splits", type="array", description="Every booking's commission split this consolidated payout covers",
+     *                             @OA\Items(type="object",
+     *                                 @OA\Property(property="total_amount",          type="number", format="float", example=150.00),
+     *                                 @OA\Property(property="commission_percentage", type="number", format="float", example=20.00),
+     *                                 @OA\Property(property="commission_amount",     type="number", format="float", example=30.00),
+     *                                 @OA\Property(property="trainer_amount",        type="number", format="float", example=120.00)
+     *                             )
      *                         )
      *                     )
      *                 ),
@@ -84,7 +86,7 @@ class AdminPayoutController extends Controller
     {
         $query = TrainerPayout::with([
             'trainer:id,name,name_ar',
-            'splits:id,payout_id,total_amount,commission_percentage,commission_amount,trainer_amount',
+            'splits',
         ]);
 
         if ($request->filled('status')) {
@@ -99,9 +101,15 @@ class AdminPayoutController extends Controller
 
         $payouts = $query->latest()->paginate($request->get('per_page', 20));
 
-        $payouts->getCollection()->transform(fn ($p) => array_merge($p->toArray(), [
-            'transfer_proof_url' => $p->transfer_proof_url,
-        ]));
+        $payouts->getCollection()->transform(function ($p) {
+            $splits = $p->displaySplits();
+
+            return array_merge($p->toArray(), [
+                'transfer_proof_url' => $p->transfer_proof_url,
+                'splits' => $splits,
+                'splits_count' => count($splits),
+            ]);
+        });
 
         $summary = [
             'total_pending_amount' => TrainerPayout::where('status', 'pending')->sum('amount'),
@@ -286,12 +294,14 @@ class AdminPayoutController extends Controller
      *                     @OA\Property(property="name",      type="string"),
      *                     @OA\Property(property="specialty", type="string")
      *                 ),
-     *                 @OA\Property(property="split", type="object",
-     *                     @OA\Property(property="total_amount",          type="number", format="float"),
-     *                     @OA\Property(property="commission_percentage", type="number", format="float"),
-     *                     @OA\Property(property="commission_amount",     type="number", format="float"),
-     *                     @OA\Property(property="trainer_amount",        type="number", format="float"),
-     *                     @OA\Property(property="status",                type="string")
+     *                 @OA\Property(property="splits", type="array", description="Every booking's commission split this consolidated payout covers",
+     *                     @OA\Items(type="object",
+     *                         @OA\Property(property="total_amount",          type="number", format="float"),
+     *                         @OA\Property(property="commission_percentage", type="number", format="float"),
+     *                         @OA\Property(property="commission_amount",     type="number", format="float"),
+     *                         @OA\Property(property="trainer_amount",        type="number", format="float"),
+     *                         @OA\Property(property="status",                type="string")
+     *                     )
      *                 )
      *             )
      *         )
@@ -312,7 +322,10 @@ class AdminPayoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => array_merge($payout->toArray(), ['transfer_proof_url' => $payout->transfer_proof_url]),
+            'data'    => array_merge($payout->toArray(), [
+                'transfer_proof_url' => $payout->transfer_proof_url,
+                'splits' => $payout->displaySplits(),
+            ]),
             'message' => 'Payout details retrieved',
         ]);
     }
@@ -362,6 +375,11 @@ class AdminPayoutController extends Controller
             'status' => 'failed',
             'notes'  => '[REJECTED] ' . $request->reason,
         ]);
+
+        // Release these splits back to unassigned — otherwise the earnings behind a
+        // rejected payout would be permanently stuck (never eligible for a future
+        // payout request, since a "failed" payout never becomes "paid").
+        $payout->splits()->update(['payout_id' => null]);
 
         try {
             $this->notifications->notifyTrainerPayoutRejected($payout->trainer->user, $payout, $request->reason);
