@@ -30,6 +30,14 @@ class AuthController extends Controller
 {
     private $aisensyApiUrl = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
+    // Used by sendWhatsAppPasswordReset/sendDeletionWhatsApp/sendDeletionConfirmedWhatsApp/
+    // sendReactivationWhatsApp/sendActivationWhatsApp — these were referencing $this->whatsappApiUrl
+    // and $this->whatsappApiToken without either ever being declared on this class (only on the
+    // unrelated AuthAdminController), so every WhatsApp send through those 5 methods silently
+    // failed against a null URL/token. Mirroring AuthAdminController's values here fixes that.
+    private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
+    private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
+
     public function __construct()
     {
     }
@@ -1955,7 +1963,7 @@ class AuthController extends Controller
 
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
             // Try WhatsApp first
-            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
+            $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode, $user->id);
             if ($whatsappSent) {
                 $resetSentVia = 'whatsapp';
             } else {
@@ -1964,12 +1972,14 @@ class AuthController extends Controller
                     if (!empty($user->email)) {
                         $user->notify(new PasswordResetNotification($resetCode));
                         $resetSentVia = 'email';
+                        AuthLog::record('otp_email', true, $user->id, 'email', $user->email, 'password_reset');
                         Log::info('Password reset sent via email (WhatsApp fallback)', [
                             'user_id' => $user->id,
                             'email' => $user->email
                         ]);
                     }
                 } catch (\Exception $e) {
+                    AuthLog::record('otp_email', false, $user->id, 'email', $user->email, 'password_reset — ' . $e->getMessage());
                     Log::error('Failed to send password reset via email after WhatsApp failed', [
                         'user_id' => $user->id,
                         'error' => $e->getMessage()
@@ -1991,12 +2001,14 @@ class AuthController extends Controller
 
                 $user->notify(new PasswordResetNotification($resetCode));
                 $resetSentVia = 'email';
+                AuthLog::record('otp_email', true, $user->id, 'email', $user->email, 'password_reset');
 
                 Log::info('Password reset email sent successfully', [
                     'user_id' => $user->id,
                     'email' => $user->email
                 ]);
             } catch (\Exception $e) {
+                AuthLog::record('otp_email', false, $user->id, 'email', $user->email ?? $login, 'password_reset — ' . $e->getMessage());
                 Log::error('Failed to send password reset via email', [
                     'user_id' => $user->id,
                     'email' => $user->email ?? 'none',
@@ -2006,7 +2018,7 @@ class AuthController extends Controller
                 // If email preferred but WhatsApp available, try WhatsApp
                 if (!empty($user->phone)) {
                     Log::info('Trying WhatsApp as fallback for email failure');
-                    $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode);
+                    $whatsappSent = $this->sendWhatsAppPasswordReset($user->phone, $resetCode, $user->id);
                     if ($whatsappSent) {
                         $resetSentVia = 'whatsapp';
                         Log::info('Password reset sent via WhatsApp (email fallback)');
@@ -2040,7 +2052,7 @@ class AuthController extends Controller
     /**
      * Send password reset via WhatsApp
      */
-    private function sendWhatsAppPasswordReset($phone, $resetCode)
+    private function sendWhatsAppPasswordReset($phone, $resetCode, ?int $userId = null)
     {
         try {
             $phoneNumber = $this->formatPhoneNumber($phone);
@@ -2065,12 +2077,23 @@ class AuthController extends Controller
                 'body' => $response->body()
             ]);
 
-            return $response->successful();
+            $success = $response->successful();
+            AuthLog::record(
+                'otp_whatsapp',
+                $success,
+                $userId,
+                'whatsapp',
+                '+' . $phoneNumber,
+                $success ? 'password_reset' : "password_reset — HTTP {$response->status()}"
+            );
+
+            return $success;
         } catch (\Exception $e) {
             Log::error('WhatsApp password reset send failed', [
                 'phone' => $phone,
                 'error' => $e->getMessage()
             ]);
+            AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $phone, 'password_reset — ' . $e->getMessage());
             return false;
         }
     }
