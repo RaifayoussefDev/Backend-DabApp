@@ -16,7 +16,9 @@ use App\Models\TrainerPayout;
 use App\Models\TrainerReview;
 use App\Models\TrainerSchedule;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -1378,6 +1380,28 @@ class TrainerFullFlowTest extends TestCase
 
     public function test_admin_can_mark_payout_as_paid()
     {
+        Storage::fake('public');
+        $payout = $this->createPayout('approved');
+
+        $response = $this->withHeaders($this->auth($this->adminToken))
+            ->post("/api/admin/payouts/{$payout->id}/mark-paid", [
+                'transfer_ref' => 'IB20260612001234',
+                'transfer_proof' => UploadedFile::fake()->image('receipt.jpg'),
+            ]);
+
+        $response->assertStatus(200)
+                 ->assertJsonPath('success', true)
+                 ->assertJsonStructure(['transfer_ref', 'transfer_proof_url']);
+
+        $this->assertDatabaseHas('trainer_payouts', [
+            'id'           => $payout->id,
+            'status'       => 'paid',
+            'transfer_ref' => 'IB20260612001234',
+        ]);
+    }
+
+    public function test_admin_cannot_mark_payout_as_paid_without_a_receipt()
+    {
         $payout = $this->createPayout('approved');
 
         $response = $this->withHeaders($this->auth($this->adminToken))
@@ -1385,15 +1409,8 @@ class TrainerFullFlowTest extends TestCase
                 'transfer_ref' => 'IB20260612001234',
             ]);
 
-        $response->assertStatus(200)
-                 ->assertJsonPath('success', true)
-                 ->assertJsonStructure(['transfer_ref']);
-
-        $this->assertDatabaseHas('trainer_payouts', [
-            'id'           => $payout->id,
-            'status'       => 'paid',
-            'transfer_ref' => 'IB20260612001234',
-        ]);
+        $response->assertStatus(422)->assertJsonValidationErrors(['transfer_proof']);
+        $this->assertDatabaseHas('trainer_payouts', ['id' => $payout->id, 'status' => 'approved']);
     }
 
     public function test_admin_cannot_mark_non_approved_payout_as_paid()

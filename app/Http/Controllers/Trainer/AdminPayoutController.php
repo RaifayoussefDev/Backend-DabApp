@@ -232,7 +232,7 @@ class AdminPayoutController extends Controller
      * @OA\Post(
      *     path="/api/admin/payouts/{id}/mark-paid",
      *     summary="Mark payout as paid",
-     *     description="Mark an approved payout as paid after the bank transfer is done. Upload proof (screenshot/receipt) to confirm the transaction. A push notification + email is sent to the trainer.",
+     *     description="Mark an approved payout as paid after the bank transfer is done. Both the transaction reference and a proof (screenshot/receipt) of the transfer are required — a payout can't be settled without evidence the money actually moved. A push notification + email is sent to the trainer.",
      *     operationId="adminMarkPayoutPaid",
      *     tags={"Admin - Payouts"},
      *     security={{"bearerAuth":{}}},
@@ -242,11 +242,11 @@ class AdminPayoutController extends Controller
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 required={"transfer_ref"},
+     *                 required={"transfer_ref","transfer_proof"},
      *                 @OA\Property(property="transfer_ref",   type="string", example="IB20260612001234",
      *                     description="Bank transfer reference number"),
      *                 @OA\Property(property="transfer_proof", type="string", format="binary",
-     *                     description="Screenshot or receipt of the transfer (image, max 5MB)")
+     *                     description="Screenshot or receipt of the transfer — required (image or PDF, max 5MB)")
      *             )
      *         )
      *     ),
@@ -260,7 +260,7 @@ class AdminPayoutController extends Controller
      *     ),
      *     @OA\Response(response=400, description="Payout is not in approved status"),
      *     @OA\Response(response=404, description="Payout not found"),
-     *     @OA\Response(response=422, description="Validation error — transfer_ref required")
+     *     @OA\Response(response=422, description="Validation error — transfer_ref and transfer_proof are required")
      * )
      */
     /**
@@ -404,7 +404,8 @@ class AdminPayoutController extends Controller
 
         $request->validate([
             'transfer_ref'   => 'required|string|max:255',
-            'transfer_proof' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            // Required — a payout can't be marked paid without proof of the actual transfer.
+            'transfer_proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
         $proofPath = $payout->transfer_proof;

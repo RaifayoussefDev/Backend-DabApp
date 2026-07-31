@@ -1104,7 +1104,9 @@ class NotificationService
             'amount'       => $payout->amount,
             'currency'     => $payout->currency ?? 'SAR',
             'transfer_ref' => $payout->transfer_ref,
-            'action_url'   => $payout->transfer_proof_url ?: 'https://dabapp.co/trainers/my-payouts',
+            // Always the website page, never the raw storage file directly — the trainer
+            // views the receipt inside the site's own interface, not a bare file download.
+            'action_url'   => 'https://dabapp.co/trainers/my-payouts',
         ], ['entity' => $payout, 'priority' => 'high']);
     }
 
