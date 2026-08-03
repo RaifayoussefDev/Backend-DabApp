@@ -30,11 +30,10 @@ class AuthController extends Controller
 {
     private $aisensyApiUrl = 'https://backend.aisensy.com/campaign/t1/api/v2';
 
-    // Used by sendWhatsAppPasswordReset/sendDeletionWhatsApp/sendDeletionConfirmedWhatsApp/
-    // sendReactivationWhatsApp/sendActivationWhatsApp — these were referencing $this->whatsappApiUrl
-    // and $this->whatsappApiToken without either ever being declared on this class (only on the
-    // unrelated AuthAdminController), so every WhatsApp send through those 5 methods silently
-    // failed against a null URL/token. Mirroring AuthAdminController's values here fixes that.
+    // sendWhatsAppPasswordReset/sendDeletionWhatsApp now go through AiSensy (sendAisensyCode) —
+    // 360Messenger is only still used by the status-notification methods that have no numeric
+    // code to send through AiSensy's approved template (sendDeletionConfirmedWhatsApp,
+    // sendReactivationWhatsApp, sendActivationWhatsApp) and by notifyUnregisteredUsers().
     private $whatsappApiUrl = 'https://api.360messenger.com/v2/sendMessage';
     private $whatsappApiToken = 'lEv2uJJUFIZl9houMUQtkCQzgyWepWEzywf';
 
@@ -684,22 +683,24 @@ class AuthController extends Controller
             return 'skipped';
         }
 
-        $whatsappOk = false;
-        $emailOk    = false;
-
         if ($whatsappEnabled && !empty($user->phone)) {
             $whatsappOk = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
             Log::info('OTP dynamic: WhatsApp attempt', [
                 'user_id' => $user->id,
                 'success' => $whatsappOk,
             ]);
+
+            if ($whatsappOk) {
+                return 'whatsapp';
+            }
         }
 
+        // Email is only attempted as a fallback — never alongside a successful WhatsApp send
         if ($emailEnabled && !empty($user->email)) {
             try {
                 $user->notify(new SendOtpNotification($otp));
-                $emailOk = true;
                 Log::info('OTP dynamic: Email sent', ['user_id' => $user->id]);
+                return 'email';
             } catch (\Exception $e) {
                 Log::error('OTP dynamic: Email failed', [
                     'user_id' => $user->id,
@@ -707,10 +708,6 @@ class AuthController extends Controller
                 ]);
             }
         }
-
-        if ($whatsappOk && $emailOk) return 'both';
-        if ($whatsappOk)             return 'whatsapp';
-        if ($emailOk)                return 'email';
 
         return 'failed';
     }
@@ -758,46 +755,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Send OTP via WhatsApp first, fallback to email if WhatsApp fails
-     */
-    private function sendOtpWithFallback(User $user, $otp)
-    {
-        // Try WhatsApp first if user has phone number
-        if (!empty($user->phone)) {
-            $whatsappSent = $this->sendWhatsAppOtp($user->phone, $otp, $user->id);
-
-            if ($whatsappSent) {
-                Log::info('OTP sent via WhatsApp', [
-                    'user_id' => $user->id,
-                    'phone' => $user->phone
-                ]);
-                return 'whatsapp';
-            }
-        }
-
-        // Fallback to email
-        try {
-            if (empty($user->email)) {
-                throw new \Exception('User has no email address');
-            }
-
-            $user->notify(new SendOtpNotification($otp));
-            Log::info('OTP sent via Email (WhatsApp fallback)', [
-                'user_id' => $user->id,
-                'email' => $user->email,
-                'reason' => empty($user->phone) ? 'no_phone' : 'whatsapp_failed'
-            ]);
-            return 'email';
-        } catch (\Exception $e) {
-            Log::error('Failed to send OTP via both WhatsApp and Email', [
-                'user_id' => $user->id,
-                'error' => $e->getMessage()
-            ]);
-            return 'failed';
-        }
-    }
-
-    /**
      * Log the otp_email side of a given $otpSentVia outcome ('whatsapp'|'email'|'both'
      * |'failed'|'skipped', as returned by the various sendOtp* helpers below).
      * otp_whatsapp is deliberately NOT logged here — sendWhatsAppOtp() already logs its
@@ -808,7 +765,7 @@ class AuthController extends Controller
     private function logOtpEvent(?int $userId, string $otpSentVia, ?string $identifier = null): void
     {
         match ($otpSentVia) {
-            'email', 'both' => AuthLog::record('otp_email', true, $userId, 'email', $identifier),
+            'email' => AuthLog::record('otp_email', true, $userId, 'email', $identifier),
             'failed' => AuthLog::record('otp_email', false, $userId, 'email', $identifier),
             default => null, // 'whatsapp' (logged inside sendWhatsAppOtp already) or 'skipped'
         };
@@ -821,6 +778,20 @@ class AuthController extends Controller
      */
     private function sendWhatsAppOtp($phone, $otp, ?int $userId = null)
     {
+        return $this->sendAisensyCode($phone, $otp, $userId);
+    }
+
+    /**
+     * Send a numeric code (OTP, password reset, deletion confirmation...) via the AiSensy
+     * WhatsApp template — the single choke point every WhatsApp-code flow goes through, so
+     * a failure is always captured in AuthLog even when a caller falls back to email after.
+     * $reason tags non-OTP callers (e.g. 'password_reset') in the AuthLog detail column;
+     * leave it null for the plain registration/login OTP flow to keep its existing log shape.
+     */
+    private function sendAisensyCode(string $phone, string $code, ?int $userId = null, ?string $reason = null): bool
+    {
+        $logPrefix = $reason ? "{$reason} — " : '';
+
         try {
             $rawPhone = trim($phone);
             $hasPlus  = str_starts_with($rawPhone, '+');
@@ -831,7 +802,7 @@ class AuthController extends Controller
                 'campaignName'        => env('AISENSY_CAMPAIGN_NAME', 'DabApp'),
                 'destination'         => $destination,
                 'userName'            => env('AISENSY_USERNAME', 'Fadel Brothers Group L.L.C'),
-                'templateParams'      => [(string) $otp],
+                'templateParams'      => [(string) $code],
                 'source'              => 'new-landing-page form',
                 'media'               => (object)[],
                 'buttons'             => [
@@ -840,7 +811,7 @@ class AuthController extends Controller
                         'sub_type'   => 'url',
                         'index'      => 0,
                         'parameters' => [
-                            ['type' => 'text', 'text' => (string) $otp],
+                            ['type' => 'text', 'text' => (string) $code],
                         ],
                     ],
                 ],
@@ -850,7 +821,7 @@ class AuthController extends Controller
                 'paramsFallbackValue' => ['FirstName' => 'user'],
             ];
 
-            Log::info('Attempting WhatsApp OTP send via AiSensy', ['phone' => $destination]);
+            Log::info('Attempting WhatsApp send via AiSensy', ['phone' => $destination, 'reason' => $reason]);
 
             $ch = curl_init($this->aisensyApiUrl);
             curl_setopt_array($ch, [
@@ -868,11 +839,11 @@ class AuthController extends Controller
 
             if ($curlErr) {
                 Log::error('AiSensy cURL error', ['error' => $curlErr]);
-                AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $destination, $curlErr);
+                AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $destination, $logPrefix . $curlErr);
                 return false;
             }
 
-            Log::info('AiSensy OTP response', ['status' => $httpCode, 'body' => json_decode($raw, true)]);
+            Log::info('AiSensy response', ['status' => $httpCode, 'body' => json_decode($raw, true)]);
 
             $success = $httpCode >= 200 && $httpCode < 300;
             AuthLog::record(
@@ -881,16 +852,16 @@ class AuthController extends Controller
                 $userId,
                 'whatsapp',
                 $destination,
-                $success ? null : "AiSensy HTTP {$httpCode}"
+                $success ? ($reason ?: null) : "{$logPrefix}AiSensy HTTP {$httpCode}"
             );
 
             return $success;
         } catch (\Exception $e) {
-            Log::error('WhatsApp OTP send failed', [
+            Log::error('WhatsApp send failed', [
                 'phone' => $phone,
                 'error' => $e->getMessage(),
             ]);
-            AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $phone, $e->getMessage());
+            AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $phone, $logPrefix . $e->getMessage());
             return false;
         }
     }
@@ -1034,7 +1005,9 @@ class AuthController extends Controller
         // Set rate limiting
         Cache::put($cacheKey, now(), 60);
 
-        $preferredMethod = $request->method;
+        // Default to whichever channel matches what the user actually typed into `login`
+        // (phone → whatsapp, email → email) when the client doesn't send `method` explicitly.
+        $preferredMethod = $request->input('method') ?? (filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'whatsapp');
         $otpSentVia = 'failed';
 
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
@@ -1958,7 +1931,9 @@ class AuthController extends Controller
             ]
         );
 
-        $preferredMethod = $request->method;
+        // Default to whichever channel matches what the user actually typed into `login`
+        // (phone → whatsapp, email → email) when the client doesn't send `method` explicitly.
+        $preferredMethod = $request->input('method') ?? ($isEmailLogin ? 'email' : 'whatsapp');
         $resetSentVia = 'failed';
 
         if ($preferredMethod === 'whatsapp' && !empty($user->phone)) {
@@ -2054,48 +2029,7 @@ class AuthController extends Controller
      */
     private function sendWhatsAppPasswordReset($phone, $resetCode, ?int $userId = null)
     {
-        try {
-            $phoneNumber = $this->formatPhoneNumber($phone);
-
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => "🔑 إعادة تعيين كلمة المرور - DabApp\n\nرمز التحقق الخاص بك:\n\n*{$resetCode}*\n\n⏳ صالح لمدة 15 دقيقة فقط.\n🔒 لا تشارك هذا الرمز مع أحد.\n\nإذا لم تطلب هذا، تجاهل هذه الرسالة."
-            ];
-
-            Log::info('Attempting WhatsApp password reset send', [
-                'phone' => $phoneNumber,
-                'formatted_phone' => '+' . $phoneNumber
-            ]);
-
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
-
-            Log::info('WhatsApp Password Reset API Response', [
-                'status' => $response->status(),
-                'body' => $response->body()
-            ]);
-
-            $success = $response->successful();
-            AuthLog::record(
-                'otp_whatsapp',
-                $success,
-                $userId,
-                'whatsapp',
-                '+' . $phoneNumber,
-                $success ? 'password_reset' : "password_reset — HTTP {$response->status()}"
-            );
-
-            return $success;
-        } catch (\Exception $e) {
-            Log::error('WhatsApp password reset send failed', [
-                'phone' => $phone,
-                'error' => $e->getMessage()
-            ]);
-            AuthLog::record('otp_whatsapp', false, $userId, 'whatsapp', $phone, 'password_reset — ' . $e->getMessage());
-            return false;
-        }
+        return $this->sendAisensyCode($phone, $resetCode, $userId, 'password_reset');
     }
 
     /**
@@ -2700,7 +2634,7 @@ class AuthController extends Controller
 
         if (!empty($user->phone)) {
             // 1. Send via WhatsApp ONLY (if phone exists)
-            $sent = $this->sendDeletionWhatsApp($user->phone, $otp);
+            $sent = $this->sendDeletionWhatsApp($user->phone, $otp, $user->id);
             if (!$sent) {
                 // Fallback to email if WhatsApp failed
                 try {
@@ -2719,28 +2653,9 @@ class AuthController extends Controller
         }
     }
 
-    private function sendDeletionWhatsApp($phone, $otp)
+    private function sendDeletionWhatsApp($phone, $otp, ?int $userId = null)
     {
-        try {
-            $phoneNumber = $this->formatPhoneNumber($phone);
-
-            $text = "⚠️ تأكيد حذف الحساب - DabApp\n\nرمز التحقق لحذف حسابك:\n\n*{$otp}*\n\n⏳ صالح لمدة 5 دقائق فقط.\n🔒 إذا لم تطلب هذا، تجاهل هذه الرسالة.";
-
-            $payload = [
-                'phonenumber' => '+' . $phoneNumber,
-                'text' => $text
-            ];
-
-            $response = Http::timeout(10)->withHeaders([
-                'Authorization' => "Bearer {$this->whatsappApiToken}",
-                'Content-Type' => 'application/json',
-            ])->post($this->whatsappApiUrl, $payload);
-
-            return $response->successful();
-        } catch (\Exception $e) {
-            Log::error('WhatsApp deletion OTP send failed', ['error' => $e->getMessage()]);
-            return false;
-        }
+        return $this->sendAisensyCode($phone, $otp, $userId, 'account_deletion');
     }
 
     private function sendDeletionConfirmedWhatsApp($phone, $name)

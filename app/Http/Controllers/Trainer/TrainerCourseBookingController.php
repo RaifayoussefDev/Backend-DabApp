@@ -809,7 +809,7 @@ class TrainerCourseBookingController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer", example=1)),
      *     @OA\Response(response=200, description="Session started"),
-     *     @OA\Response(response=400, description="Session not in a startable state / booking not paid"),
+     *     @OA\Response(response=400, description="Session not in a startable state / booking not paid / a prior session isn't completed yet"),
      *     @OA\Response(response=403, description="Not your session")
      * )
      */
@@ -830,6 +830,17 @@ class TrainerCourseBookingController extends Controller
         }
         if ($session->status !== 'scheduled') {
             return response()->json(['success' => false, 'message' => 'Session must be scheduled before it can start'], 400);
+        }
+
+        // Sessions within a course run in order — starting session N while an earlier one is
+        // still scheduled/in-progress would let a trainer skip ahead and complete out of order.
+        $hasIncompletePriorSession = TrainerCourseBookingSession::where('course_booking_id', $session->course_booking_id)
+            ->where('session_number', '<', $session->session_number)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->exists();
+
+        if ($hasIncompletePriorSession) {
+            return response()->json(['success' => false, 'message' => 'Complete the previous session before starting this one'], 400);
         }
 
         $session->update(['status' => 'in_progress', 'started_at' => now()]);

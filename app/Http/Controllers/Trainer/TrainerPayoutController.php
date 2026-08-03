@@ -14,29 +14,23 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 /**
  * @OA\Tag(
  *     name="Trainer Payouts",
- *     description="Trainer-facing: check available balance and request a monthly payout"
+ *     description="Trainer-facing: check available balance and request a payout at any time once the balance clears the minimum threshold"
  * )
  */
 class TrainerPayoutController extends Controller
 {
+    /**
+     * A trainer can request a payout any time — no monthly cadence — but only once their
+     * unpaid balance exceeds this amount. Since a successful request assigns every unpaid
+     * split to the new payout (removing them from the "unassigned" pool), the trainer can't
+     * request the same money twice; they simply need new bookings to push the balance back
+     * over this line before requesting again.
+     */
+    private const MINIMUM_PAYOUT_AMOUNT = 1000;
+
     private function getTrainer(): ?Trainer
     {
         return Trainer::where('user_id', JWTAuth::parseToken()->authenticate()->id)->first();
-    }
-
-    /**
-     * The current calendar-month window used for the one-request-per-month rule.
-     * A rejected ('failed') request doesn't count — its splits are released back to
-     * unassigned on rejection, so blocking a resubmission (e.g. after fixing a typo'd
-     * IBAN) until next month would strand that money for no reason.
-     */
-    private function currentMonthRequest(Trainer $trainer): ?TrainerPayout
-    {
-        return TrainerPayout::where('trainer_id', $trainer->id)
-            ->where('status', '!=', 'failed')
-            ->whereYear('created_at', now()->year)
-            ->whereMonth('created_at', now()->month)
-            ->first();
     }
 
     /**
@@ -68,7 +62,7 @@ class TrainerPayoutController extends Controller
      * @OA\Get(
      *     path="/api/trainer/payouts/balance",
      *     summary="Available balance for payout",
-     *     description="Sums the trainer's unpaid, unassigned booking earnings (both direct sessions and course bookings) — this is what a payout request would cover. Also reports whether a request is allowed this calendar month.",
+     *     description="Sums the trainer's unpaid, unassigned booking earnings (both direct sessions and course bookings) — this is what a payout request would cover. A request is allowed at any time once this balance exceeds the minimum payout threshold (1000 SAR).",
      *     operationId="getTrainerPayoutBalance",
      *     tags={"Trainer Payouts"},
      *     security={{"bearerAuth":{}}},
@@ -78,12 +72,12 @@ class TrainerPayoutController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="balance",          type="number", format="float", example=540.00),
-     *                 @OA\Property(property="currency",         type="string", example="SAR"),
-     *                 @OA\Property(property="bookings_count",   type="integer", example=4),
-     *                 @OA\Property(property="can_request",      type="boolean", example=true),
-     *                 @OA\Property(property="reason",           type="string", nullable=true, example="A payout was already requested this month"),
-     *                 @OA\Property(property="next_request_available_at", type="string", format="date", nullable=true, example="2026-08-01")
+     *                 @OA\Property(property="balance",           type="number", format="float", example=1540.00),
+     *                 @OA\Property(property="currency",          type="string", example="SAR"),
+     *                 @OA\Property(property="bookings_count",    type="integer", example=4),
+     *                 @OA\Property(property="minimum_required",  type="number", format="float", example=1000.00),
+     *                 @OA\Property(property="can_request",       type="boolean", example=true),
+     *                 @OA\Property(property="reason",            type="string", nullable=true, example="Balance must exceed 1000 SAR to request a payout (currently 450 SAR)")
      *             )
      *         )
      *     ),
@@ -98,26 +92,29 @@ class TrainerPayoutController extends Controller
         }
 
         $splits = $this->unassignedSplitsForPrimaryCurrency($trainer);
+        $total = $splits->sum('trainer_amount');
 
-        $existingRequest = $this->currentMonthRequest($trainer);
-
-        $canRequest = !$existingRequest && $splits->sum('trainer_amount') > 0;
+        $canRequest = $total > self::MINIMUM_PAYOUT_AMOUNT;
         $reason = null;
-        if ($existingRequest) {
-            $reason = 'A payout was already requested this month';
-        } elseif ($splits->isEmpty()) {
+        if ($splits->isEmpty()) {
             $reason = 'No available balance to request';
+        } elseif (!$canRequest) {
+            $reason = sprintf(
+                'Balance must exceed %d SAR to request a payout (currently %s SAR)',
+                self::MINIMUM_PAYOUT_AMOUNT,
+                $total
+            );
         }
 
         return response()->json([
             'success' => true,
             'data' => [
-                'balance'                    => (string) $splits->sum('trainer_amount'),
-                'currency'                   => $splits->first()->currency ?? 'SAR',
-                'bookings_count'             => $splits->count(),
-                'can_request'                => $canRequest,
-                'reason'                     => $reason,
-                'next_request_available_at'  => $existingRequest ? now()->addMonthNoOverflow()->startOfMonth()->toDateString() : null,
+                'balance'           => (string) $total,
+                'currency'          => $splits->first()->currency ?? 'SAR',
+                'bookings_count'    => $splits->count(),
+                'minimum_required'  => self::MINIMUM_PAYOUT_AMOUNT,
+                'can_request'       => $canRequest,
+                'reason'            => $reason,
             ],
         ]);
     }
@@ -156,8 +153,8 @@ class TrainerPayoutController extends Controller
     /**
      * @OA\Post(
      *     path="/api/trainer/payouts/request",
-     *     summary="Request the monthly payout",
-     *     description="Consolidates every unpaid, unassigned booking/course-booking earning into one payout request, submitted with the trainer's bank details for the transfer. Limited to one request per calendar month.",
+     *     summary="Request a payout",
+     *     description="Consolidates every unpaid, unassigned booking/course-booking earning into one payout request, submitted with the trainer's bank details for the transfer. Allowed at any time, provided the unassigned balance exceeds the minimum threshold (1000 SAR).",
      *     operationId="requestTrainerPayout",
      *     tags={"Trainer Payouts"},
      *     security={{"bearerAuth":{}}},
@@ -176,7 +173,7 @@ class TrainerPayoutController extends Controller
      *             @OA\Property(property="data",    type="object")
      *         )
      *     ),
-     *     @OA\Response(response=400, description="Already requested this month, or no available balance"),
+     *     @OA\Response(response=400, description="Balance does not exceed the minimum payout threshold"),
      *     @OA\Response(response=403, description="No trainer profile found"),
      *     @OA\Response(response=422, description="Validation error")
      * )
@@ -195,20 +192,9 @@ class TrainerPayoutController extends Controller
 
         try {
             $payout = DB::transaction(function () use ($trainer, $validated) {
-                // Lock this trainer's rows for the duration of the transaction so two
-                // concurrent/double-clicked requests can't both pass the "already
-                // requested this month" check before either has committed a row.
-                $existing = TrainerPayout::where('trainer_id', $trainer->id)
-                    ->where('status', '!=', 'failed')
-                    ->whereYear('created_at', now()->year)
-                    ->whereMonth('created_at', now()->month)
-                    ->lockForUpdate()
-                    ->first();
-
-                if ($existing) {
-                    throw new \RuntimeException('ALREADY_REQUESTED');
-                }
-
+                // Lock this trainer's unassigned splits for the duration of the transaction so
+                // two concurrent/double-clicked requests can't both pass the balance check
+                // before either has committed a row.
                 $splitIds = PaymentSplit::where('trainer_id', $trainer->id)
                     ->unassigned()
                     ->where('status', 'pending')
@@ -230,7 +216,7 @@ class TrainerPayoutController extends Controller
 
                 $splits = $splits->where('currency', $primaryCurrency)->values();
 
-                if ($splits->sum('trainer_amount') <= 0) {
+                if ($splits->sum('trainer_amount') <= self::MINIMUM_PAYOUT_AMOUNT) {
                     throw new \RuntimeException('NO_BALANCE');
                 }
 
@@ -262,8 +248,7 @@ class TrainerPayoutController extends Controller
             });
         } catch (\RuntimeException $e) {
             return match ($e->getMessage()) {
-                'ALREADY_REQUESTED' => response()->json(['success' => false, 'message' => 'A payout was already requested this month'], 400),
-                'NO_BALANCE' => response()->json(['success' => false, 'message' => 'No available balance to request'], 400),
+                'NO_BALANCE' => response()->json(['success' => false, 'message' => sprintf('Balance must exceed %d SAR to request a payout', self::MINIMUM_PAYOUT_AMOUNT)], 400),
                 default => throw $e,
             };
         }

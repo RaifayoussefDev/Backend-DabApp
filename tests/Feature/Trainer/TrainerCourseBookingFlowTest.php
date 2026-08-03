@@ -488,11 +488,10 @@ class TrainerCourseBookingFlowTest extends TestCase
         $courseBooking = $this->createConfirmedCourseBooking(2);
         $sessions = $courseBooking->sessions()->orderBy('session_number')->get();
 
-        foreach ($sessions as $session) {
-            $this->withHeaders($this->auth($this->trainerToken))
-                ->postJson("/api/trainer/course-sessions/{$session->id}/start")
-                ->assertStatus(200);
-        }
+        // Sessions run in order — start/complete session 1 fully before session 2 can start.
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[0]->id}/start")
+            ->assertStatus(200);
 
         $first = $this->withHeaders($this->auth($this->trainerToken))
             ->postJson("/api/trainer/course-sessions/{$sessions[0]->id}/complete", ['otp' => $sessions[0]->completion_otp]);
@@ -500,11 +499,48 @@ class TrainerCourseBookingFlowTest extends TestCase
 
         $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'in_progress']);
 
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[1]->id}/start")
+            ->assertStatus(200);
+
         $second = $this->withHeaders($this->auth($this->trainerToken))
             ->postJson("/api/trainer/course-sessions/{$sessions[1]->id}/complete", ['otp' => $sessions[1]->completion_otp]);
         $second->assertStatus(200);
 
         $this->assertDatabaseHas('trainer_course_bookings', ['id' => $courseBooking->id, 'status' => 'completed']);
+    }
+
+    public function test_trainer_cannot_start_session_while_a_prior_session_is_incomplete()
+    {
+        $courseBooking = $this->createConfirmedCourseBooking(3);
+        $sessions = $courseBooking->sessions()->orderBy('session_number')->get();
+
+        // Session 1 is still 'scheduled' (never started) — session 2 must not be startable.
+        $blocked = $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[1]->id}/start");
+        $blocked->assertStatus(400)->assertJsonPath('message', 'Complete the previous session before starting this one');
+
+        // Start session 1 but don't complete it — session 2 must still be blocked.
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[0]->id}/start")
+            ->assertStatus(200);
+
+        $stillBlocked = $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[1]->id}/start");
+        $stillBlocked->assertStatus(400);
+
+        // Complete session 1 → session 2 becomes startable, session 3 is still blocked.
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[0]->id}/complete", ['otp' => $sessions[0]->completion_otp])
+            ->assertStatus(200);
+
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[1]->id}/start")
+            ->assertStatus(200);
+
+        $this->withHeaders($this->auth($this->trainerToken))
+            ->postJson("/api/trainer/course-sessions/{$sessions[2]->id}/start")
+            ->assertStatus(400);
     }
 
     public function test_other_trainer_cannot_manage_course_session()
