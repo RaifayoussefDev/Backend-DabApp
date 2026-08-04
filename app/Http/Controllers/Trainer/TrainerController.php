@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\EquipmentType;
 use App\Models\MyGarage;
+use App\Models\PaymentSplit;
 use App\Models\Trainer;
 use App\Models\TrainerEquipment;
 use App\Models\TrainerLevelApproval;
@@ -716,11 +717,17 @@ class TrainerController extends Controller
             return response()->json(['success' => false, 'message' => 'No trainer profile found'], 404);
         }
 
+        $unassignedSplits = PaymentSplit::where('trainer_id', $trainer->id)
+            ->unassigned()
+            ->where('status', 'pending')
+            ->get();
+
         $stats = [
-            'total_bookings'   => $trainer->bookings()->count(),
-            'pending_bookings' => $trainer->bookings()->pending()->count(),
-            'total_earnings'   => $trainer->payouts()->where('status', 'paid')->sum('amount'),
-            'pending_payout'   => $trainer->payouts()->where('status', 'pending')->sum('amount'),
+            'total_bookings'      => $trainer->bookings()->count(),
+            'pending_bookings'    => $trainer->bookings()->pending()->count(),
+            'total_earnings'      => $trainer->payouts()->where('status', 'paid')->sum('amount'),
+            'pending_payout'      => $trainer->payouts()->where('status', 'pending')->sum('amount'),
+            'available_to_payout' => (string) $unassignedSplits->sum('trainer_amount'),
         ];
 
         // Group level approvals by status for easy frontend consumption

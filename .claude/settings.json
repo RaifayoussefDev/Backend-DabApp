@@ -20,7 +20,16 @@
       "Bash(php -l app/Http/Controllers/Trainer/AdminTrainerController.php)",
       "Bash(php -l app/Http/Controllers/Trainer/AdminCommissionController.php)",
       "Bash(php -l app/Http/Controllers/Trainer/AdminPayoutController.php)",
-      "Bash(php -l routes/api.php)"
+      "Bash(php -l routes/api.php)",
+      "Bash(xargs grep -liE \"otp|verif\")",
+      "Bash(php artisan *)",
+      "Bash(/c/xampp/mysql/bin/mysqladmin.exe -u root status)",
+      "Read(//c/xampp/mysql/bin//**)",
+      "Read(//c/Users/Raifa Youssef/.ssh/**)",
+      "Bash(awk '{print $1}')",
+      "Bash(python3 -c \"import datetime; print\\(datetime.datetime.utcfromtimestamp\\(1766241854\\)\\)\")",
+      "Bash(python3 -c \"import datetime; print\\(datetime.datetime.utcfromtimestamp\\(1777839530\\)\\)\")",
+      "Bash(awk 'NR>=1 && NR<=2100 && /Route::\\(prefix|middleware\\)\\\\\\(.admin/' routes/api.php)"
     ]
   }
 }

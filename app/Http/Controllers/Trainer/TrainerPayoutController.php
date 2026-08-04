@@ -109,12 +109,13 @@ class TrainerPayoutController extends Controller
         return response()->json([
             'success' => true,
             'data' => [
-                'balance'           => (string) $total,
-                'currency'          => $splits->first()->currency ?? 'SAR',
-                'bookings_count'    => $splits->count(),
-                'minimum_required'  => self::MINIMUM_PAYOUT_AMOUNT,
-                'can_request'       => $canRequest,
-                'reason'            => $reason,
+                'balance'             => (string) $total,
+                'available_to_payout' => (string) $total,
+                'currency'            => $splits->first()->currency ?? 'SAR',
+                'bookings_count'      => $splits->count(),
+                'minimum_required'    => self::MINIMUM_PAYOUT_AMOUNT,
+                'can_request'         => $canRequest,
+                'reason'              => $reason,
             ],
         ]);
     }
@@ -140,8 +141,17 @@ class TrainerPayoutController extends Controller
 
         $payouts = TrainerPayout::where('trainer_id', $trainer->id)
             ->withCount('splits')
+            ->with('splits')
             ->latest()
             ->paginate($request->get('per_page', 20));
+
+        $payouts->getCollection()->transform(function (TrainerPayout $payout) {
+            $splits = collect($payout->displaySplits());
+            $payout->gross_amount      = (string) $splits->sum('total_amount');
+            $payout->commission_amount = (string) $splits->sum('commission_amount');
+            $payout->net_amount        = (string) $payout->amount;
+            return $payout;
+        });
 
         return response()->json([
             'success' => true,
