@@ -487,6 +487,64 @@ class NotificationService
     }
 
     /**
+     * Notification: POI approuvé
+     */
+    public function notifyPoiApproved(User $user, $poi): array
+    {
+        return $this->sendToUser($user, 'poi_approved', [
+            'poi_id' => $poi->id,
+            'poi_name' => $poi->name,
+        ], [
+            'entity' => $poi,
+            'priority' => 'high',
+        ]);
+    }
+
+    /**
+     * Notification: POI rejeté
+     */
+    public function notifyPoiRejected(User $user, $poi, string $reason = null): array
+    {
+        return $this->sendToUser($user, 'poi_rejected', [
+            'poi_id' => $poi->id,
+            'poi_name' => $poi->name,
+            'rejection_reason' => $reason,
+        ], [
+            'entity' => $poi,
+            'priority' => 'high',
+        ]);
+    }
+
+    /**
+     * Notification: Route approuvée
+     */
+    public function notifyRouteApproved(User $user, $route): array
+    {
+        return $this->sendToUser($user, 'route_approved', [
+            'route_id' => $route->id,
+            'route_title' => $route->title,
+        ], [
+            'entity' => $route,
+            'priority' => 'high',
+        ]);
+    }
+
+    /**
+     * Notification: Route rejetée
+     */
+    public function notifyRouteRejected(User $user, $route, string $reason = null): array
+    {
+        return $this->sendToUser($user, 'route_rejected', [
+            'route_id' => $route->id,
+            'route_title' => $route->title,
+            'rejection_reason' => $reason,
+        ], [
+            'entity' => $route,
+            'priority' => 'high',
+        ]);
+    }
+
+    /**
      * Notification: Nouveau message sur un listing
      */
     public function notifyListingMessage(User $user, $listing, $sender): array

@@ -296,6 +296,7 @@ Route::prefix('admin')->group(function () {
         Route::apiResource('listings', AdminListingController::class);
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
+        Route::get('/listings/{id}/images/{image_id}/download', [AdminListingController::class, 'downloadImage']);
 
         // Subscriptions Management
         Route::get('/subscriptions/stats', [AdminSubscriptionController::class, 'statistics']); // Must be before {id}
@@ -348,6 +349,8 @@ Route::prefix('admin')->group(function () {
 
         // Points of Interest
         Route::get('/pois/stats/overview', [AdminPointOfInterestController::class, 'stats']);
+        Route::post('/pois/{id}/approve', [AdminPointOfInterestController::class, 'approve']);
+        Route::post('/pois/{id}/reject', [AdminPointOfInterestController::class, 'reject']);
         Route::apiResource('pois', AdminPointOfInterestController::class);
 
         // POI Reports
@@ -406,6 +409,8 @@ Route::prefix('admin')->group(function () {
 
         // Routes
         Route::get('/routes/stats/overview', [AdminRouteController::class, 'stats']);
+        Route::post('/routes/{id}/approve', [AdminRouteController::class, 'approve']);
+        Route::post('/routes/{id}/reject', [AdminRouteController::class, 'reject']);
         Route::apiResource('routes', AdminRouteController::class);
 
         // Route Categories

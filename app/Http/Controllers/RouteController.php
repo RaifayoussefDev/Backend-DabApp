@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\PointOfInterest;
 use App\Models\Route;
 use App\Models\RouteWaypoint;
 use Illuminate\Http\Request;
@@ -69,6 +70,14 @@ class RouteController extends Controller
             $query->featured();
         }
 
+        // "My Routes" — the creator's own list, including drafts/rejected pending review.
+        if ($request->boolean('mine')) {
+            if (!auth()->check()) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+            $query->where('created_by', auth()->id());
+        }
+
         $routes = $query->latest()->paginate(20);
 
         // Ajouter le starter_point à chaque route
@@ -108,9 +117,66 @@ class RouteController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Simplified "start POI + end POI only" creation path used by the public
+        // website's user-facing POI/Route feature — the client sends start_poi_id/
+        // end_poi_id instead of a raw waypoints array. We validate both POIs belong
+        // to the caller, build the 2-waypoint array internally, and force the route
+        // into 'draft' below so it needs admin approval before going live. The
+        // legacy full-waypoints path (mobile app, admin) is untouched.
+        $isSimpleRoute = $request->has('start_poi_id') || $request->has('end_poi_id');
+
+        if ($isSimpleRoute) {
+            $poiValidator = Validator::make($request->all(), [
+                'start_poi_id' => 'required|integer|different:end_poi_id|exists:points_of_interest,id',
+                'end_poi_id' => 'required|integer|exists:points_of_interest,id',
+            ]);
+
+            if ($poiValidator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $poiValidator->errors(),
+                ], 422);
+            }
+
+            $pois = PointOfInterest::whereIn('id', [$request->start_poi_id, $request->end_poi_id])
+                ->where('owner_id', auth()->id())
+                ->get()
+                ->keyBy('id');
+
+            if ($pois->count() !== 2) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You can only build a route from your own points of interest.',
+                ], 403);
+            }
+
+            $startPoi = $pois[$request->start_poi_id];
+            $endPoi = $pois[$request->end_poi_id];
+
+            $request->merge([
+                'description' => $request->input('description', ''),
+                'waypoints' => [
+                    [
+                        'name' => $startPoi->name,
+                        'latitude' => $startPoi->latitude,
+                        'longitude' => $startPoi->longitude,
+                        'waypoint_type' => 'start',
+                        'poi_id' => $startPoi->id,
+                    ],
+                    [
+                        'name' => $endPoi->name,
+                        'latitude' => $endPoi->latitude,
+                        'longitude' => $endPoi->longitude,
+                        'waypoint_type' => 'end',
+                        'poi_id' => $endPoi->id,
+                    ],
+                ],
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'description' => $isSimpleRoute ? 'nullable|string' : 'required|string',
             'category_id' => 'nullable|exists:route_categories,id',
             'difficulty' => 'nullable|in:easy,moderate,difficult,expert',
             'estimated_duration' => 'nullable|string|max:50',
@@ -137,9 +203,13 @@ class RouteController extends Controller
 
         DB::beginTransaction();
         try {
-            $routeData = $request->except(['waypoints', 'tags']);
+            $routeData = $request->except(['waypoints', 'tags', 'start_poi_id', 'end_poi_id']);
             $routeData['slug'] = Str::slug($request->title) . '-' . time();
             $routeData['created_by'] = auth()->id();
+
+            if ($isSimpleRoute) {
+                $routeData['status'] = 'draft';
+            }
 
             // Calculate total distance
             $totalDistance = $this->calculateTotalDistance($request->waypoints);

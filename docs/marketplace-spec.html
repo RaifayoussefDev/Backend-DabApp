@@ -1,0 +1,576 @@
+<title>Marketplace Module</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#f1efea;
+    --surface:#ffffff;
+    --surface-2:#e9e6df;
+    --ink:#1c1b19;
+    --ink-soft:#5c584f;
+    --ink-faint:#8a8578;
+    --line:#d8d3c8;
+    --accent:#c8391f;
+    --accent-ink:#ffffff;
+    --accent-soft:#f5ded8;
+    --good:#3d6b46;
+    --good-soft:#e1ebe0;
+    --info:#39628a;
+    --info-soft:#dfe7ee;
+    --code-bg:#26241f;
+    --code-ink:#e9e4d8;
+    --shadow: 0 1px 2px rgba(28,27,25,0.06), 0 6px 20px rgba(28,27,25,0.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#171613;
+      --surface:#1f1e1a;
+      --surface-2:#26241f;
+      --ink:#efece4;
+      --ink-soft:#b6b0a2;
+      --ink-faint:#847e70;
+      --line:#33312a;
+      --accent:#ff7452;
+      --accent-ink:#1a1512;
+      --accent-soft:#3a241d;
+      --good:#7fbf8a;
+      --good-soft:#243027;
+      --info:#8db3d9;
+      --info-soft:#212d38;
+      --code-bg:#0f0e0c;
+      --code-ink:#e9e4d8;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#171613;
+    --surface:#1f1e1a;
+    --surface-2:#26241f;
+    --ink:#efece4;
+    --ink-soft:#b6b0a2;
+    --ink-faint:#847e70;
+    --line:#33312a;
+    --accent:#ff7452;
+    --accent-ink:#1a1512;
+    --accent-soft:#3a241d;
+    --good:#7fbf8a;
+    --good-soft:#243027;
+    --info:#8db3d9;
+    --info-soft:#212d38;
+    --code-bg:#0f0e0c;
+    --code-ink:#e9e4d8;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 30px rgba(0,0,0,0.35);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    font-size:16px;
+    line-height:1.6;
+  }
+  ::selection{ background:var(--accent-soft); color:var(--ink); }
+
+  a{ color:var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  h1,h2,h3,h4{ font-family:"Oswald", ui-sans-serif, system-ui, sans-serif; font-weight:600; text-wrap:balance; color:var(--ink); margin:0; }
+
+  .eyebrow{
+    font-family:"IBM Plex Mono", ui-monospace, monospace;
+    font-size:0.72rem;
+    letter-spacing:0.11em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+
+  code, .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; }
+
+  /* ---------- shell ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns: 258px minmax(0,1fr);
+    max-width:1280px;
+    margin:0 auto;
+  }
+  @media (max-width: 920px){
+    .shell{ grid-template-columns: 1fr; }
+    .toc{ position:static; border-right:none; border-bottom:1px solid var(--line); height:auto; }
+  }
+
+  /* ---------- header ---------- */
+  .titlebar{
+    max-width:1280px;
+    margin:0 auto;
+    padding: 2.6rem clamp(1.25rem,3vw,2.5rem) 1.6rem;
+    border-bottom:1px solid var(--line);
+    display:flex; flex-direction:column; gap:0.9rem;
+  }
+  .titlebar .doc-id{ display:flex; align-items:center; gap:0.6rem; }
+  .titlebar .doc-id .mark{
+    width:34px;height:34px; border-radius:7px;
+    background:var(--accent); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:"Oswald"; font-weight:700; font-size:1.1rem;
+  }
+  .titlebar h1{ font-size:clamp(1.9rem, 3.4vw, 2.6rem); letter-spacing:-0.01em; }
+  .titlebar .sub{ color:var(--ink-soft); max-width:62ch; font-size:1.02rem; }
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:0.5rem 1.6rem;
+    font-family:"IBM Plex Mono"; font-size:0.78rem; color:var(--ink-faint);
+    margin-top:0.3rem;
+  }
+  .meta-row b{ color:var(--ink-soft); font-weight:500; }
+
+  /* ---------- toc ---------- */
+  .toc{
+    position:sticky; top:0; align-self:start; height:100vh;
+    overflow-y:auto;
+    border-right:1px solid var(--line);
+    padding: 1.8rem 1.1rem 2rem;
+  }
+  .toc .toc-label{ padding:0 0.6rem 0.7rem; }
+  .toc ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:0.1rem; }
+  .toc li a{
+    display:flex; gap:0.55rem;
+    padding:0.42rem 0.6rem; border-radius:6px;
+    color:var(--ink-soft); text-decoration:none; font-size:0.88rem;
+    line-height:1.35;
+  }
+  .toc li a:hover{ background:var(--surface-2); color:var(--ink); }
+  .toc li a .n{ font-family:"IBM Plex Mono"; color:var(--ink-faint); font-size:0.78rem; min-width:1.6em; }
+  .toc .sub-list a{ padding-left:1.8rem; font-size:0.83rem; }
+
+  /* ---------- main ---------- */
+  main{ padding: 2.4rem clamp(1.25rem,3vw,3rem) 5rem; min-width:0; }
+  section{ padding-top:2.6rem; margin-top:2.6rem; border-top:1px solid var(--line); scroll-margin-top:1.5rem; }
+  section:first-of-type{ border-top:none; margin-top:0; padding-top:0; }
+
+  .sec-head{ display:flex; align-items:baseline; gap:0.85rem; margin-bottom:0.4rem; }
+  .sec-head .num{ font-family:"IBM Plex Mono"; color:var(--accent); font-size:1rem; }
+  .sec-head h2{ font-size:1.5rem; }
+  section > .sec-intro{ color:var(--ink-soft); max-width:70ch; margin-top:0.7rem; }
+
+  h3.sub{ font-size:1.08rem; margin-top:2rem; margin-bottom:0.7rem; display:flex; align-items:baseline; gap:0.6rem;}
+  h3.sub .num{ font-family:"IBM Plex Mono"; color:var(--ink-faint); font-size:0.85rem; }
+
+  p{ max-width:70ch; margin:0.8rem 0; color:var(--ink); }
+  p.lede{ color:var(--ink-soft); }
+
+  ul.feature-list{ margin:0.8rem 0; padding-left:1.15rem; max-width:70ch; }
+  ul.feature-list li{ margin:0.4rem 0; }
+  ul.feature-list li b{ font-weight:600; }
+
+  /* ---------- status chips ---------- */
+  .chip{
+    display:inline-flex; align-items:center; gap:0.35rem;
+    font-family:"IBM Plex Mono"; font-size:0.72rem; letter-spacing:0.02em;
+    padding:0.15rem 0.55rem; border-radius:99px; font-weight:500;
+    white-space:nowrap;
+  }
+  .chip.new{ background:var(--accent-soft); color:var(--accent); }
+  .chip.extend{ background:var(--info-soft); color:var(--info); }
+  .chip.reuse{ background:var(--good-soft); color:var(--good); }
+
+  /* ---------- tables ---------- */
+  .table-wrap{ overflow-x:auto; margin:1.1rem 0; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--shadow); }
+  table{ border-collapse:collapse; width:100%; min-width:560px; font-size:0.9rem; }
+  thead th{
+    text-align:left; font-family:"IBM Plex Mono"; font-weight:500; font-size:0.72rem;
+    letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-faint);
+    padding:0.75rem 1rem; border-bottom:1px solid var(--line); background:var(--surface-2);
+    white-space:nowrap;
+  }
+  tbody td{ padding:0.72rem 1rem; border-bottom:1px solid var(--line); vertical-align:top; color:var(--ink-soft); }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody td:first-child{ color:var(--ink); font-weight:500; }
+  td.num-cell, th.num-cell{ font-family:"IBM Plex Mono"; font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap; }
+
+  /* ---------- code / endpoint blocks ---------- */
+  .endpoint-group{ margin:1rem 0; }
+  .endpoint-group h4{ font-family:"IBM Plex Mono"; font-size:0.82rem; color:var(--ink-soft); font-weight:500; margin-bottom:0.5rem; }
+  pre{
+    background:var(--code-bg); color:var(--code-ink);
+    border-radius:10px; padding:1rem 1.2rem; overflow-x:auto;
+    font-family:"IBM Plex Mono"; font-size:0.83rem; line-height:1.65; margin:0.5rem 0;
+  }
+  pre .verb{ color:#ff9d7a; }
+  pre .cmt{ color:#8a8575; }
+
+  /* ---------- screen inventory grid ---------- */
+  .screen-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:0.7rem; margin:1.1rem 0; }
+  .screen-card{
+    border:1px solid var(--line); border-radius:9px; padding:0.75rem 0.85rem;
+    background:var(--surface); box-shadow:var(--shadow);
+  }
+  .screen-card .flow{ font-family:"IBM Plex Mono"; font-size:0.68rem; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-faint); }
+  .screen-card .name{ font-weight:600; margin-top:0.15rem; font-size:0.93rem; }
+  .screen-card .desc{ color:var(--ink-soft); font-size:0.82rem; margin-top:0.25rem; }
+
+  /* ---------- timeline ---------- */
+  .phase-card{
+    border:1px solid var(--line); border-radius:10px; padding:1.1rem 1.3rem;
+    margin:1rem 0; background:var(--surface); box-shadow:var(--shadow);
+  }
+  .phase-card .phase-top{ display:flex; justify-content:space-between; align-items:baseline; gap:1rem; flex-wrap:wrap; }
+  .phase-card h4{ font-family:"Oswald"; font-size:1.05rem; }
+  .phase-card .weeks{ font-family:"IBM Plex Mono"; color:var(--accent); font-size:0.85rem; }
+  .stream-bars{ display:flex; flex-direction:column; gap:0.4rem; margin-top:0.8rem; }
+  .stream-bar{ display:grid; grid-template-columns:88px 1fr 2.4rem; align-items:center; gap:0.6rem; }
+  .stream-bar .label{ font-family:"IBM Plex Mono"; font-size:0.74rem; color:var(--ink-faint); }
+  .stream-bar .track{ background:var(--surface-2); border-radius:4px; height:8px; overflow:hidden; }
+  .stream-bar .fill{ height:100%; border-radius:4px; background:var(--accent); }
+  .stream-bar .fill.fe{ background:var(--info); }
+  .stream-bar .fill.mob{ background:var(--good); }
+  .stream-bar .val{ font-family:"IBM Plex Mono"; font-size:0.76rem; color:var(--ink-soft); text-align:right; }
+
+  .total-banner{
+    display:flex; flex-wrap:wrap; gap:2rem; align-items:baseline;
+    background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+    padding:1.2rem 1.4rem; margin-top:1.2rem;
+  }
+  .total-banner .stat{ display:flex; flex-direction:column; gap:0.2rem; }
+  .total-banner .stat .k{ font-family:"IBM Plex Mono"; font-size:0.7rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-faint); }
+  .total-banner .stat .v{ font-family:"Oswald"; font-size:1.5rem; color:var(--ink); }
+  .total-banner .stat .v small{ font-family:"IBM Plex Sans"; font-size:0.95rem; color:var(--ink-soft); font-weight:400; }
+
+  /* ---------- risk list ---------- */
+  .risk{
+    display:grid; grid-template-columns: 1.1rem 1fr; gap:0.7rem;
+    padding:0.85rem 0; border-bottom:1px solid var(--line);
+  }
+  .risk:last-child{ border-bottom:none; }
+  .risk .dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:0.5rem; }
+  .risk .t{ font-weight:600; }
+  .risk .d{ color:var(--ink-soft); font-size:0.92rem; margin-top:0.15rem; }
+
+  footer{ padding:2rem clamp(1.25rem,3vw,3rem) 3rem; color:var(--ink-faint); font-size:0.82rem; border-top:1px solid var(--line); max-width:1280px; margin:0 auto; }
+</style>
+
+<div class="titlebar">
+  <div class="doc-id">
+    <div class="mark">DA</div>
+    <span class="eyebrow">DabApp &nbsp;·&nbsp; Functional &amp; Technical Specification</span>
+  </div>
+  <h1>Marketplace Module</h1>
+  <p class="sub">Multi-vendor buying and selling of motorcycles, spare parts, tyres and accessories inside DabApp — built on top of the existing Listing, Soom and payment infrastructure rather than beside it.</p>
+  <div class="meta-row">
+    <span><b>Status</b> Draft v1</span>
+    <span><b>Date</b> 2026-08-23</span>
+    <span><b>Owner</b> Product / Engineering</span>
+    <span><b>Scope</b> Backend · Mobile · Admin</span>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="eyebrow toc-label">Contents</div>
+    <ol>
+      <li><a href="#s1"><span class="n">1</span>Purpose &amp; scope</a></li>
+      <li><a href="#s2"><span class="n">2</span>Platform baseline</a></li>
+      <li><a href="#s3"><span class="n">3</span>Functional requirements</a></li>
+      <ul class="sub-list" style="list-style:none;padding:0;margin:0;">
+        <li><a href="#s3-1">3.1 Shops</a></li>
+        <li><a href="#s3-2">3.2 Catalog &amp; fitment search</a></li>
+        <li><a href="#s3-3">3.3 Product &amp; variants</a></li>
+        <li><a href="#s3-4">3.4 Filters, sort &amp; search</a></li>
+        <li><a href="#s3-5">3.5 Reviews &amp; ratings</a></li>
+        <li><a href="#s3-6">3.6 Cart, checkout &amp; orders</a></li>
+        <li><a href="#s3-7">3.7 Payments &amp; wallet</a></li>
+        <li><a href="#s3-8">3.8 Messaging</a></li>
+        <li><a href="#s3-9">3.9 Notifications</a></li>
+        <li><a href="#s3-10">3.10 Admin console</a></li>
+      </ul>
+      <li><a href="#s4"><span class="n">4</span>Mobile screen inventory</a></li>
+      <li><a href="#s5"><span class="n">5</span>Backend architecture</a></li>
+      <li><a href="#s6"><span class="n">6</span>Non-functional requirements</a></li>
+      <li><a href="#s7"><span class="n">7</span>Delivery plan &amp; timeline</a></li>
+      <li><a href="#s8"><span class="n">8</span>Risks &amp; open questions</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="s1">
+      <div class="sec-head"><span class="num">1</span><h2>Purpose &amp; scope</h2></div>
+      <p class="sec-intro">DabApp currently lets a user publish a <code>Listing</code> (motorcycle, spare part or license plate) and negotiate its sale through <code>Soom</code> offers or an auction. There is no concept of a <b>storefront</b>, a <b>cart</b>, an <b>order</b>, or a <b>seller wallet</b> — a buyer cannot browse several sellers' catalogs, filter by vehicle compatibility, and check out. This document specifies the Marketplace module that adds that layer, reusing the existing catalog, payment and negotiation infrastructure wherever possible instead of duplicating it.</p>
+      <p>The scope covers backend (Laravel API), the buyer- and seller-facing mobile app, and the admin console. It excludes physical shipping/logistics integration, which is flagged as an open question in §8.</p>
+    </section>
+
+    <section id="s2">
+      <div class="sec-head"><span class="num">2</span><h2>Platform baseline</h2></div>
+      <p class="sec-intro">What the Marketplace module inherits from the existing codebase, and what it must add. This baseline is what keeps the estimate in §7 realistic — most of the catalog and payment plumbing already exists.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Capability</th><th>Existing asset</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Product catalog</td><td>Listing, ListingType, Category, ListingImage</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>Vehicle taxonomy</td><td>MotorcycleBrand / Model / Type / Year</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>Offers &amp; auctions</td><td>SoomNegotiation, AuctionHistory</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>Payment gateway</td><td>PayTabs integration, Payment model</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>Commission split</td><td>CommissionSetting, PaymentSplit</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>Roles / permissions</td><td>Role, Permission, RolePermission</td><td><span class="chip reuse">reuse</span></td></tr>
+            <tr><td>"Become an X" onboarding</td><td>ServiceProvider / become-provider pattern</td><td><span class="chip extend">extend</span> → become-seller</td></tr>
+            <tr><td>1:1 messaging</td><td>chat-sessions (Services domain)</td><td><span class="chip extend">extend</span> → generalize</td></tr>
+            <tr><td>Ratings</td><td>Review pattern (Trainer / Route / POI)</td><td><span class="chip extend">extend</span> → ProductReview</td></tr>
+            <tr><td>Vendor storefront</td><td>—</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Cart / checkout / orders</td><td>—</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Seller wallet</td><td>—</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Product variants &amp; fitment</td><td>—</td><td><span class="chip new">new</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="s3">
+      <div class="sec-head"><span class="num">3</span><h2>Functional requirements</h2></div>
+      <p class="sec-intro">Grouped by module. Each reflects both the approved UI reference (shop directory, vehicle-fit search, faceted filters, product detail with variants, tyre specs, reviews) and the transaction layer it currently lacks (cart, checkout, orders, wallet).</p>
+
+      <h3 class="sub" id="s3-1"><span class="num">3.1</span>Shops <span class="chip new">new</span></h3>
+      <ul class="feature-list">
+        <li><b>Become a seller</b> — a user opens a shop from their profile (name, logo, banner, description, pickup location), mirroring the existing become-provider flow. Goes to <code>pending</code> until admin approval.</li>
+        <li><b>Shop directory</b> — "All Shops" grid, searchable, sortable by rating / newest / most listings.</li>
+        <li><b>Shop page</b> — banner, aggregate rating, all active listings, follow/favorite a shop.</li>
+        <li><b>Shop dashboard (seller side)</b> — active listings, pending orders, wallet balance, review inbox.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-2"><span class="num">3.2</span>Catalog &amp; vehicle-fitment search <span class="chip new">new</span></h3>
+      <ul class="feature-list">
+        <li><b>Browse entry points</b> — Marketplace home with featured items, "All Accessories", "All Bike Types", "All Brands" shortcuts.</li>
+        <li><b>Search by vehicle</b> — a guided Brand → Model → Year stepper that narrows results to parts confirmed compatible with the selected bike, reusing the existing motorcycle taxonomy.</li>
+        <li><b>Fitment badge</b> — any product screen shows "Fits your bike" when the buyer has a garage vehicle saved (ties into the existing MyGarage model).</li>
+      </ul>
+
+      <h3 class="sub" id="s3-3"><span class="num">3.3</span>Product &amp; variants <span class="chip new">new</span></h3>
+      <ul class="feature-list">
+        <li><b>Product detail</b> — description, image gallery, price, shop link, tabbed sections for Part Numbers and Size &amp; Fit.</li>
+        <li><b>Variants</b> — size / color / part-number combinations under one listing, each with its own stock and optional price delta.</li>
+        <li><b>Category-specific specs</b> — e.g. tyres carry width, aspect ratio, rim diameter, load index and speed rating as a dedicated spec block and filter set.</li>
+        <li><b>Add to cart / Buy now</b> — both actions available from the product page.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-4"><span class="num">3.4</span>Filters, sort &amp; search <span class="chip new">new</span></h3>
+      <ul class="feature-list">
+        <li><b>Faceted filters</b> — shop, price range, ship-from location, color, brand, size, rating; facets are configurable per category rather than hard-coded.</li>
+        <li><b>Sort</b> — relevance, price asc/desc, rating, newest.</li>
+        <li><b>Empty / no-results states</b> — distinct messaging for "nothing published yet" vs. "no match for current filters," with a one-tap filter reset.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-5"><span class="num">3.5</span>Reviews &amp; ratings <span class="chip extend">extend</span></h3>
+      <ul class="feature-list">
+        <li><b>Product reviews</b> — star rating, text, optional photos, generalized from the existing Trainer/Route/POI review pattern.</li>
+        <li><b>Helpful vote</b> and <b>report review</b> (flags suspected fake reviews for moderation, per the reference design).</li>
+        <li><b>Shop rating</b> — rolls up from product reviews on that shop's listings.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-6"><span class="num">3.6</span>Cart, checkout &amp; orders <span class="chip new">new</span></h3>
+      <ul class="feature-list">
+        <li><b>Cart</b> — persists per user, supports mixed items from multiple shops, quantity edit, remove, live total.</li>
+        <li><b>Checkout</b> — address / pickup point selection, payment method (saved card via existing BankCard, or PayTabs redirect), promo code (reuses PromoCode), order summary with commission-aware total.</li>
+        <li><b>Order splitting</b> — one checkout can produce several <code>Order</code> records, one per shop, each with its own fulfillment status.</li>
+        <li><b>Order lifecycle</b> — pending → paid → preparing → ready for pickup / shipped → completed → (cancelled / disputed), visible to both buyer and seller.</li>
+        <li><b>Order history</b> — buyer order list with status and reorder; seller order queue with fulfillment actions.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-7"><span class="num">3.7</span>Payments, commission &amp; wallet <span class="chip extend">extend</span></h3>
+      <ul class="feature-list">
+        <li><b>Checkout payment</b> — reuses PayTabs create/callback flow already wired for listing payments.</li>
+        <li><b>Commission</b> — reuses CommissionSetting / PaymentSplit to take a marketplace cut per order line.</li>
+        <li><b>Seller wallet</b> <span class="chip new">new</span> — running balance credited on order completion, debited on payout request; payout request/approval flow mirrors the existing TrainerPayout admin pipeline.</li>
+        <li><b>Refunds</b> <span class="chip new">new</span> — full/partial refund tied to order cancellation or dispute resolution.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-8"><span class="num">3.8</span>Buyer–seller messaging <span class="chip extend">extend</span></h3>
+      <ul class="feature-list">
+        <li>Generalizes the existing service chat-sessions into a per-order or per-listing conversation thread, so a buyer can ask a seller about fit or availability before purchasing.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-9"><span class="num">3.9</span>Notifications <span class="chip reuse">reuse</span></h3>
+      <ul class="feature-list">
+        <li>Order status changes, new message, review received, payout processed — all routed through the existing notification-token / template / preference system.</li>
+      </ul>
+
+      <h3 class="sub" id="s3-10"><span class="num">3.10</span>Admin console <span class="chip extend">extend</span></h3>
+      <ul class="feature-list">
+        <li><b>Shop moderation</b> — approve/suspend shops, view shop-level metrics.</li>
+        <li><b>Category &amp; facet configuration</b> — define which filters/spec fields apply per category (e.g. tyre specs).</li>
+        <li><b>Order &amp; dispute management</b> — view all orders, intervene on disputes, trigger refunds.</li>
+        <li><b>Review moderation queue</b> — act on reported/fake reviews.</li>
+        <li><b>Commission &amp; payout management</b> — reuses AdminCommissionController / AdminPayoutController patterns.</li>
+      </ul>
+    </section>
+
+    <section id="s4">
+      <div class="sec-head"><span class="num">4</span><h2>Mobile screen inventory</h2></div>
+      <p class="sec-intro">Mapped directly from the approved reference flow — 20 screens, already sequenced, ready to break into tickets without further UX discovery.</p>
+      <div class="screen-grid">
+        <div class="screen-card"><div class="flow">Home</div><div class="name">Home</div><div class="desc">Entry point with categories &amp; featured items</div></div>
+        <div class="screen-card"><div class="flow">Home</div><div class="name">Marketplace — New</div><div class="desc">Featured + filters landing</div></div>
+        <div class="screen-card"><div class="flow">Home</div><div class="name">All Shops</div><div class="desc">Shop directory</div></div>
+        <div class="screen-card"><div class="flow">Home</div><div class="name">All Accessories</div><div class="desc">Category shortcut</div></div>
+        <div class="screen-card"><div class="flow">Home</div><div class="name">All Bike Types</div><div class="desc">Category shortcut</div></div>
+        <div class="screen-card"><div class="flow">Home</div><div class="name">All Brands</div><div class="desc">Category shortcut</div></div>
+        <div class="screen-card"><div class="flow">Search</div><div class="name">Searching by vehicle</div><div class="desc">Brand → Model → Year stepper (4–5 screens)</div></div>
+        <div class="screen-card"><div class="flow">Results</div><div class="name">Sort by</div><div class="desc">Modal, any product screen</div></div>
+        <div class="screen-card"><div class="flow">Results</div><div class="name">Empty state</div><div class="desc">Any product screen, no listings</div></div>
+        <div class="screen-card"><div class="flow">Results</div><div class="name">Results — bikes</div><div class="desc">Grid with filter entry</div></div>
+        <div class="screen-card"><div class="flow">Results</div><div class="name">Filters</div><div class="desc">Shop, price, ship-from, color, brand, size, rating</div></div>
+        <div class="screen-card"><div class="flow">Results</div><div class="name">No products found</div><div class="desc">After filters applied</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Product page — Details</div><div class="desc">Core product detail</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Product page — Part numbers</div><div class="desc">Detail tab</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Product page — Size &amp; fit</div><div class="desc">Detail tab</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Product page — Reviews</div><div class="desc">Rating summary + list</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Reviews — report</div><div class="desc">Flag a suspected fake review</div></div>
+        <div class="screen-card"><div class="flow">Product</div><div class="name">Write a review</div><div class="desc">Rating + text + photo</div></div>
+        <div class="screen-card"><div class="flow">Category</div><div class="name">Tyres</div><div class="desc">Category with dedicated filters</div></div>
+        <div class="screen-card"><div class="flow">Category</div><div class="name">Tyre product details</div><div class="desc">Tyre spec block</div></div>
+      </div>
+      <p style="font-size:0.86rem;color:var(--ink-faint);">Not yet designed and required for §3.6/3.7: cart, checkout, order tracking, wallet/payout, and the seller-side shop dashboard &amp; order queue.</p>
+    </section>
+
+    <section id="s5">
+      <div class="sec-head"><span class="num">5</span><h2>Backend architecture</h2></div>
+
+      <h3 class="sub"><span class="num">5.1</span>Data model</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Entity</th><th>Key fields</th><th>Relationships</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Shop</td><td class="mono">user_id, name, slug, logo, banner, status, rating_avg</td><td>belongsTo User · hasMany Listing</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Listing</td><td class="mono">+ shop_id</td><td>belongsTo Shop</td><td><span class="chip extend">extend</span></td></tr>
+            <tr><td>VehicleFitment</td><td class="mono">listing_id, brand_id, model_id, year_id</td><td>belongsTo Listing / Brand / Model / Year</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>ProductVariant</td><td class="mono">listing_id, sku, size, color, price_delta, stock</td><td>belongsTo Listing</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>TyreSpec</td><td class="mono">listing_id, width, aspect_ratio, rim_diameter, load_index, speed_rating</td><td>belongsTo Listing (1:1)</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>CategoryFacet</td><td class="mono">category_id, key, label, type</td><td>belongsTo Category</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Cart / CartItem</td><td class="mono">user_id · cart_id, listing_id, variant_id, qty</td><td>belongsTo User / Listing</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Order / OrderItem</td><td class="mono">buyer_id, shop_id, status, total · order_id, listing_id, qty, price</td><td>belongsTo User, Shop</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>OrderStatusHistory</td><td class="mono">order_id, status, changed_by, note</td><td>belongsTo Order</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>Wallet / WalletTransaction</td><td class="mono">shop_id, balance · type, amount, order_id</td><td>belongsTo Shop</td><td><span class="chip new">new</span></td></tr>
+            <tr><td>ProductReview</td><td class="mono">listing_id, user_id, rating, comment, photos, status</td><td>belongsTo Listing, User</td><td><span class="chip extend">extend</span></td></tr>
+            <tr><td>Conversation / Message</td><td class="mono">buyer_id, shop_id, listing_id · body, read_at</td><td>belongsTo User, Shop</td><td><span class="chip extend">extend</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="sub"><span class="num">5.2</span>API surface</h3>
+      <div class="endpoint-group">
+        <h4>buyer-facing (auth:api)</h4>
+        <pre><span class="verb">GET</span>  /marketplace/shops                 <span class="cmt"># directory</span>
+<span class="verb">GET</span>  /marketplace/shops/{id}
+<span class="verb">GET</span>  /marketplace/products                <span class="cmt"># filters, facets, vehicle fitment</span>
+<span class="verb">GET</span>  /marketplace/products/{id}
+<span class="verb">GET</span>  /marketplace/products/{id}/reviews
+<span class="verb">POST</span> /marketplace/products/{id}/reviews
+<span class="verb">POST</span> /marketplace/reviews/{id}/report
+<span class="verb">GET</span>  /cart
+<span class="verb">POST</span> /cart/items
+<span class="verb">PATCH</span>/cart/items/{id}
+<span class="verb">DELETE</span> /cart/items/{id}
+<span class="verb">POST</span> /checkout
+<span class="verb">GET</span>  /orders
+<span class="verb">GET</span>  /orders/{id}
+<span class="verb">POST</span> /orders/{id}/cancel
+<span class="verb">GET</span>  /wallet
+<span class="verb">GET</span>  /wallet/transactions
+<span class="verb">POST</span> /shops/become-seller
+<span class="verb">GET</span>  /conversations
+<span class="verb">POST</span> /conversations/{id}/messages</pre>
+      </div>
+      <div class="endpoint-group">
+        <h4>admin (admin/* prefix, permission-gated)</h4>
+        <pre><span class="verb">GET/PATCH</span> admin/marketplace/shops            <span class="cmt"># approve / suspend</span>
+<span class="verb">CRUD</span>      admin/marketplace/category-facets
+<span class="verb">GET</span>       admin/marketplace/orders           <span class="cmt"># incl. disputes</span>
+<span class="verb">POST</span>      admin/marketplace/orders/{id}/refund
+<span class="verb">CRUD</span>      admin/marketplace/commission-settings
+<span class="verb">GET/PATCH</span> admin/marketplace/reviews          <span class="cmt"># moderation queue</span></pre>
+      </div>
+
+      <h3 class="sub"><span class="num">5.3</span>Migrations checklist</h3>
+      <p>New tables: <code>shops</code>, <code>vehicle_fitments</code>, <code>product_variants</code>, <code>tyre_specs</code>, <code>category_facets</code>, <code>carts</code>, <code>cart_items</code>, <code>orders</code>, <code>order_items</code>, <code>order_status_histories</code>, <code>wallets</code>, <code>wallet_transactions</code>, <code>product_reviews</code>, <code>conversations</code>, <code>messages</code>. Altered tables: <code>listings</code> (+ <code>shop_id</code>).</p>
+    </section>
+
+    <section id="s6">
+      <div class="sec-head"><span class="num">6</span><h2>Non-functional requirements</h2></div>
+      <ul class="feature-list">
+        <li><b>Fitment lookup performance</b> — composite index on <code class="mono">(brand_id, model_id, year_id)</code> in <code>vehicle_fitments</code>; the "search by vehicle" path must stay fast as catalog size grows.</li>
+        <li><b>Faceted filter performance</b> — the current MySQL-only filtering may not scale once shop/price/color/size/rating facets combine; plan to introduce Meilisearch or Elasticsearch if P95 query time exceeds target once catalog volume is known.</li>
+        <li><b>Payment compliance</b> — checkout money flow must stay inside PayTabs' supported capture model (see §8 on hold/escrow).</li>
+        <li><b>Media</b> — product photos and review photos need consistent CDN-backed storage and size variants (thumbnail/full), consistent with existing ListingImage handling.</li>
+        <li><b>Concurrency</b> — stock decrement on checkout must be race-safe across concurrent buyers for the same variant.</li>
+      </ul>
+    </section>
+
+    <section id="s7">
+      <div class="sec-head"><span class="num">7</span><h2>Delivery plan &amp; timeline</h2></div>
+      <p class="sec-intro">Assumes 2 backend engineers, 2 mobile engineers, and a frontend web engineer only if a buyer-facing web app is in scope (otherwise fold that effort into admin console work). Phases run with backend leading by roughly one sprint so mobile always has a real API to build against.</p>
+
+      <div class="phase-card">
+        <div class="phase-top"><h4>Phase 0 — Discovery &amp; UX finalization</h4><span class="weeks">1 week</span></div>
+        <div class="stream-bars">
+          <div class="stream-bar"><span class="label">Backend</span><div class="track"><div class="fill" style="width:20%"></div></div><span class="val">1w</span></div>
+          <div class="stream-bar"><span class="label">Mobile</span><div class="track"><div class="fill mob" style="width:20%"></div></div><span class="val">1w</span></div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-top"><h4>Phase 1 — Shops, catalog, fitment search, filters, product detail</h4><span class="weeks">4–5 weeks</span></div>
+        <div class="stream-bars">
+          <div class="stream-bar"><span class="label">Backend</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="val">5w</span></div>
+          <div class="stream-bar"><span class="label">Mobile</span><div class="track"><div class="fill mob" style="width:100%"></div></div><span class="val">5w</span></div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-top"><h4>Phase 2 — Cart, checkout, orders, wallet, payments</h4><span class="weeks">4 weeks</span></div>
+        <div class="stream-bars">
+          <div class="stream-bar"><span class="label">Backend</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="val">4w</span></div>
+          <div class="stream-bar"><span class="label">Mobile</span><div class="track"><div class="fill mob" style="width:80%"></div></div><span class="val">4w</span></div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-top"><h4>Phase 3 — Reviews, messaging, admin console</h4><span class="weeks">2–3 weeks</span></div>
+        <div class="stream-bars">
+          <div class="stream-bar"><span class="label">Backend</span><div class="track"><div class="fill" style="width:60%"></div></div><span class="val">3w</span></div>
+          <div class="stream-bar"><span class="label">Mobile</span><div class="track"><div class="fill mob" style="width:40%"></div></div><span class="val">2w</span></div>
+        </div>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-top"><h4>Phase 4 — QA, hardening, edge cases</h4><span class="weeks">2 weeks</span></div>
+        <div class="stream-bars">
+          <div class="stream-bar"><span class="label">Backend</span><div class="track"><div class="fill" style="width:40%"></div></div><span class="val">2w</span></div>
+          <div class="stream-bar"><span class="label">Mobile</span><div class="track"><div class="fill mob" style="width:40%"></div></div><span class="val">2w</span></div>
+        </div>
+      </div>
+
+      <div class="total-banner">
+        <div class="stat"><span class="k">Backend effort</span><span class="v">15<small>w</small></span></div>
+        <div class="stat"><span class="k">Mobile effort</span><span class="v">14<small>w</small></span></div>
+        <div class="stat"><span class="k">Calendar time, parallel</span><span class="v">~17<small>w ≈ 4–4.5 months</small></span></div>
+      </div>
+    </section>
+
+    <section id="s8">
+      <div class="sec-head"><span class="num">8</span><h2>Risks &amp; open questions</h2></div>
+      <div class="table-wrap" style="border:none;box-shadow:none;background:none;">
+        <div class="risk"><span class="dot"></span><div><div class="t">PayTabs escrow / hold-capture support unknown</div><div class="d">If PayTabs cannot hold funds until order completion, the wallet must simulate escrow internally (credit only after buyer confirmation), adding backend complexity.</div></div></div>
+        <div class="risk"><span class="dot"></span><div><div class="t">Fulfillment model undefined</div><div class="d">Local pickup vs. carrier shipping changes the Order state machine and possibly requires a shipping-partner integration — needs a product decision before Phase 2 starts.</div></div></div>
+        <div class="risk"><span class="dot"></span><div><div class="t">Fitment data quality</div><div class="d">Vehicle-fitment search is only as good as the brand/model/year tagging on each listing; existing spare-part listings will need a backfill pass.</div></div></div>
+        <div class="risk"><span class="dot"></span><div><div class="t">Review fraud workflow</div><div class="d">The reference design includes "report a fake review" — the moderation SLA and enforcement action (hide vs. delete vs. warn seller) still need to be defined.</div></div></div>
+        <div class="risk"><span class="dot"></span><div><div class="t">Search scale</div><div class="d">Faceted filtering may outgrow plain MySQL queries; budget a follow-up spike for Meilisearch/Elasticsearch once real catalog volume is known.</div></div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>DabApp — Marketplace Module specification · Draft v1 · for internal engineering use</footer>

@@ -175,18 +175,12 @@ class FilterController extends Controller
         }
 
         if ($this->hasValue($countryName)) {
-            $countryFilteredQuery = clone $query;
-            $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
+            // A selected country must strictly scope results — a zero-match combination
+            // returns an empty page, it must never silently widen back out to every country.
+            $query->whereHas('country', function ($q) use ($countryName) {
                 $q->where('name', 'LIKE', '%' . $countryName . '%');
             });
-            $countCount = $countryFilteredQuery->count();
-            if ($countCount === 0) {
-                $showingAllCountries = true;
-                $message = "No listings found for '{$countryName}'. Showing all countries instead.";
-            } else {
-                $query = $countryFilteredQuery;
-                $message = "Showing listings for '{$countryName}'.";
-            }
+            $message = "Showing listings for '{$countryName}'.";
         }
 
         // ✅ Tri par date DESC (plus récent en premier)
@@ -399,18 +393,12 @@ class FilterController extends Controller
         }
 
         if ($this->hasValue($countryName)) {
-            $countryFilteredQuery = clone $query;
-            $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
+            // A selected country must strictly scope results — a zero-match combination
+            // returns an empty page, it must never silently widen back out to every country.
+            $query->whereHas('country', function ($q) use ($countryName) {
                 $q->where('name', 'LIKE', '%' . $countryName . '%');
             });
-            $countCount = $countryFilteredQuery->count();
-            if ($countCount === 0) {
-                $showingAllCountries = true;
-                $message = "No listings found for '{$countryName}'. Showing all countries instead.";
-            } else {
-                $query = $countryFilteredQuery;
-                $message = "Showing listings for '{$countryName}'.";
-            }
+            $message = "Showing listings for '{$countryName}'.";
         }
 
         // ✅ Tri par date DESC (plus récent en premier)
@@ -610,18 +598,12 @@ class FilterController extends Controller
         }
 
         if ($this->hasValue($countryName)) {
-            $countryFilteredQuery = clone $query;
-            $countryFilteredQuery->whereHas('country', function ($q) use ($countryName) {
+            // A selected country must strictly scope results — a zero-match combination
+            // returns an empty page, it must never silently widen back out to every country.
+            $query->whereHas('country', function ($q) use ($countryName) {
                 $q->where('name', 'LIKE', '%' . $countryName . '%');
             });
-            $countCount = $countryFilteredQuery->count();
-            if ($countCount === 0) {
-                $showingAllCountries = true;
-                $message = "No listings found for '{$countryName}'. Showing all countries instead.";
-            } else {
-                $query = $countryFilteredQuery;
-                $message = "Showing listings for '{$countryName}'.";
-            }
+            $message = "Showing listings for '{$countryName}'.";
         }
 
         // ✅ Tri par date DESC (plus récent en premier)

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\PointOfInterest;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Tag(
@@ -16,6 +18,14 @@ use Illuminate\Support\Facades\Auth;
  */
 class AdminPointOfInterestController extends Controller
 {
+    private NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
+
     /**
      * @OA\Get(
      *     path="/api/admin/pois",
@@ -464,6 +474,76 @@ class AdminPointOfInterestController extends Controller
         if ($mainImageUrl) {
             $poi->images()->where('image_url', '!=', $mainImageUrl)->update(['is_main' => false]);
         }
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/pois/{id}/approve",
+     *     summary="Approve and publish a user-submitted POI (Admin)",
+     *     tags={"Admin POIs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="POI approved"),
+     *     @OA\Response(response=404, description="POI not found")
+     * )
+     */
+    public function approve(int $id): JsonResponse
+    {
+        $poi = PointOfInterest::find($id);
+
+        if (!$poi) {
+            return response()->json(['success' => false, 'message' => 'Point of interest not found'], 404);
+        }
+
+        if ($poi->status === 'published') {
+            return response()->json(['success' => false, 'message' => 'Point of interest is already published'], 400);
+        }
+
+        $poi->update(['status' => 'published', 'rejection_reason' => null]);
+
+        if ($poi->seller) {
+            try {
+                $this->notifications->notifyPoiApproved($poi->seller, $poi);
+            } catch (\Exception $e) {
+                Log::error('AdminPointOfInterestController@approve notify failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Point of interest approved successfully']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/pois/{id}/reject",
+     *     summary="Reject a user-submitted POI (Admin)",
+     *     tags={"Admin POIs"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="POI rejected"),
+     *     @OA\Response(response=404, description="POI not found")
+     * )
+     */
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        $poi = PointOfInterest::find($id);
+
+        if (!$poi) {
+            return response()->json(['success' => false, 'message' => 'Point of interest not found'], 404);
+        }
+
+        $request->validate(['reason' => 'nullable|string|max:1000']);
+
+        $poi->update(['status' => 'rejected', 'rejection_reason' => $request->reason]);
+
+        if ($poi->seller) {
+            try {
+                $this->notifications->notifyPoiRejected($poi->seller, $poi, $request->reason);
+            } catch (\Exception $e) {
+                Log::error('AdminPointOfInterestController@reject notify failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Point of interest rejected']);
     }
 
     /**

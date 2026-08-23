@@ -39,6 +39,7 @@ class PointOfInterest extends Model
         'google_rating',
         'google_reviews_count',
         'status',
+        'rejection_reason',
     ];
 
     // Note: 'custom_icon' is a real DB column, NOT a virtual attribute,

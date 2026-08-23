@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Route;
 use App\Models\RouteWaypoint;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -18,6 +20,14 @@ use Illuminate\Support\Str;
  */
 class AdminRouteController extends Controller
 {
+    private NotificationService $notifications;
+
+    public function __construct(NotificationService $notifications)
+    {
+        $this->notifications = $notifications;
+    }
+
+
     /**
      * @OA\Get(
      *     path="/api/admin/routes",
@@ -367,6 +377,76 @@ class AdminRouteController extends Controller
             'success' => true,
             'message' => 'Route deleted successfully',
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/routes/{id}/approve",
+     *     summary="Approve and publish a user-submitted route (Admin)",
+     *     tags={"Admin - Routes"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Route approved"),
+     *     @OA\Response(response=404, description="Route not found")
+     * )
+     */
+    public function approve(int $id): JsonResponse
+    {
+        $route = Route::find($id);
+
+        if (!$route) {
+            return response()->json(['success' => false, 'message' => 'Route not found'], 404);
+        }
+
+        if ($route->status === 'published') {
+            return response()->json(['success' => false, 'message' => 'Route is already published'], 400);
+        }
+
+        $route->update(['status' => 'published', 'rejection_reason' => null]);
+
+        if ($route->creator) {
+            try {
+                $this->notifications->notifyRouteApproved($route->creator, $route);
+            } catch (\Exception $e) {
+                Log::error('AdminRouteController@approve notify failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Route approved successfully']);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/routes/{id}/reject",
+     *     summary="Reject a user-submitted route (Admin)",
+     *     tags={"Admin - Routes"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Route rejected"),
+     *     @OA\Response(response=404, description="Route not found")
+     * )
+     */
+    public function reject(Request $request, int $id): JsonResponse
+    {
+        $route = Route::find($id);
+
+        if (!$route) {
+            return response()->json(['success' => false, 'message' => 'Route not found'], 404);
+        }
+
+        $request->validate(['reason' => 'nullable|string|max:1000']);
+
+        $route->update(['status' => 'rejected', 'rejection_reason' => $request->reason]);
+
+        if ($route->creator) {
+            try {
+                $this->notifications->notifyRouteRejected($route->creator, $route, $request->reason);
+            } catch (\Exception $e) {
+                Log::error('AdminRouteController@reject notify failed: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['success' => true, 'message' => 'Route rejected']);
     }
 
     /**

@@ -31,6 +31,8 @@ class Route extends Model
         'likes_count',
         'completed_count',
         'rating_average',
+        'status',
+        'rejection_reason',
     ];
 
     protected $casts = [
@@ -168,5 +170,29 @@ class Route extends Model
     public function scopeInCategory($query, $categoryId)
     {
         return $query->where('category_id', $categoryId);
+    }
+
+    /**
+     * Scope to get only published routes.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', 'published');
+    }
+
+    /**
+     * Scope to get only draft (pending review) routes.
+     */
+    public function scopeDraft($query)
+    {
+        return $query->where('status', 'draft');
+    }
+
+    /**
+     * Scope to get only rejected routes.
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'rejected');
     }
 }

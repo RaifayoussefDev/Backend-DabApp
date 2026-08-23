@@ -13,6 +13,7 @@ use App\Services\NotificationService;
 use App\Models\CurrencyExchangeRate;
 use App\Traits\CategoryDataTrait; // ✅ Added
 use App\Models\ListingImage; // ✅ Added
+use Illuminate\Support\Facades\Http;
 
 class AdminListingController extends Controller
 {
@@ -395,6 +396,43 @@ class AdminListingController extends Controller
         $image->delete();
 
         return response()->json(['message' => 'Image deleted successfully']);
+    }
+
+    /**
+     * Stream a listing image back with a forced "Save As" download header,
+     * so the admin panel (on a different origin than the storage host) can
+     * trigger a real device download instead of a browser navigation.
+     */
+    public function downloadImage($id, $imageId)
+    {
+        $image = ListingImage::where('listing_id', $id)->where('id', $imageId)->firstOrFail();
+        $imageUrl = $image->image_url;
+
+        $filename = 'listing-' . $id . '-image-' . $imageId . '.' . (pathinfo(parse_url($imageUrl, PHP_URL_PATH) ?? '', PATHINFO_EXTENSION) ?: 'jpg');
+
+        // Locally stored file (public disk) — serve directly from disk.
+        if (str_starts_with($imageUrl, 'http')) {
+            $relativePath = str_ireplace(url('/storage'), '', $imageUrl);
+        } else {
+            $relativePath = $imageUrl;
+        }
+        $localPath = public_path('storage/' . ltrim($relativePath, '/'));
+
+        if (file_exists($localPath)) {
+            return response()->download($localPath, $filename);
+        }
+
+        // Externally hosted file — fetch server-side (no CORS constraint here) and relay it.
+        $response = Http::timeout(20)->get($imageUrl);
+
+        if (!$response->successful()) {
+            return response()->json(['error' => 'Could not retrieve image'], 502);
+        }
+
+        return response($response->body(), 200, [
+            'Content-Type' => $response->header('Content-Type', 'application/octet-stream'),
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     /**

@@ -86,6 +86,14 @@ class PointOfInterestController extends Controller
             $query->ofType($request->type_id);
         }
 
+        // Strictly scope to the selected country/city — never leak POIs from other locations.
+        if ($request->filled('country_id')) {
+            $query->where('country_id', $request->country_id);
+        }
+        if ($request->filled('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+
         // Filter by verification status
         if ($request->has('is_verified')) {
             if ($request->boolean('is_verified')) {
@@ -93,8 +101,17 @@ class PointOfInterestController extends Controller
             }
         }
 
-        // Filter by active status
-        $query->active();
+        // "My POIs" — the owner's own list, including drafts/rejected pending review.
+        // Bypasses the active()/published filter below since a user must be able to
+        // see their own not-yet-approved submissions.
+        if ($request->boolean('mine')) {
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+            $query->where('owner_id', $user->id);
+        } else {
+            $query->active();
+        }
 
         // Nearby search
         if ($request->has('latitude') && $request->has('longitude')) {
@@ -223,7 +240,11 @@ class PointOfInterestController extends Controller
             'services.*' => 'exists:poi_services,id',
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
+            'google_place_id' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:draft,published,inactive',
+            'main_image' => 'nullable|string|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'string|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -234,7 +255,12 @@ class PointOfInterestController extends Controller
         }
 
         $validatedData = $validator->validated();
+        unset($validatedData['main_image'], $validatedData['images']);
         $validatedData['owner_id'] = auth()->id();
+        // User-submitted POIs always need admin approval before going live — ignore
+        // whatever status the client sent (the field stays validated above for the
+        // admin-side update() path, which does need to accept it).
+        $validatedData['status'] = 'draft';
 
         $poi = PointOfInterest::create($validatedData);
 
@@ -244,6 +270,10 @@ class PointOfInterestController extends Controller
 
         if ($request->has('services')) {
             $poi->services()->sync($request->services);
+        }
+
+        if ($request->has('main_image') || $request->has('images')) {
+            $this->syncImages($poi, $request->input('main_image'), $request->input('images', []));
         }
 
         $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
@@ -440,6 +470,9 @@ class PointOfInterestController extends Controller
             'google_rating' => 'nullable|numeric|between:0,5',
             'google_reviews_count' => 'nullable|integer|min:0',
             'status' => 'nullable|string|in:draft,published,inactive',
+            'main_image' => 'nullable|string|max:2048',
+            'images' => 'nullable|array',
+            'images.*' => 'string|max:2048',
         ]);
 
 
@@ -451,6 +484,7 @@ class PointOfInterestController extends Controller
         }
 
         $validatedData = $validator->validated();
+        unset($validatedData['main_image'], $validatedData['images']);
         $validatedData['status'] = $targetStatus;
 
         // Only admins can change the owner
@@ -471,6 +505,10 @@ class PointOfInterestController extends Controller
 
         if ($request->has('services')) {
             $poi->services()->sync($request->services);
+        }
+
+        if ($request->has('main_image') || $request->has('images')) {
+            $this->syncImages($poi, $request->input('main_image'), $request->input('images', []));
         }
 
         $poi->load(['type', 'city', 'country', 'tags', 'services', 'images', 'mainImage']);
@@ -853,5 +891,35 @@ class PointOfInterestController extends Controller
         $image->delete();
 
         return response()->json(['success' => true, 'message' => 'Image removed']);
+    }
+
+    /**
+     * Sync a POI's gallery images (mirrors AdminPointOfInterestController::syncImages()).
+     */
+    private function syncImages($poi, $mainImageUrl, array $otherImages)
+    {
+        $newUrls = array_filter(array_merge([$mainImageUrl], $otherImages));
+        $poi->images()->whereNotIn('image_url', $newUrls)->delete();
+
+        if ($mainImageUrl) {
+            $poi->images()->updateOrCreate(
+                ['image_url' => $mainImageUrl],
+                ['is_main' => true, 'order_position' => 0]
+            );
+        }
+
+        foreach ($otherImages as $index => $imageUrl) {
+            if ($imageUrl === $mainImageUrl) {
+                continue;
+            }
+            $poi->images()->updateOrCreate(
+                ['image_url' => $imageUrl],
+                ['is_main' => false, 'order_position' => $index + 1]
+            );
+        }
+
+        if ($mainImageUrl) {
+            $poi->images()->where('image_url', '!=', $mainImageUrl)->update(['is_main' => false]);
+        }
     }
 }
