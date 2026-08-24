@@ -14,6 +14,7 @@ class TrainerLevel extends Model
         'name_ar',
         'slug',
         'description',
+        'description_ar',
         'required_certifications',
         'sort_order',
         'is_active',
@@ -49,5 +50,10 @@ class TrainerLevel extends Model
     public function getLocalizedNameAttribute(): string
     {
         return app()->getLocale() === 'ar' ? ($this->name_ar ?? $this->name_en) : $this->name_en;
+    }
+
+    public function getLocalizedDescriptionAttribute(): ?string
+    {
+        return app()->getLocale() === 'ar' ? ($this->description_ar ?? $this->description) : $this->description;
     }
 }

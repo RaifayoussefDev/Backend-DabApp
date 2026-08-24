@@ -41,6 +41,7 @@ class AdminTrainerLevelController extends Controller
      *                     @OA\Property(property="name_ar",                type="string",  example="مبتدئ"),
      *                     @OA\Property(property="slug",                   type="string",  example="beginner"),
      *                     @OA\Property(property="description",            type="string",  example="For first-time riders"),
+     *                     @OA\Property(property="description_ar",         type="string",  example="للمتسابقين لأول مرة"),
      *                     @OA\Property(property="required_certifications", type="array",  @OA\Items(type="string")),
      *                     @OA\Property(property="sort_order",             type="integer", example=1)
      *                 )
@@ -84,6 +85,7 @@ class AdminTrainerLevelController extends Controller
      *                     @OA\Property(property="name_ar",                 type="string",  example="مبتدئ"),
      *                     @OA\Property(property="slug",                    type="string",  example="beginner"),
      *                     @OA\Property(property="description",             type="string"),
+     *                     @OA\Property(property="description_ar",          type="string"),
      *                     @OA\Property(property="required_certifications", type="array",   @OA\Items(type="string")),
      *                     @OA\Property(property="sort_order",              type="integer", example=1),
      *                     @OA\Property(property="is_active",               type="boolean", example=true),
@@ -123,6 +125,7 @@ class AdminTrainerLevelController extends Controller
      *             @OA\Property(property="name_ar",                 type="string",  example="مبتدئ"),
      *             @OA\Property(property="slug",                    type="string",  example="beginner", description="Auto-generated if omitted"),
      *             @OA\Property(property="description",             type="string",  example="For first-time riders"),
+     *             @OA\Property(property="description_ar",          type="string",  example="للمتسابقين لأول مرة"),
      *             @OA\Property(property="required_certifications", type="array",   @OA\Items(type="string"), example={"Basic riding license"}),
      *             @OA\Property(property="sort_order",              type="integer", example=1),
      *             @OA\Property(property="is_active",               type="boolean", example=true)
@@ -147,6 +150,7 @@ class AdminTrainerLevelController extends Controller
             'name_ar'                 => 'nullable|string|max:100',
             'slug'                    => 'nullable|string|max:100|unique:trainer_levels,slug',
             'description'             => 'nullable|string|max:1000',
+            'description_ar'          => 'nullable|string|max:1000',
             'required_certifications' => 'nullable|array',
             'required_certifications.*' => 'string|max:200',
             'sort_order'              => 'nullable|integer|min:0',
@@ -178,6 +182,7 @@ class AdminTrainerLevelController extends Controller
      *             @OA\Property(property="name_en",                 type="string"),
      *             @OA\Property(property="name_ar",                 type="string"),
      *             @OA\Property(property="description",             type="string"),
+     *             @OA\Property(property="description_ar",          type="string"),
      *             @OA\Property(property="required_certifications", type="array", @OA\Items(type="string")),
      *             @OA\Property(property="sort_order",              type="integer"),
      *             @OA\Property(property="is_active",               type="boolean")
@@ -198,6 +203,7 @@ class AdminTrainerLevelController extends Controller
             'name_en'                 => 'nullable|string|max:100',
             'name_ar'                 => 'nullable|string|max:100',
             'description'             => 'nullable|string|max:1000',
+            'description_ar'          => 'nullable|string|max:1000',
             'required_certifications' => 'nullable|array',
             'required_certifications.*' => 'string|max:200',
             'sort_order'              => 'nullable|integer|min:0',
