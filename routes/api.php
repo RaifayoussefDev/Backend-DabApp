@@ -51,6 +51,7 @@ use App\Http\Controllers\{
     LicensePlateController,
     ListingAuctionController,
     ListingController,
+    ListingFollowUpController,
     LocationController,
     MotorcycleBrandController,
     MotorcycleComparisonController,
@@ -1096,6 +1097,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/listings/by-city/{city_id}', [ListingController::class, 'getByCity']);
     Route::get('/listings/filter', [ListingController::class, 'filter']);
     Route::get('/listings/recent/city/{city_id}', [ListingController::class, 'getLastByCity']);
+    Route::get('/listings/pending-follow-up', [ListingFollowUpController::class, 'pendingFollowUp']);
     Route::get('/listings/{listingId}/payment-status', [ListingController::class, 'checkListingPaymentStatus']);
     Route::get('/debug-wishlist/{id}', [ListingController::class, 'getDebugInfo']);
     Route::get('/listings/{id}', [ListingController::class, 'getById']);
@@ -1168,6 +1170,8 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/listings/{listingId}/mark-as-sold', [SoomController::class, 'markListingAsSold']);
     Route::patch('/listings/{listingId}/close', [SoomController::class, 'closeListing']);
     Route::patch('/listings/{listingId}/reopen', [SoomController::class, 'reopenListing']);
+    Route::patch('/listings/{listingId}/follow-up', [ListingFollowUpController::class, 'respond']);
+    Route::patch('/listings/{listingId}/follow-up/undo', [ListingFollowUpController::class, 'undoSold']);
 
     Route::get('/sooms/max', [SoomController::class, 'getMaxSoom']);
     Route::get('/sooms/max/me', [SoomController::class, 'getMyMaxSoom']);

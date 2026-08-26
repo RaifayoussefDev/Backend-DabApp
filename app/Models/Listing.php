@@ -35,6 +35,7 @@ class Listing extends Model
         'country_id',
         'city_id',
         'status',
+        'published_at',
         'auction_enabled',
         'minimum_bid',
         'allow_submission',
@@ -47,6 +48,11 @@ class Listing extends Model
         'last_edited_at',
         'created_by', // ✅ Added
         'views_count', // ✅ Added
+        'follow_up_sent_at',
+        'follow_up_responded_at',
+        'follow_up_response',
+        'sale_channel',
+        'reason_not_sold',
     ];
 
     // ✅ AJOUT DES CASTS
@@ -62,6 +68,8 @@ class Listing extends Model
         'published_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'follow_up_sent_at' => 'datetime',
+        'follow_up_responded_at' => 'datetime',
     ];
 
     // ===========================
@@ -179,6 +187,18 @@ class Listing extends Model
     public function scopeDraft($query)
     {
         return $query->where('status', 'draft');
+    }
+
+    /**
+     * Listings still published, at least 7 days after going live, that haven't
+     * had their one-time "did it sell?" follow-up sent yet.
+     */
+    public function scopeNeedsFollowUp($query)
+    {
+        return $query->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now()->subDays(7))
+            ->whereNull('follow_up_sent_at');
     }
 
     // ===========================

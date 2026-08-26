@@ -1,0 +1,432 @@
+{
+  "info": {
+    "name": "DabApp – Mobile: Listing Follow-up (Day-7 \"Did it sell?\" check-in)",
+    "_postman_id": "dabapp-listings-follow-up-v1",
+    "description": "## Seller Follow-up Bottom Sheet\n\nBacks the mobile bottom sheet a seller sees 7 days after publishing a listing, asking whether it sold:\n- **Check** → `GET /listings/pending-follow-up` → returns **at most one** listing (never a list) — the oldest one currently due, or `data: null`. The app calls this on launch to show the sheet in-session instead of waiting for the push.\n- **Sold** → `PATCH /listings/{id}/follow-up` with `{\"response\": \"sold\", \"sale_channel\": \"dabapp|other_platform|off_platform\"}` → listing status `published` → `sold`, `sale_channel` stored, pending SOOM offers auto-rejected.\n- **Not sold** → `PATCH /listings/{id}/follow-up` with `{\"response\": \"not_sold\", \"reason_not_sold\": \"...\"}` (reason optional, free text) → listing stays `published`, `reason_not_sold` stored.\n- **Undo** → `PATCH /listings/{id}/follow-up/undo` (\"تراجع — ما زال متاحًا\" on the success screen) → only reverses a sale made through this flow, back to `published`. Does not restore any SOOM offers that were auto-rejected.\n\nThis is a **single one-time follow-up per listing** — there is no recurring/escalating schedule. The endpoint itself doesn't check whether the automated day-7 push was actually sent (`follow_up_sent_at`); it only requires the listing to still be `published` and owned by the caller, so you can exercise it any time in this collection without waiting 7 days.\n\nTo test the automated side (the daily sweep that sends the push notification), run on the server:\n```\nphp artisan listings:send-follow-up\n```\nThat command marks listings `published` for 7+ days with `follow_up_sent_at` and sends the `listing_follow_up` push/notification — it does not touch listing status, only the response endpoint below does.\n\n### Before you run this\n1. Set `base_url` (defaults to production).\n2. Fill `seller_email` / `seller_password` with a real account that owns at least two **published** listings.\n3. Set `listing_id` (will be answered as **not sold**, stays published) and `listing_id_2` (will be answered as **sold**) to two distinct published listing IDs owned by that seller.\n\nRun Phase 1 → 4 in order. Phase 5 (edge cases) can be run any time after Phase 1.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://be.dabapp.co", "type": "string" },
+    { "key": "seller_email", "value": "", "type": "string" },
+    { "key": "seller_password", "value": "", "type": "string" },
+    { "key": "seller_token", "value": "", "type": "string" },
+    { "key": "listing_id", "value": "", "type": "string" },
+    { "key": "listing_id_2", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 — Login (Seller)",
+      "item": [
+        {
+          "name": "1-1 · POST Seller Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.requiresOTP) { console.warn('This account requires OTP verification — complete it via /api/verify-otp, then paste the resulting token into {{seller_token}} manually.'); }",
+                  "else if (json.token) { pm.collectionVariables.set('seller_token', json.token); console.log('seller_token saved'); }",
+                  "pm.test('Login request succeeded', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{seller_email}}\",\n  \"password\": \"{{seller_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "login" ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 — Load the seller's active listings",
+      "item": [
+        {
+          "name": "2-1 · GET My Listings (status=published)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('My ads listed', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/my-ads?status=published",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "my-ads" ],
+              "query": [ { "key": "status", "value": "published" } ]
+            },
+            "description": "Use this to confirm listing_id / listing_id_2 are published and owned by this seller before running Phase 3-4."
+          }
+        },
+        {
+          "name": "2-2 · GET Pending Follow-up (single listing, not a list)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Request succeeded', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('data is a single listing or null, never an array', function () { pm.expect(json.data).to.not.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/pending-follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "pending-follow-up" ]
+            },
+            "description": "This is what the mobile app calls on launch to decide whether to show the follow-up bottom sheet in-session (before waiting for the push). It intentionally returns **at most one** listing — `data: null` if nothing is due, or a single listing object (the oldest one still awaiting an answer) — never a list, even if the seller owns several published listings. Compare against 2-1: `my-ads` can return every listing the seller has (e.g. 3), this endpoint only ever returns the one, if any, that actually needs the follow-up shown right now."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 — Seller answers: NOT SOLD",
+      "item": [
+        {
+          "name": "3-1 · PATCH Follow-up response = not_sold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Response accepted', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Listing stays published', function () { pm.expect(json.data.status).to.eql('published'); });",
+                  "pm.test('reason_not_sold stored', function () { pm.expect(json.data.reason_not_sold).to.eql('price_issue'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"not_sold\",\n  \"reason_not_sold\": \"price_issue\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "follow-up" ]
+            },
+            "description": "Requires status=published and ownership. `reason_not_sold` is optional free text (the mobile app sends one of the predefined reason keys, or a custom string for \"other\"). Listing status is unchanged."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 — Seller answers: SOLD",
+      "item": [
+        {
+          "name": "4-1 · PATCH Follow-up response = sold (via DabApp)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Marked as sold', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Status is sold', function () { pm.expect(json.data.status).to.eql('sold'); });",
+                  "pm.test('sale_channel stored', function () { pm.expect(json.data.sale_channel).to.eql('dabapp'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"sold\",\n  \"sale_channel\": \"dabapp\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id_2}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id_2}}", "follow-up" ]
+            },
+            "description": "Requires status=published and ownership. `sale_channel` is required when response=sold: dabapp | other_platform | off_platform. Sets status=sold, allow_submission=false, auto-rejects pending SOOM offers, notifies rejected bidders."
+          }
+        },
+        {
+          "name": "4-2 · PATCH Undo the sold answer (\"تراجع — ما زال متاحًا\")",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Undo accepted', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Listing is published again', function () { pm.expect(json.data.status).to.eql('published'); });",
+                  "pm.test('sale_channel cleared', function () { pm.expect(json.data.sale_channel).to.eql(null); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id_2}}/follow-up/undo",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id_2}}", "follow-up", "undo" ]
+            },
+            "description": "Run this right after 4-1. Only reverses a sale made through THIS follow-up flow (`follow_up_response = sold`) — reverts status to `published`, clears `sale_channel`/`follow_up_response`/`follow_up_responded_at`, restores `allow_submission = true`. It does NOT restore any SOOM offers that 4-1 auto-rejected — those stay rejected. Run 4-1 again afterwards if you want listing_id_2 back in the `sold` state for further testing."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 5 — Edge cases (optional, run any time after Phase 1)",
+      "item": [
+        {
+          "name": "5-1 · PATCH sold without sale_channel → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validation failed', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"sold\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "follow-up" ]
+            },
+            "description": "Run against a listing that is still published (e.g. listing_id after Phase 3, since not_sold leaves it published). sale_channel is required_if response=sold."
+          }
+        },
+        {
+          "name": "5-2 · PATCH invalid response value → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Validation failed', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"maybe\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "follow-up" ]
+            }
+          }
+        },
+        {
+          "name": "5-3 · PATCH follow-up on an already-sold listing → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejected as no longer active', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"not_sold\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id_2}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id_2}}", "follow-up" ]
+            },
+            "description": "Run this AFTER Phase 4-1 — listing_id_2 is already 'sold', so this call should now fail with 422 and current_status:'sold'."
+          }
+        },
+        {
+          "name": "5-4 · PATCH follow-up without auth → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"not_sold\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "follow-up" ]
+            }
+          }
+        },
+        {
+          "name": "5-5 · PATCH follow-up on a nonexistent listing → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Not found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"not_sold\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/999999999/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "999999999", "follow-up" ]
+            }
+          }
+        },
+        {
+          "name": "5-6 · PATCH follow-up on someone else's listing → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Forbidden', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"not_sold\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{other_users_listing_id}}/follow-up",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{other_users_listing_id}}", "follow-up" ]
+            },
+            "description": "Replace {{other_users_listing_id}} manually with a published listing_id owned by a different seller before running this one."
+          }
+        },
+        {
+          "name": "5-7 · PATCH undo on a listing not sold via follow-up → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejected — not eligible for undo', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/follow-up/undo",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "follow-up", "undo" ]
+            },
+            "description": "Run against listing_id after Phase 3 (answered not_sold, so it's still `published` and was never marked sold via this flow). Undo only works on a listing currently `sold` with `follow_up_response = sold` — anything else is rejected."
+          }
+        }
+      ]
+    }
+  ]
+}

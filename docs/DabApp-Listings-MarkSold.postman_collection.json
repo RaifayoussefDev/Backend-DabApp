@@ -1,0 +1,255 @@
+{
+  "info": {
+    "name": "DabApp – Mobile: Listing Status Popup (Mark Sold / Close / Reopen)",
+    "_postman_id": "dabapp-listings-mark-sold-v1",
+    "description": "## Seller \"My Listings\" Status Popup\n\nBacks the mobile popup that shows a seller all of their own active listings and lets them declare, per listing, whether it sold or not:\n- **Sold** → `PATCH /listings/{id}/mark-as-sold` (status `published` → `sold`)\n- **Not sold, remove from listings** → `PATCH /listings/{id}/close` (status `published` → `inactive`)\n- **Undo a close** → `PATCH /listings/{id}/reopen` (status `inactive` → `published`)\n\nAll three only work on the listing's own seller (`seller_id == Auth::id()`) and only from status `published` (mark-as-sold/close) or `inactive` (reopen) — otherwise 422 with `current_status`. Both actions auto-reject any pending SOOM offers on the listing.\n\n### Before you run this\n1. Set `base_url` (defaults to production).\n2. Fill `seller_email` / `seller_password` with a real account that owns at least two **published** listings.\n3. Set `listing_id` (will be marked sold) and `listing_id_2` (will be closed then reopened) to two distinct published listing IDs owned by that seller.\n\nRun Phase 1 → 4 in order. Phase 5 (edge cases) can be run any time after Phase 1.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "https://be.dabapp.co", "type": "string" },
+    { "key": "seller_email", "value": "", "type": "string" },
+    { "key": "seller_password", "value": "", "type": "string" },
+    { "key": "seller_token", "value": "", "type": "string" },
+    { "key": "listing_id", "value": "", "type": "string" },
+    { "key": "listing_id_2", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Phase 1 — Login (Seller)",
+      "item": [
+        {
+          "name": "1-1 · POST Seller Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.requiresOTP) { console.warn('This account requires OTP verification — complete it via /api/verify-otp, then paste the resulting token into {{seller_token}} manually.'); }",
+                  "else if (json.token) { pm.collectionVariables.set('seller_token', json.token); console.log('seller_token saved'); }",
+                  "pm.test('Login request succeeded', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"{{seller_email}}\",\n  \"password\": \"{{seller_password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/login",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "login" ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 2 — Load the Popup (seller's active listings)",
+      "item": [
+        {
+          "name": "2-1 · GET My Listings (status=published)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('My ads listed', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/my-ads?status=published",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "my-ads" ],
+              "query": [ { "key": "status", "value": "published" } ]
+            },
+            "description": "This is what feeds the mobile popup: only the current seller's own published (currently displayed) listings. Add category_id / page / per_page as needed."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 3 — Seller declares: SOLD",
+      "item": [
+        {
+          "name": "3-1 · PATCH Mark Listing as Sold",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Marked as sold', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Status is sold', function () { pm.expect(json.data.status).to.eql('sold'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/mark-as-sold",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "mark-as-sold" ]
+            },
+            "description": "Requires the listing to currently be status=published and owned by the logged-in seller. Auto-rejects pending SOOM offers and removes the listing from public listings (only status=published is publicly shown)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 4 — Seller declares: NOT SOLD, remove from listings",
+      "item": [
+        {
+          "name": "4-1 · PATCH Close Listing",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Closed', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Status is inactive', function () { pm.expect(json.data.status).to.eql('inactive'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id_2}}/close",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id_2}}", "close" ]
+            },
+            "description": "Requires status=published. Sets status=inactive (removed from public listings), auto-rejects pending SOOM offers. Use this for 'no, didn't sell it, hide it' from the popup."
+          }
+        },
+        {
+          "name": "4-2 · PATCH Reopen Listing (undo close)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Reopened', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('Status is published again', function () { pm.expect(json.data.status).to.eql('published'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{seller_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"allow_submission\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id_2}}/reopen",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id_2}}", "reopen" ]
+            },
+            "description": "Requires status=inactive. Not part of the popup itself — included here to reset listing_id_2 back to published so this collection can be re-run."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Phase 5 — Edge cases (optional, run any time after Phase 1)",
+      "item": [
+        {
+          "name": "5-1 · PATCH Mark-as-sold on an already-sold listing → 422",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rejected as already sold/inactive', function () { pm.response.to.have.status(422); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/mark-as-sold",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "mark-as-sold" ]
+            },
+            "description": "Run this AFTER Phase 3-1 — listing_id is already 'sold', so this call should now fail with 422 and current_status:'sold'."
+          }
+        },
+        {
+          "name": "5-2 · PATCH Mark-as-sold without auth → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unauthorized', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/listings/{{listing_id}}/mark-as-sold",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "{{listing_id}}", "mark-as-sold" ]
+            }
+          }
+        },
+        {
+          "name": "5-3 · PATCH Close a nonexistent listing → 404",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Not found', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{seller_token}}" } ],
+            "url": {
+              "raw": "{{base_url}}/api/listings/999999999/close",
+              "host": [ "{{base_url}}" ],
+              "path": [ "api", "listings", "999999999", "close" ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

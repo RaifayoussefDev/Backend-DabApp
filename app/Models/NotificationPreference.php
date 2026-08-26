@@ -223,6 +223,8 @@ class NotificationPreference extends Model
             'trainer_course_booking_created'     => 'system_updates',
             'trainer_course_booking_completed'   => 'system_updates',
             'trainer_course_set_to_draft'        => 'system_updates',
+            // Listing lifecycle check-in — reuse the listing_sold preference toggle
+            'listing_follow_up'                  => 'listing_sold',
         ];
 
         $column = $map[$type] ?? $type;

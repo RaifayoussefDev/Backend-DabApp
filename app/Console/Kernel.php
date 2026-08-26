@@ -52,6 +52,11 @@ class Kernel extends ConsoleKernel
             ->daily()
             ->withoutOverlapping();
 
+        // One-time "did it sell?" follow-up, 7 days after a listing is published
+        $schedule->command('listings:send-follow-up')
+            ->dailyAt('18:00')
+            ->withoutOverlapping();
+
         // Cancel trainer bookings left unpaid for 2 hours (gives clients a retry window)
         $schedule->command('trainer-bookings:expire-unpaid')
             ->everyFifteenMinutes()

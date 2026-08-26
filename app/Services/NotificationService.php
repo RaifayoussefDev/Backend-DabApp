@@ -574,6 +574,20 @@ class NotificationService
         ]);
     }
 
+    /**
+     * Day-7 "did it sell?" check-in, sent once per listing.
+     */
+    public function notifyListingFollowUp(User $user, $listing): array
+    {
+        return $this->sendToUser($user, 'listing_follow_up', [
+            'listing_id' => $listing->id,
+            'listing_title' => $listing->title,
+        ], [
+            'entity' => $listing,
+            'priority' => 'normal',
+        ]);
+    }
+
     // ==================== SOOM (ENCHÈRES) ====================
 
     /**
