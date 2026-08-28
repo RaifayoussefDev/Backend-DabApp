@@ -3529,6 +3529,7 @@ class ListingController extends Controller
     public function getById($id)
     {
         $user = Auth::user();
+        $isGuest = !$user;
 
         $listing = Listing::with([
             'images',
@@ -3621,19 +3622,23 @@ class ListingController extends Controller
             'current_bid' => $currentBid,
             'seller' => [
                 'id' => $listing->seller?->id,
-                'name' => $listing->seller?->first_name . ' ' . $listing->seller?->last_name,
-                'email' => $listing->seller?->email,
-                'phone' => $listing->seller?->phone,
-                'address' => $listing->seller?->address,
+                'name' => trim($listing->seller?->first_name . ' ' . $listing->seller?->last_name),
                 'profile_image' => $listing->seller?->profile_image,
                 'verified' => (bool) $listing->seller?->verified,
-                'member_since' => $listing->seller?->created_at?->format('Y-m-d H:i:s'),
                 'is_dealer' => (bool) $listing->seller?->is_dealer,
                 'dealer_title' => $listing->seller?->dealer_title,
-                'dealer_address' => $listing->seller?->dealer_address,
-                'dealer_phone' => $listing->seller?->dealer_phone,
-                'points_of_interest' => $listing->seller?->pointsOfInterest,
+                // ✅ Mode invité : les coordonnées du vendeur sont masquées tant que
+                // l'utilisateur n'est pas connecté (voir GET /listings/{id}/seller-contact).
+                'email' => $isGuest ? null : $listing->seller?->email,
+                'phone' => $isGuest ? null : $listing->seller?->phone,
+                'address' => $isGuest ? null : $listing->seller?->address,
+                'member_since' => $isGuest ? null : $listing->seller?->created_at?->format('Y-m-d H:i:s'),
+                'dealer_address' => $isGuest ? null : $listing->seller?->dealer_address,
+                'dealer_phone' => $isGuest ? null : $listing->seller?->dealer_phone,
+                'points_of_interest' => $isGuest ? null : $listing->seller?->pointsOfInterest,
             ],
+            'contact_locked' => $isGuest,
+            'requires_auth_for' => $isGuest ? ['contact', 'offer', 'buy', 'wishlist'] : [],
             'views_count' => $listing->views_count,
         ];
 
@@ -3787,7 +3792,60 @@ class ListingController extends Controller
         return response()->json($debugInfo, 200);
     }
 
+    /**
+     * Coordonnées de contact du vendeur pour une annonce publiée.
+     *
+     * Route protégée par `auth:api` : un visiteur non connecté reçoit
+     * automatiquement le 401 structuré ({ requires_auth: true, action: "login" }),
+     * ce qui déclenche l'ouverture de la modale de login côté frontend
+     * ("voir le numéro" / contacter le vendeur en mode invité).
+     *
+     * @OA\Get(
+     *     path="/api/listings/{id}/seller-contact",
+     *     summary="Get seller contact channels for a listing (auth required)",
+     *     tags={"Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Seller contact details"),
+     *     @OA\Response(response=401, description="Authentication required"),
+     *     @OA\Response(response=404, description="Listing not found")
+     * )
+     */
+    public function getSellerContact($id)
+    {
+        $listing = Listing::with([
+            'seller',
+            'seller.pointsOfInterest',
+        ])
+            ->where('id', $id)
+            ->where('status', 'published')
+            ->first();
 
+        if (!$listing) {
+            return response()->json(['message' => 'Listing not found'], 404);
+        }
+
+        // ✅ Traceability: record who revealed the seller's contact details.
+        try {
+            \App\Models\ListingContactReveal::record($listing, Auth::id());
+        } catch (\Exception $e) {
+            \Log::warning('Failed to record listing contact reveal: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'listing_id' => $listing->id,
+            'contacting_channel' => $listing->contacting_channel,
+            'seller' => [
+                'id' => $listing->seller?->id,
+                'name' => trim($listing->seller?->first_name . ' ' . $listing->seller?->last_name),
+                'phone' => $listing->seller?->dealer_phone ?: $listing->seller?->phone,
+                'email' => $listing->seller?->email,
+                'address' => $listing->seller?->dealer_address ?: $listing->seller?->address,
+                'is_dealer' => (bool) $listing->seller?->is_dealer,
+                'dealer_title' => $listing->seller?->dealer_title,
+            ],
+        ]);
+    }
 
     /**
      * @OA\Get(
@@ -5080,14 +5138,43 @@ class ListingController extends Controller
      */
     private function recordView($viewable, $user)
     {
+        $ip = request()->ip();
+        $ua = request()->userAgent();
+        $type = get_class($viewable);
+
+        // ✅ Guest mode: still record the visit (user_id = null) so guest traffic
+        // is traceable, deduped by IP + user-agent on the same item within 24h so
+        // a refresh doesn't inflate views_count.
         if (!$user) {
-            $viewable->increment('views_count');
+            $recentGuestView = \App\Models\View::whereNull('user_id')
+                ->where('viewable_id', $viewable->id)
+                ->where('viewable_type', $type)
+                ->where('ip_address', $ip)
+                ->where('user_agent', $ua)
+                ->where('created_at', '>=', now()->subDay())
+                ->exists();
+
+            if (!$recentGuestView) {
+                try {
+                    \App\Models\View::create([
+                        'user_id' => null,
+                        'viewable_id' => $viewable->id,
+                        'viewable_type' => $type,
+                        'ip_address' => $ip,
+                        'user_agent' => $ua,
+                    ]);
+                    $viewable->increment('views_count');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+            }
+
             return;
         }
 
         $exists = \App\Models\View::where('user_id', $user->id)
             ->where('viewable_id', $viewable->id)
-            ->where('viewable_type', get_class($viewable))
+            ->where('viewable_type', $type)
             ->exists();
 
         if (!$exists) {
@@ -5095,9 +5182,9 @@ class ListingController extends Controller
                 \App\Models\View::create([
                     'user_id' => $user->id,
                     'viewable_id' => $viewable->id,
-                    'viewable_type' => get_class($viewable),
-                    'ip_address' => request()->ip(),
-                    'user_agent' => request()->userAgent(),
+                    'viewable_type' => $type,
+                    'ip_address' => $ip,
+                    'user_agent' => $ua,
                 ]);
                 $viewable->increment('views_count');
             } catch (\Exception $e) {

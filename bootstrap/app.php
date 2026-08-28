@@ -31,6 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => CheckPermission::class,
             'admin.access' => CheckAdminAccess::class,
             'auth.admin' => \App\Http\Middleware\AdminAuth::class,
+            'auth.optional' => \App\Http\Middleware\OptionalJwtAuth::class,
             'provider.subscription' => \App\Http\Middleware\EnsureProviderHasActiveSubscription::class,
         ]);
     })
@@ -53,7 +54,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'error' => 'Token expired',
-                    'message' => 'Your session has expired. Please login again.'
+                    'message' => 'Your session has expired. Please login again.',
+                    'requires_auth' => true,
+                    'action' => 'login'
                 ], 401);
             }
         });
@@ -64,7 +67,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'error' => 'Token invalid',
-                    'message' => 'Your authentication token is invalid. Please login again.'
+                    'message' => 'Your authentication token is invalid. Please login again.',
+                    'requires_auth' => true,
+                    'action' => 'login'
                 ], 401);
             }
         });
@@ -75,7 +80,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'error' => 'Token not provided',
-                    'message' => 'Authentication token is required.'
+                    'message' => 'Authentication token is required.',
+                    'requires_auth' => true,
+                    'action' => 'login'
                 ], 401);
             }
         });
@@ -86,7 +93,9 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'success' => false,
                     'error' => 'Unauthenticated',
-                    'message' => 'You must be authenticated to access this resource.'
+                    'message' => 'You must be authenticated to access this resource.',
+                    'requires_auth' => true,
+                    'action' => 'login'
                 ], 401);
             }
         });

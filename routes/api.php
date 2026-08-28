@@ -273,6 +273,11 @@ Route::prefix('admin')->group(function () {
         Route::get('/auth-logs', [\App\Http\Controllers\Admin\AuthLogController::class, 'index']);
         Route::get('/auth-logs/summary', [\App\Http\Controllers\Admin\AuthLogController::class, 'summary']);
 
+        // Guest traceability (anonymous listing views + seller-contact reveals)
+        Route::get('/guest-activity/summary', [\App\Http\Controllers\Admin\GuestActivityController::class, 'summary']);
+        Route::get('/guest-activity/views', [\App\Http\Controllers\Admin\GuestActivityController::class, 'views']);
+        Route::get('/guest-activity/contact-reveals', [\App\Http\Controllers\Admin\GuestActivityController::class, 'contactReveals']);
+
         // Report Reasons & Types
         Route::get('/report-reasons/types', [\App\Http\Controllers\Admin\ReportReasonController::class, 'getTypes']);
         Route::apiResource('report-reasons', \App\Http\Controllers\Admin\ReportReasonController::class);
@@ -649,6 +654,20 @@ Route::get('/brands/{brandId}/models-with-listings', [ListingController::class, 
 Route::get('/brands/{brandId}/models/{modelId}/years-with-listings', [ListingController::class, 'getYearsWithListingsByBrandAndModel']);
 Route::get('/categorie/listings-count', [ListingController::class, 'getTypesWithListingCount']);
 Route::get('/categories/{categoryId}/price-range', [ListingController::class, 'getPriceRangeByCategory'])->where('categoryId', '[1-3]');
+
+// ============================================
+// LISTINGS – GUEST MODE (optional auth)
+// Visiteur non connecté : peut consulter le détail d'une annonce et les infos
+// soom associées. Si un token valide est fourni, l'utilisateur est résolu et
+// le contrôleur enrichit la réponse (wishlist, is_seller, infos vendeur).
+// ============================================
+Route::middleware('auth.optional')->group(function () {
+    Route::get('/listings/{id}', [ListingController::class, 'getById'])->whereNumber('id');
+    Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom'])->whereNumber('listingId');
+    Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount'])->whereNumber('listingId');
+    Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms'])->whereNumber('listingId');
+    Route::get('/sooms/max', [SoomController::class, 'getMaxSoom']);
+});
 
 // ============================================
 // FILTERS (PUBLIC)
@@ -1100,7 +1119,8 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/listings/pending-follow-up', [ListingFollowUpController::class, 'pendingFollowUp']);
     Route::get('/listings/{listingId}/payment-status', [ListingController::class, 'checkListingPaymentStatus']);
     Route::get('/debug-wishlist/{id}', [ListingController::class, 'getDebugInfo']);
-    Route::get('/listings/{id}', [ListingController::class, 'getById']);
+    // NOTE: GET /listings/{id} est servi par le groupe "auth.optional" (mode invité) plus haut.
+    Route::get('/listings/{id}/seller-contact', [ListingController::class, 'getSellerContact'])->whereNumber('id');
     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
     Route::put('/listings/edit/{id}', [ListingController::class, 'editListing']);
     Route::get('/listings/{id}/edit-status', [ListingController::class, 'checkEditStatus']);
@@ -1163,9 +1183,8 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // SOOM (BIDDING SYSTEM)
     // ============================================
-    Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms']);
-    Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount']);
-    Route::get('/listings/{listingId}/last-soom', [SoomController::class, 'getLastSoom']);
+    // NOTE: les GET sooms/last-soom/minimum-soom d'une annonce sont servis par le
+    // groupe "auth.optional" (mode invité) plus haut. Ici on garde l'action d'offre.
     Route::post('/listings/{listingId}/soom', [SoomController::class, 'createSoom']);
     Route::patch('/listings/{listingId}/mark-as-sold', [SoomController::class, 'markListingAsSold']);
     Route::patch('/listings/{listingId}/close', [SoomController::class, 'closeListing']);
@@ -1173,7 +1192,7 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/listings/{listingId}/follow-up', [ListingFollowUpController::class, 'respond']);
     Route::patch('/listings/{listingId}/follow-up/undo', [ListingFollowUpController::class, 'undoSold']);
 
-    Route::get('/sooms/max', [SoomController::class, 'getMaxSoom']);
+    // NOTE: GET /sooms/max est servi par le groupe "auth.optional" (mode invité) plus haut.
     Route::get('/sooms/max/me', [SoomController::class, 'getMyMaxSoom']);
     Route::get('/sooms/overbidding/users', [SoomController::class, 'getUsersWithOverbidding']);
 
