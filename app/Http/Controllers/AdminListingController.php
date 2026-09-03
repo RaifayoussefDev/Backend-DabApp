@@ -98,6 +98,13 @@ class AdminListingController extends Controller
             $query->where('sale_channel', $request->sale_channel);
         }
 
+        if ($request->filled('answered_from')) {
+            $query->whereDate('follow_up_responded_at', '>=', $request->answered_from);
+        }
+        if ($request->filled('answered_to')) {
+            $query->whereDate('follow_up_responded_at', '<=', $request->answered_to);
+        }
+
         $listings = $query->paginate($perPage);
 
         return response()->json($listings);
@@ -280,6 +287,7 @@ class AdminListingController extends Controller
 
     /**
      * Narrow the listings query by follow-up state.
+     *   answered  → seller OR admin gave an answer (feeds the dedicated diagnostic table)
      *   sold      → seller/admin said it sold
      *   not_sold  → seller/admin said it didn't
      *   pending   → follow-up sent, still no answer
@@ -288,6 +296,9 @@ class AdminListingController extends Controller
     private function applyFollowUpResponseFilter($query, string $value): void
     {
         switch ($value) {
+            case 'answered':
+                $query->whereNotNull('follow_up_responded_at');
+                break;
             case 'sold':
                 $query->where('follow_up_response', 'sold');
                 break;

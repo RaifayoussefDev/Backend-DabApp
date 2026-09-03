@@ -297,6 +297,7 @@ class ReportingController extends Controller
             ->when($request->filled('sale_channel'), fn($q) => $q->where('sale_channel', $request->sale_channel))
             ->when($request->filled('follow_up_response'), function ($q) use ($request) {
                 match ($request->follow_up_response) {
+                    'answered' => $q->whereNotNull('follow_up_responded_at'),
                     'sold'     => $q->where('follow_up_response', 'sold'),
                     'not_sold' => $q->where('follow_up_response', 'not_sold'),
                     'pending'  => $q->whereNotNull('follow_up_sent_at')->whereNull('follow_up_responded_at'),
@@ -306,6 +307,8 @@ class ReportingController extends Controller
             })
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
+            ->when($request->filled('answered_from'), fn($q) => $q->whereDate('follow_up_responded_at', '>=', $request->answered_from))
+            ->when($request->filled('answered_to'), fn($q) => $q->whereDate('follow_up_responded_at', '<=', $request->answered_to))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $s = $request->search;
                 $q->where(fn($qq) => $qq->where('title', 'like', "%$s%")->orWhere('id', $s));
