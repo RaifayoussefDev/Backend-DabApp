@@ -55,6 +55,8 @@ class Listing extends Model
         'reason_not_sold',
         'follow_up_source',
         'follow_up_set_by',
+        'follow_up_count',
+        'next_follow_up_at',
     ];
 
     // ✅ AJOUT DES CASTS
@@ -72,7 +74,26 @@ class Listing extends Model
         'updated_at' => 'datetime',
         'follow_up_sent_at' => 'datetime',
         'follow_up_responded_at' => 'datetime',
+        'next_follow_up_at' => 'datetime',
+        'follow_up_count' => 'integer',
     ];
+
+    protected static function booted(): void
+    {
+        // Arm the recurring "did it sell?" schedule the moment a listing is
+        // (re)published. Covers every publish path without touching them. Only
+        // fills a NULL slot, so it never fights the cron / controller updates.
+        static::saving(function (Listing $listing) {
+            $shouldArm = $listing->status === 'published'
+                && $listing->published_at
+                && $listing->follow_up_response !== 'sold'
+                && $listing->next_follow_up_at === null;
+
+            if ($shouldArm) {
+                $listing->next_follow_up_at = $listing->computeNextFollowUpAt();
+            }
+        });
+    }
 
     // ===========================
     // RELATIONS EXISTANTES
@@ -201,15 +222,61 @@ class Listing extends Model
     }
 
     /**
-     * Listings still published, at least 7 days after going live, that haven't
-     * had their one-time "did it sell?" follow-up sent yet.
+     * Recurring "did it sell?" reminder cadence, in days after `published_at`,
+     * keyed by how many reminders were already sent.
+     *   0 sent → J+7   |   1 → J+17   |   2 → J+32   |   3+ → +30 days each
      */
-    public function scopeNeedsFollowUp($query)
+    public static function followUpOffsetDays(int $sentCount): int
+    {
+        return match (true) {
+            $sentCount <= 0  => 7,
+            $sentCount === 1 => 17,
+            $sentCount === 2 => 32,
+            default          => 32 + ($sentCount - 2) * 30,
+        };
+    }
+
+    /**
+     * The absolute time the next reminder is due, anchored to `published_at` so
+     * the cadence doesn't drift. If that anchor point is already in the past
+     * (old listing that just entered the schedule), floor it to 30 days out so a
+     * backlog listing gets ONE reminder now and then the normal monthly cadence —
+     * never a burst of catch-up reminders on consecutive daily runs.
+     */
+    public function computeNextFollowUpAt(?int $forCount = null): ?\Illuminate\Support\Carbon
+    {
+        if (!$this->published_at) {
+            return null;
+        }
+
+        $count = $forCount ?? (int) $this->follow_up_count;
+        $natural = $this->published_at->copy()->addDays(self::followUpOffsetDays($count));
+
+        return $natural->isPast() ? now()->addDays(30) : $natural;
+    }
+
+    /**
+     * Listings whose next recurring "did it sell?" reminder is due now. Recurs
+     * J+7 / J+17 / J+32 / then every 30 days for as long as the listing stays
+     * `published`. Only a "sold" answer (or leaving `published`) stops it — a
+     * "not sold" answer just re-arms the 30-day cycle.
+     */
+    public function scopeDueForFollowUp($query)
     {
         return $query->where('status', 'published')
             ->whereNotNull('published_at')
-            ->where('published_at', '<=', now()->subDays(7))
-            ->whereNull('follow_up_sent_at');
+            ->where(fn ($q) => $q->whereNull('follow_up_response')->orWhere('follow_up_response', '!=', 'sold'))
+            ->whereNotNull('next_follow_up_at')
+            ->where('next_follow_up_at', '<=', now());
+    }
+
+    /**
+     * @deprecated use scopeDueForFollowUp — kept for callers that pre-date the
+     * recurring cadence.
+     */
+    public function scopeNeedsFollowUp($query)
+    {
+        return $this->scopeDueForFollowUp($query);
     }
 
     // ===========================

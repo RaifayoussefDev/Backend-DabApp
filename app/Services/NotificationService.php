@@ -575,13 +575,15 @@ class NotificationService
     }
 
     /**
-     * Day-7 "did it sell?" check-in, sent once per listing.
+     * Recurring "did it sell?" check-in (J+7, J+17, J+32, then every 30 days).
+     * $reminderNumber is 1-based so the app/template can vary the copy.
      */
-    public function notifyListingFollowUp(User $user, $listing): array
+    public function notifyListingFollowUp(User $user, $listing, int $reminderNumber = 1): array
     {
         return $this->sendToUser($user, 'listing_follow_up', [
             'listing_id' => $listing->id,
             'listing_title' => $listing->title,
+            'reminder_number' => $reminderNumber,
         ], [
             'entity' => $listing,
             'priority' => 'normal',

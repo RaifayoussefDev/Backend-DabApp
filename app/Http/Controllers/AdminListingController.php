@@ -359,6 +359,8 @@ class AdminListingController extends Controller
                 'follow_up_responded_at' => $response ? now() : null,
                 'follow_up_source'       => $response ? 'admin' : null,
                 'follow_up_set_by'       => $response ? $request->user()->id : null,
+                // 'sold' stops the recurring reminder; 'not_sold' / cleared re-arms the 30-day cycle.
+                'next_follow_up_at'      => $response === 'sold' ? null : now()->addDays(30),
             ]);
 
             // Mirrors ListingFollowUpController::handleSold (can't call it directly —
@@ -389,7 +391,8 @@ class AdminListingController extends Controller
     /**
      * @OA\Post(
      *     path="/api/admin/listings/{id}/resend-follow-up",
-     *     summary="(Re)send the Day-7 'did it sell?' push to the seller",
+     *     summary="Send the recurring 'did it sell?' reminder to the seller now",
+     *     description="Fires the reminder immediately and re-anchors the next one 30 days out.",
      *     tags={"Admin Listings"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
@@ -401,11 +404,11 @@ class AdminListingController extends Controller
     {
         $listing = Listing::with('seller')->findOrFail($id);
 
-        if ($listing->status !== 'published' || $listing->follow_up_responded_at !== null) {
+        if ($listing->status !== 'published' || $listing->follow_up_response === 'sold') {
             return response()->json([
-                'message' => 'Only a published listing with no follow-up answer yet can be re-notified.',
+                'message' => 'Only a published listing that has not been marked sold can be re-notified.',
                 'status' => $listing->status,
-                'follow_up_responded_at' => $listing->follow_up_responded_at,
+                'follow_up_response' => $listing->follow_up_response,
             ], 422);
         }
 
@@ -413,8 +416,14 @@ class AdminListingController extends Controller
             return response()->json(['message' => 'Listing has no seller to notify.'], 422);
         }
 
-        $notificationService->notifyListingFollowUp($listing->seller, $listing);
-        $listing->update(['follow_up_sent_at' => now()]);
+        $reminderNumber = $listing->follow_up_count + 1;
+        $notificationService->notifyListingFollowUp($listing->seller, $listing, $reminderNumber);
+
+        $listing->update([
+            'follow_up_sent_at' => now(),
+            'follow_up_count'   => $reminderNumber,
+            'next_follow_up_at' => now()->addDays(30),
+        ]);
 
         return response()->json(['message' => 'Follow-up sent to the seller.', 'listing' => $listing->fresh()]);
     }
@@ -433,15 +442,14 @@ class AdminListingController extends Controller
     {
         $query = Listing::query()
             ->where('status', 'published')
-            ->whereNull('follow_up_responded_at')
+            ->where(fn ($q) => $q->whereNull('follow_up_response')->orWhere('follow_up_response', '!=', 'sold'))
             ->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->category_id))
             ->when($request->filled('country_id'), fn ($q) => $q->where('country_id', $request->country_id));
 
         $ids = $query->pluck('id');
 
-        // Clear follow_up_sent_at so Listing::scopeNeedsFollowUp / SendListingFollowUps picks
-        // them up on the next run, AND force an immediate send via a dispatched job.
-        Listing::whereIn('id', $ids)->update(['follow_up_sent_at' => null]);
+        // Make every match due right now, then run the sweep immediately.
+        Listing::whereIn('id', $ids)->update(['next_follow_up_at' => now()]);
         \App\Jobs\SendListingFollowUps::dispatch();
 
         return response()->json([

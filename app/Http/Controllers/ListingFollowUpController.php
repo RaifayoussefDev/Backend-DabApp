@@ -36,11 +36,10 @@ class ListingFollowUpController extends Controller
             ], 401);
         }
 
+        // Same predicate as the recurring push (Listing::scopeDueForFollowUp) so the
+        // in-app bottom sheet and the notification stay in lock-step.
         $listing = Listing::where('seller_id', $userId)
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now()->subDays(7))
-            ->whereNull('follow_up_responded_at')
+            ->dueForFollowUp()
             ->orderBy('published_at', 'asc')
             ->first();
 
@@ -106,6 +105,9 @@ class ListingFollowUpController extends Controller
             'reason_not_sold' => $request->reason_not_sold,
             'follow_up_source' => 'seller',
             'follow_up_set_by' => $userId,
+            // "not sold" is not terminal — re-arm the 30-day cycle from the answer.
+            'follow_up_count' => $listing->follow_up_count + 1,
+            'next_follow_up_at' => now()->addDays(30),
         ]);
 
         return response()->json([
@@ -159,6 +161,8 @@ class ListingFollowUpController extends Controller
             'follow_up_responded_at' => null,
             'follow_up_source' => null,
             'follow_up_set_by' => null,
+            // Back on the market → resume the recurring check-in.
+            'next_follow_up_at' => now()->addDays(30),
         ]);
 
         return response()->json([
@@ -180,6 +184,7 @@ class ListingFollowUpController extends Controller
                 'follow_up_responded_at' => now(),
                 'follow_up_source' => 'seller',
                 'follow_up_set_by' => $listing->seller_id,
+                'next_follow_up_at' => null, // sold → recurring reminders stop
             ]);
 
             $rejectedSoomsCount = Submission::where('listing_id', $listing->id)

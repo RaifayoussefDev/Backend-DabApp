@@ -52,7 +52,8 @@ class Kernel extends ConsoleKernel
             ->daily()
             ->withoutOverlapping();
 
-        // One-time "did it sell?" follow-up, 7 days after a listing is published
+        // Recurring "did it sell?" reminder: J+7, J+17, J+32, then every 30 days
+        // while the listing stays published and isn't marked sold.
         $schedule->command('listings:send-follow-up')
             ->dailyAt('18:00')
             ->withoutOverlapping();

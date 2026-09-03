@@ -19,17 +19,17 @@ class SendListingFollowUpsCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Send the one-time "did it sell?" follow-up to sellers 7 days after a listing is published';
+    protected $description = 'Send the recurring "did it sell?" reminder (J+7, J+17, J+32, then every 30 days) to sellers of still-published listings';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info('Starting listing follow-up job...');
+        // Queued (not run inline) so a big backlog never blocks the scheduler.
+        // The job is chunked and capped per run — see SendListingFollowUps.
+        SendListingFollowUps::dispatch();
 
-        (new SendListingFollowUps())->handle(app(\App\Services\NotificationService::class));
-
-        $this->info('Listing follow-up job completed.');
+        $this->info('Listing follow-up sweep queued.');
     }
 }
