@@ -52,11 +52,18 @@ class MassNotificationJob implements ShouldQueue
 
         $batch->update(['status' => 'processing']);
 
+        // For a 'both' broadcast the guest job also runs and owns the terminal
+        // state + the combined total_targeted the controller already stored — this
+        // job must not overwrite either.
+        $sharedWithGuestJob = ($batch->audience ?? 'users') === 'both';
+
         $query = User::query()->applyFilters($this->filters);
         $totalUsers = $query->count();
 
         if ($totalUsers === 0) {
-            $batch->update(['status' => 'completed', 'total_targeted' => 0, 'completed_at' => now()]);
+            if (!$sharedWithGuestJob) {
+                $batch->update(['status' => 'completed', 'total_targeted' => 0, 'completed_at' => now()]);
+            }
             return;
         }
 
@@ -82,6 +89,10 @@ class MassNotificationJob implements ShouldQueue
                         'type' => $this->content['type'] ?? 'info',
                         'original_content' => $this->content,
                     ];
+                    // Optional deep-link → flows to Notification.action_url and the push data payload.
+                    if (!empty($this->content['action_url'])) {
+                        $data['action_url'] = $this->content['action_url'];
+                    }
 
                     $result = $notificationService->sendCustomNotification($user, $title, $message, $data, [
                         'channels' => $this->channels,
@@ -109,11 +120,16 @@ class MassNotificationJob implements ShouldQueue
             $batch->increment('failed_count', $failedInChunk);
         });
 
-        $batch->update([
-            'total_targeted' => $totalUsers,
-            'status' => 'completed',
-            'completed_at' => now(),
-        ]);
+        if ($sharedWithGuestJob) {
+            // Guest job finalises the batch; keep the controller's combined total.
+            Log::info("MassNotificationJob: batch {$batch->id} user side done (guest side still owns completion).");
+        } else {
+            $batch->update([
+                'total_targeted' => $totalUsers,
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+        }
 
         Log::info("MassNotificationJob: batch {$batch->id} completed.", [
             'sent' => $batch->fresh()->sent_count,

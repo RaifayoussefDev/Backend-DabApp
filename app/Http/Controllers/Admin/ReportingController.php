@@ -294,6 +294,16 @@ class ReportingController extends Controller
             ->when($request->filled('status'), fn($q) => $q->where('status', $request->status))
             ->when($request->filled('category_id'), fn($q) => $q->where('category_id', $request->category_id))
             ->when($request->filled('seller_id'), fn($q) => $q->where('seller_id', $request->seller_id))
+            ->when($request->filled('sale_channel'), fn($q) => $q->where('sale_channel', $request->sale_channel))
+            ->when($request->filled('follow_up_response'), function ($q) use ($request) {
+                match ($request->follow_up_response) {
+                    'sold'     => $q->where('follow_up_response', 'sold'),
+                    'not_sold' => $q->where('follow_up_response', 'not_sold'),
+                    'pending'  => $q->whereNotNull('follow_up_sent_at')->whereNull('follow_up_responded_at'),
+                    'none'     => $q->whereNull('follow_up_sent_at'),
+                    default    => $q,
+                };
+            })
             ->when($request->filled('date_from'), fn($q) => $q->whereDate('created_at', '>=', $request->date_from))
             ->when($request->filled('date_to'), fn($q) => $q->whereDate('created_at', '<=', $request->date_to))
             ->when($request->filled('search'), function ($q) use ($request) {
@@ -310,33 +320,56 @@ class ReportingController extends Controller
 
         $listings = $query->get();
 
+        $channelLabels = [
+            'dabapp'         => 'Sold on DabApp',
+            'other_platform' => 'Sold on another platform',
+            'off_platform'   => 'Sold offline / directly',
+        ];
+
         $columns = [
             'ID', 'Title', 'Category', 'Price', 'Status', 'Seller',
             'City', 'Country', 'Brand', 'Model', 'Views', 'Created At',
+            'Sale Result', 'Sale Channel', 'Reason Not Sold', 'Follow-up Responded At', 'Set By',
         ];
 
-        $rows = $listings->map(fn($l) => [
-            $l->id,
-            $l->title,
-            $l->category?->name ?? '—',
-            $l->price,
-            $l->status,
-            $l->seller?->first_name . ' ' . $l->seller?->last_name,
-            $l->city?->name ?? '—',
-            $l->country?->name ?? '—',
-            $l->motorcycle?->brand?->name ?? '—',
-            $l->motorcycle?->model?->name ?? '—',
-            $l->views_count ?? 0,
-            $l->created_at?->format('Y-m-d H:i'),
-        ])->toArray();
+        $rows = $listings->map(function ($l) use ($channelLabels) {
+            $result = match ($l->follow_up_response) {
+                'sold'     => 'Sold',
+                'not_sold' => 'Not sold',
+                default    => $l->follow_up_sent_at ? 'Awaiting answer' : 'No follow-up',
+            };
+
+            return [
+                $l->id,
+                $l->title,
+                $l->category?->name ?? '—',
+                $l->price,
+                $l->status,
+                $l->seller?->first_name . ' ' . $l->seller?->last_name,
+                $l->city?->name ?? '—',
+                $l->country?->name ?? '—',
+                $l->motorcycle?->brand?->name ?? '—',
+                $l->motorcycle?->model?->name ?? '—',
+                $l->views_count ?? 0,
+                $l->created_at?->format('Y-m-d H:i'),
+                $result,
+                $l->sale_channel ? ($channelLabels[$l->sale_channel] ?? $l->sale_channel) : '—',
+                $l->reason_not_sold ?? '—',
+                $l->follow_up_responded_at?->format('Y-m-d H:i') ?? '—',
+                $l->follow_up_source ?? '—',
+            ];
+        })->toArray();
 
         $title = 'Listings Report';
         $stats = [
-            'Total'     => $listings->count(),
-            'Published' => $listings->where('status', 'published')->count(),
-            'Pending'   => $listings->where('status', 'pending')->count(),
-            'Rejected'  => $listings->where('status', 'rejected')->count(),
-            'Draft'     => $listings->where('status', 'draft')->count(),
+            'Total'                 => $listings->count(),
+            'Published'             => $listings->where('status', 'published')->count(),
+            'Pending'               => $listings->where('status', 'pending')->count(),
+            'Rejected'              => $listings->where('status', 'rejected')->count(),
+            'Draft'                 => $listings->where('status', 'draft')->count(),
+            'Sold on DabApp'        => $listings->where('sale_channel', 'dabapp')->count(),
+            'Sold elsewhere'        => $listings->whereIn('sale_channel', ['other_platform', 'off_platform'])->count(),
+            'Reported not sold'     => $listings->where('follow_up_response', 'not_sold')->count(),
         ];
 
         return $this->export($format, 'listings_report', $title, $columns, $rows, $stats);

@@ -5146,6 +5146,10 @@ class ListingController extends Controller
         // is traceable, deduped by IP + user-agent on the same item within 24h so
         // a refresh doesn't inflate views_count.
         if (!$user) {
+            // Stable per-install id from the app — lets guest push campaigns target
+            // "devices that viewed category X / listing Y" (join views.device_id → guest_notification_tokens).
+            $deviceId = request()->header('X-Device-Id');
+
             $recentGuestView = \App\Models\View::whereNull('user_id')
                 ->where('viewable_id', $viewable->id)
                 ->where('viewable_type', $type)
@@ -5162,6 +5166,7 @@ class ListingController extends Controller
                         'viewable_type' => $type,
                         'ip_address' => $ip,
                         'user_agent' => $ua,
+                        'device_id' => $deviceId,
                     ]);
                     $viewable->increment('views_count');
                 } catch (\Exception $e) {

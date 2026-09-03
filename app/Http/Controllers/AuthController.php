@@ -644,6 +644,13 @@ class AuthController extends Controller
             ], 202);
         }
 
+        // This device is no longer a guest — retire its guest push token so guest
+        // broadcasts stop reaching it (the app re-registers under /notification-tokens).
+        if ($request->filled('device_id')) {
+            \App\Models\GuestNotificationToken::where('device_id', $request->input('device_id'))
+                ->update(['is_active' => false, 'converted_user_id' => $user->id]);
+        }
+
         // ✅ GÉNÉRER LES DEUX TOKENS
         $tokens = $this->generateTokens($user, $country, $continent);
 
@@ -1371,6 +1378,13 @@ class AuthController extends Controller
         Log::info('User authentication completed after OTP verification', [
             'user_id' => $user->id
         ]);
+
+        // This device is no longer a guest — retire its guest push token so guest
+        // broadcasts stop reaching it (the app re-registers under /notification-tokens).
+        if ($request->filled('device_id')) {
+            \App\Models\GuestNotificationToken::where('device_id', $request->input('device_id'))
+                ->update(['is_active' => false, 'converted_user_id' => $user->id]);
+        }
 
         // ✅ RECHARGER L'UTILISATEUR pour avoir les données fraîches
         $user->refresh();

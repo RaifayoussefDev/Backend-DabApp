@@ -299,8 +299,11 @@ Route::prefix('admin')->group(function () {
         // Admin Listings
         Route::get('/listings/stats', [AdminListingController::class, 'stats']);
         Route::get('/listings/export-zip', [\App\Http\Controllers\Admin\ExportListingController::class, 'exportZip']);
+        Route::post('/listings/resend-follow-up', [AdminListingController::class, 'bulkResendFollowUp']);
         Route::apiResource('listings', AdminListingController::class);
         Route::patch('/listings/{id}/status', [AdminListingController::class, 'changeStatus']);
+        Route::patch('/listings/{id}/sale-diagnostic', [AdminListingController::class, 'setSaleDiagnostic']);
+        Route::post('/listings/{id}/resend-follow-up', [AdminListingController::class, 'resendFollowUp']);
         Route::post('/listings/{id}/images/reorder', [AdminListingController::class, 'reorderImages']);
         Route::get('/listings/{id}/images/{image_id}/download', [AdminListingController::class, 'downloadImage']);
 
@@ -667,6 +670,16 @@ Route::middleware('auth.optional')->group(function () {
     Route::get('/listings/{listingId}/minimum-soom', [SoomController::class, 'getMinimumSoomAmount'])->whereNumber('listingId');
     Route::get('/listings/{listingId}/sooms', [SoomController::class, 'getListingSooms'])->whereNumber('listingId');
     Route::get('/sooms/max', [SoomController::class, 'getMaxSoom']);
+});
+
+// ============================================
+// GUEST NOTIFICATION TOKENS (PUBLIC)
+// Visiteur non connecté : enregistre son token FCM (clé = device_id de l'app)
+// pour recevoir les broadcasts "invités" déclenchés depuis l'admin panel.
+// ============================================
+Route::prefix('guest')->middleware('throttle:60,1')->group(function () {
+    Route::post('/notification-tokens', [\App\Http\Controllers\GuestNotificationTokenController::class, 'store']);
+    Route::delete('/notification-tokens/{deviceId}', [\App\Http\Controllers\GuestNotificationTokenController::class, 'destroy']);
 });
 
 // ============================================

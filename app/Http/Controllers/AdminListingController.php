@@ -41,7 +41,7 @@ class AdminListingController extends Controller
         $sortBy = $request->input('sort_by', 'created_at');
         $sortOrder = $request->input('sort_order', 'desc');
 
-        $allowedSorts = ['id', 'title', 'category_id', 'country_id', 'price', 'status', 'created_at', 'views_count', 'updated_at'];
+        $allowedSorts = ['id', 'title', 'category_id', 'country_id', 'price', 'status', 'created_at', 'views_count', 'updated_at', 'follow_up_responded_at', 'follow_up_sent_at'];
 
         if (!in_array($sortBy, $allowedSorts)) {
             $sortBy = 'created_at';
@@ -87,6 +87,15 @@ class AdminListingController extends Controller
                 $q->where('title', 'like', "%{$search}%")
                     ->orWhere('id', 'like', "%{$search}%");
             });
+        }
+
+        // Sale diagnostic filters (fed by the Day-7 "did it sell?" follow-up + admin overrides)
+        if ($request->filled('follow_up_response')) {
+            $this->applyFollowUpResponseFilter($query, $request->follow_up_response);
+        }
+
+        if ($request->filled('sale_channel')) {
+            $query->where('sale_channel', $request->sale_channel);
         }
 
         $listings = $query->paginate($perPage);
@@ -263,6 +272,171 @@ class AdminListingController extends Controller
         $listing->save();
 
         return response()->json(['message' => 'Status updated', 'status' => $listing->status]);
+    }
+
+    // ============================================================
+    // SALE DIAGNOSTIC — "did it sell? where?" (Day-7 follow-up data + admin overrides)
+    // ============================================================
+
+    /**
+     * Narrow the listings query by follow-up state.
+     *   sold      → seller/admin said it sold
+     *   not_sold  → seller/admin said it didn't
+     *   pending   → follow-up sent, still no answer
+     *   none      → follow-up never sent
+     */
+    private function applyFollowUpResponseFilter($query, string $value): void
+    {
+        switch ($value) {
+            case 'sold':
+                $query->where('follow_up_response', 'sold');
+                break;
+            case 'not_sold':
+                $query->where('follow_up_response', 'not_sold');
+                break;
+            case 'pending':
+                $query->whereNotNull('follow_up_sent_at')->whereNull('follow_up_responded_at');
+                break;
+            case 'none':
+                $query->whereNull('follow_up_sent_at');
+                break;
+        }
+    }
+
+    /**
+     * @OA\Patch(
+     *     path="/api/admin/listings/{id}/sale-diagnostic",
+     *     summary="Manually set a listing's sale diagnostic (Admin override)",
+     *     description="For listings whose seller never answered the Day-7 follow-up. Records whether/where it sold. Set mark_sold=true to also flip the listing status to 'sold'.",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="follow_up_response", type="string", enum={"sold", "not_sold", "null"}),
+     *             @OA\Property(property="sale_channel", type="string", enum={"dabapp", "other_platform", "off_platform"}),
+     *             @OA\Property(property="reason_not_sold", type="string"),
+     *             @OA\Property(property="mark_sold", type="boolean", default=false)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Diagnostic updated")
+     * )
+     */
+    public function setSaleDiagnostic(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'follow_up_response' => 'nullable|in:sold,not_sold',
+            'sale_channel' => 'nullable|required_if:follow_up_response,sold|in:dabapp,other_platform,off_platform',
+            'reason_not_sold' => 'nullable|string|max:255',
+            'mark_sold' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $listing = Listing::findOrFail($id);
+        $response = $request->input('follow_up_response');
+
+        DB::beginTransaction();
+        try {
+            $listing->update([
+                'follow_up_response'     => $response,
+                'sale_channel'           => $response === 'sold' ? $request->input('sale_channel') : null,
+                'reason_not_sold'        => $response === 'not_sold' ? $request->input('reason_not_sold') : null,
+                'follow_up_responded_at' => $response ? now() : null,
+                'follow_up_source'       => $response ? 'admin' : null,
+                'follow_up_set_by'       => $response ? $request->user()->id : null,
+            ]);
+
+            // Mirrors ListingFollowUpController::handleSold (can't call it directly —
+            // it reads Auth::id() and returns HTTP responses inline).
+            if ($response === 'sold' && $request->boolean('mark_sold') && $listing->status === 'published') {
+                $listing->update(['status' => 'sold', 'allow_submission' => false]);
+
+                \App\Models\Submission::where('listing_id', $listing->id)
+                    ->where('status', 'pending')
+                    ->update([
+                        'status' => 'rejected',
+                        'rejection_reason' => 'Listing marked as sold by admin',
+                    ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['error' => 'Failed to update diagnostic', 'details' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'message' => 'Sale diagnostic updated',
+            'listing' => $listing->fresh(),
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/listings/{id}/resend-follow-up",
+     *     summary="(Re)send the Day-7 'did it sell?' push to the seller",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\Response(response=200, description="Follow-up sent"),
+     *     @OA\Response(response=422, description="Listing not eligible")
+     * )
+     */
+    public function resendFollowUp($id, NotificationService $notificationService)
+    {
+        $listing = Listing::with('seller')->findOrFail($id);
+
+        if ($listing->status !== 'published' || $listing->follow_up_responded_at !== null) {
+            return response()->json([
+                'message' => 'Only a published listing with no follow-up answer yet can be re-notified.',
+                'status' => $listing->status,
+                'follow_up_responded_at' => $listing->follow_up_responded_at,
+            ], 422);
+        }
+
+        if (!$listing->seller) {
+            return response()->json(['message' => 'Listing has no seller to notify.'], 422);
+        }
+
+        $notificationService->notifyListingFollowUp($listing->seller, $listing);
+        $listing->update(['follow_up_sent_at' => now()]);
+
+        return response()->json(['message' => 'Follow-up sent to the seller.', 'listing' => $listing->fresh()]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/admin/listings/resend-follow-up",
+     *     summary="Bulk (re)send the Day-7 follow-up to every eligible listing matching the filters",
+     *     description="Same filters as GET /admin/listings. Dispatches the existing SendListingFollowUps job so nothing blocks the request.",
+     *     tags={"Admin Listings"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(response=202, description="Bulk follow-up queued")
+     * )
+     */
+    public function bulkResendFollowUp(Request $request)
+    {
+        $query = Listing::query()
+            ->where('status', 'published')
+            ->whereNull('follow_up_responded_at')
+            ->when($request->filled('category_id'), fn ($q) => $q->where('category_id', $request->category_id))
+            ->when($request->filled('country_id'), fn ($q) => $q->where('country_id', $request->country_id));
+
+        $ids = $query->pluck('id');
+
+        // Clear follow_up_sent_at so Listing::scopeNeedsFollowUp / SendListingFollowUps picks
+        // them up on the next run, AND force an immediate send via a dispatched job.
+        Listing::whereIn('id', $ids)->update(['follow_up_sent_at' => null]);
+        \App\Jobs\SendListingFollowUps::dispatch();
+
+        return response()->json([
+            'message' => 'Bulk follow-up queued',
+            'eligible_count' => $ids->count(),
+        ], 202);
     }
 
     /**
@@ -530,6 +704,14 @@ class AdminListingController extends Controller
                 ->pluck('count', 'categories.name'),
             'new_today' => Listing::whereDate('created_at', now()->today())->count(),
             'new_this_week' => Listing::where('created_at', '>=', now()->startOfWeek())->count(),
+            'sale_diagnostic' => [
+                'sold_dabapp'          => Listing::where('sale_channel', 'dabapp')->count(),
+                'sold_other_platform'  => Listing::where('sale_channel', 'other_platform')->count(),
+                'sold_off_platform'    => Listing::where('sale_channel', 'off_platform')->count(),
+                'not_sold'             => Listing::where('follow_up_response', 'not_sold')->count(),
+                'awaiting_response'    => Listing::whereNotNull('follow_up_sent_at')->whereNull('follow_up_responded_at')->count(),
+                'no_follow_up'         => Listing::whereNull('follow_up_sent_at')->count(),
+            ],
         ];
 
         return response()->json($stats);

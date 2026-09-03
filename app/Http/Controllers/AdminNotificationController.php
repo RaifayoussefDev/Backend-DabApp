@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Jobs\MassNotificationJob;
+use App\Jobs\GuestMassNotificationJob;
+use App\Models\GuestNotificationToken;
 use App\Models\NotificationBatch;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
@@ -155,6 +157,18 @@ class AdminNotificationController extends Controller
             'content.title_ar' => 'nullable|string|max:255',
             'content.body_ar' => 'nullable|string',
             'content.type' => 'nullable|string|in:promo,news,info',
+            // Optional deep-link / redirect carried in the push data payload (both audiences).
+            'content.action_url' => 'nullable|string|max:500',
+            // Audience: registered users (default, unchanged), guest devices, or both.
+            'audience' => 'nullable|string|in:users,guests,both',
+            'guest_filters' => 'nullable|array',
+            'guest_filters.device_type' => 'nullable|in:ios,android,web,huawei',
+            'guest_filters.app_version' => 'nullable|string|max:50',
+            'guest_filters.country_id' => 'nullable|exists:countries,id',
+            'guest_filters.city_id' => 'nullable|exists:cities,id',
+            'guest_filters.active_since' => 'nullable|date',
+            'guest_filters.viewed_category_id' => 'nullable|exists:categories,id',
+            'guest_filters.viewed_listing_id' => 'nullable|exists:listings,id',
             'filters.user_ids' => 'nullable|array',
             'filters.user_ids.*' => 'exists:users,id',
             'filters.is_verified' => 'nullable|boolean',
@@ -177,22 +191,36 @@ class AdminNotificationController extends Controller
         }
 
         $filters = $request->input('filters', []);
+        $guestFilters = $request->input('guest_filters', []);
         $content = $request->input('content');
         $channels = $request->input('channels', ['push']); // Default to push if not specified
         $scheduledAt = $request->input('scheduled_at');
+        $audience = $request->input('audience', 'users');
 
-        // Cheap COUNT query regardless of how many users match — safe even at 100k+ users.
+        $targetsUsers = in_array($audience, ['users', 'both'], true);
+        $targetsGuests = in_array($audience, ['guests', 'both'], true);
+
+        // Cheap COUNT queries regardless of how many recipients match — safe even at 100k+.
         // (Recomputed at fire time for scheduled broadcasts, since the audience can shift by then.)
-        $totalTargeted = User::query()->applyFilters($filters)->count();
+        $totalTargeted = 0;
+        if ($targetsUsers) {
+            $totalTargeted += User::query()->applyFilters($filters)->count();
+        }
+        if ($targetsGuests) {
+            $totalTargeted += $this->guestAudienceQuery($guestFilters)->count();
+        }
 
         $batch = NotificationBatch::create([
             'title_en'       => $content['title_en'],
             'title_ar'       => $content['title_ar'] ?? null,
             'body_en'        => $content['body_en'],
             'body_ar'        => $content['body_ar'] ?? null,
+            'action_url'     => $content['action_url'] ?? null,
             'type'           => $content['type'] ?? 'info',
+            'audience'       => $audience,
             'channels'       => $channels,
             'filters'        => $filters,
+            'guest_filters'  => $guestFilters,
             'scheduled_at'   => $scheduledAt,
             'total_targeted' => $totalTargeted,
             'status'         => $scheduledAt ? 'scheduled' : 'pending',
@@ -208,15 +236,30 @@ class AdminNotificationController extends Controller
             ], 202);
         }
 
-        // Dispatched to the queue — the actual sending (push/email per user) happens on a
+        // Dispatched to the queue — the actual sending (push/email per recipient) happens on a
         // queue worker, never blocking this HTTP request. This is what makes broadcasting
-        // to any number of users (10, 10 000, or more) return instantly instead of timing out.
-        MassNotificationJob::dispatch($batch->id, $filters, $content, $channels, $batch->created_by);
+        // to any number of recipients (10, 10 000, or more) return instantly instead of timing out.
+        if ($targetsUsers) {
+            MassNotificationJob::dispatch($batch->id, $filters, $content, $channels, $batch->created_by);
+        }
+        if ($targetsGuests) {
+            GuestMassNotificationJob::dispatch($batch->id, $guestFilters, $content);
+        }
 
         return response()->json([
             'message' => 'Broadcast queued',
             'batch'   => $batch,
         ], 202);
+    }
+
+    /**
+     * Guest device tokens matching an admin broadcast's guest filters. Delegates
+     * to GuestNotificationToken::scopeMatchingFilters so the pre-send count and
+     * the actual send (GuestMassNotificationJob) apply the exact same predicate.
+     */
+    private function guestAudienceQuery(array $f)
+    {
+        return GuestNotificationToken::query()->active()->matchingFilters($f);
     }
 
     /**

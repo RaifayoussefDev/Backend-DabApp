@@ -104,6 +104,8 @@ class ListingFollowUpController extends Controller
             'follow_up_response' => 'not_sold',
             'follow_up_responded_at' => now(),
             'reason_not_sold' => $request->reason_not_sold,
+            'follow_up_source' => 'seller',
+            'follow_up_set_by' => $userId,
         ]);
 
         return response()->json([
@@ -155,6 +157,8 @@ class ListingFollowUpController extends Controller
             'sale_channel' => null,
             'follow_up_response' => null,
             'follow_up_responded_at' => null,
+            'follow_up_source' => null,
+            'follow_up_set_by' => null,
         ]);
 
         return response()->json([
@@ -174,6 +178,8 @@ class ListingFollowUpController extends Controller
                 'sale_channel' => $saleChannel,
                 'follow_up_response' => 'sold',
                 'follow_up_responded_at' => now(),
+                'follow_up_source' => 'seller',
+                'follow_up_set_by' => $listing->seller_id,
             ]);
 
             $rejectedSoomsCount = Submission::where('listing_id', $listing->id)

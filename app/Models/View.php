@@ -16,6 +16,7 @@ class View extends Model
         'viewable_type',
         'ip_address',
         'user_agent',
+        'device_id',
     ];
 
     /**

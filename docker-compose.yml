@@ -1,0 +1,40 @@
+# Runs on each target server (prod / dev / test).
+# The CI pipeline sets IMAGE_TAG=<branch>-<sha> and runs `docker compose up -d`.
+name: dabapp-backend
+
+services:
+  app:
+    image: ${IMAGE:-ghcr.io/fadelbg/dabapp-backend}:${IMAGE_TAG:-prod}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      RUN_MIGRATIONS: "true"
+      GENERATE_SWAGGER: "${GENERATE_SWAGGER:-false}"
+    ports:
+      - "${HTTP_PORT:-8000}:80"
+    volumes:
+      - storage:/var/www/html/storage/app
+      - ./secrets/firebase_credentials.json:/var/www/html/app/firebase_credentials.json:ro
+      - ./secrets/google-service-account.json:/var/www/html/storage/app/google-service-account.json:ro
+      - ./secrets/google-service-account.json:/var/www/html/storage/app/public/google-service-account.json:ro
+    depends_on:
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:80/up"]
+      interval: 30s
+      
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env}"]
+    volumes:
+      - redis:/data
+
+volumes:
+  storage:
+  redis:

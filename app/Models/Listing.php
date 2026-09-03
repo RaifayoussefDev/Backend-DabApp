@@ -53,6 +53,8 @@ class Listing extends Model
         'follow_up_response',
         'sale_channel',
         'reason_not_sold',
+        'follow_up_source',
+        'follow_up_set_by',
     ];
 
     // ✅ AJOUT DES CASTS
@@ -89,6 +91,15 @@ class Listing extends Model
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    /**
+     * The admin who last set the sale diagnostic manually (null when the seller
+     * answered the follow-up themselves).
+     */
+    public function followUpSetBy()
+    {
+        return $this->belongsTo(User::class, 'follow_up_set_by');
     }
 
     public function wishlistedBy()
