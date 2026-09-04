@@ -1205,6 +1205,10 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('/listings/{listingId}/follow-up', [ListingFollowUpController::class, 'respond']);
     Route::patch('/listings/{listingId}/follow-up/undo', [ListingFollowUpController::class, 'undoSold']);
 
+    // TEMP — mobile QA only (user id 83 whitelisted in the controller). Remove once done.
+    Route::post('/listings/{listingId}/test-follow-up-notification', [ListingFollowUpController::class, 'testFollowUpNotification'])
+        ->middleware('throttle:20,1');
+
     // NOTE: GET /sooms/max est servi par le groupe "auth.optional" (mode invité) plus haut.
     Route::get('/sooms/max/me', [SoomController::class, 'getMyMaxSoom']);
     Route::get('/sooms/overbidding/users', [SoomController::class, 'getUsersWithOverbidding']);

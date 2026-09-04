@@ -182,3 +182,39 @@ PATCH /api/listings/{id}/follow-up/undo    // undo a mistaken "sold" tap
 
 - `"sold"` → listing status flips to `sold`, pending sooms rejected, reminders stop.
 - `"not_sold"` → listing stays live, next reminder in 30 days.
+
+---
+
+## 5. QA test endpoint — trigger the push on demand, as many times as needed
+
+**Whitelisted to one account** for now: `sayedalaa447@gmail.com` (user id **83**). Temporary,
+remove once mobile QA is done (`ListingFollowUpController::TEST_USER_IDS` + this route).
+
+```
+GET  /api/my-ads
+     → list your own listings, pick a listing_id to test with
+
+POST /api/listings/{listing_id}/test-follow-up-notification     (auth required, JWT of user 83)
+     → 200 {
+         "message": "Test follow-up notification sent (schedule untouched — call again anytime).",
+         "listing_id": 123,
+         "listing_title": "...",
+         "push_results": { "total": 1, "sent": 1, "failed": 0 }
+       }
+     → 403 if not logged in as user 83
+     → 404 if the listing isn't yours
+```
+
+- Sends the real `listing_follow_up` push (same title/body/data as §3.C) **immediately**.
+- **Repeatable** — does NOT touch `follow_up_count` / `next_follow_up_at` / `follow_up_sent_at`,
+  so it never desyncs the real J+7/17/32/+30d schedule. Call it 50 times in a row if needed.
+- Throttled to 20 requests/minute.
+
+**Suggested test flow:**
+1. `GET /api/my-ads` → grab a `listing_id` you own.
+2. `POST /api/listings/{listing_id}/test-follow-up-notification` → push should arrive.
+3. Tap it → bottom sheet opens for that listing.
+4. `PATCH /api/listings/{listing_id}/follow-up` with `sold`/`not_sold` → verify the response +
+   that the listing updates.
+5. Repeat step 2 anytime to re-test push delivery / deep link handling without waiting for the
+   real 30-day cycle.

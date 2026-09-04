@@ -171,6 +171,53 @@ class ListingFollowUpController extends Controller
         ]);
     }
 
+    /**
+     * Temporary QA endpoint: re-send the "did it sell?" push for one of the
+     * caller's own listings, on demand, as many times as needed. Whitelisted
+     * to specific test accounts (currently the mobile dev, sayedalaa447@gmail.com,
+     * user id 83) — remove TEST_USER_IDS / this endpoint once mobile QA is done.
+     *
+     * Unlike the real recurring flow, this NEVER touches follow_up_count /
+     * follow_up_sent_at / next_follow_up_at — so it can't desync the schedule
+     * and is safe to spam-test.
+     */
+    private const TEST_USER_IDS = [83];
+
+    public function testFollowUpNotification(Request $request, $listingId)
+    {
+        $userId = Auth::id();
+
+        if (!$userId || !in_array($userId, self::TEST_USER_IDS, true)) {
+            return response()->json([
+                'message' => 'Not authorized for test notifications.',
+            ], 403);
+        }
+
+        $listing = Listing::where('id', $listingId)
+            ->where('seller_id', $userId)
+            ->with('seller')
+            ->first();
+
+        if (!$listing) {
+            return response()->json([
+                'message' => 'Listing not found, or it does not belong to you.',
+            ], 404);
+        }
+
+        $result = $this->notificationService->notifyListingFollowUp(
+            $listing->seller,
+            $listing,
+            $listing->follow_up_count + 1 // preview number only — not persisted
+        );
+
+        return response()->json([
+            'message' => 'Test follow-up notification sent (schedule untouched — call again anytime).',
+            'listing_id' => $listing->id,
+            'listing_title' => $listing->title,
+            'push_results' => $result['push_results'] ?? null,
+        ]);
+    }
+
     private function handleSold(Listing $listing, string $saleChannel)
     {
         DB::beginTransaction();
