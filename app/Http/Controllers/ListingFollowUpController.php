@@ -183,7 +183,7 @@ class ListingFollowUpController extends Controller
      */
     private const TEST_USER_IDS = [83];
 
-    public function testFollowUpNotification(Request $request, $listingId)
+    public function testFollowUpNotification(Request $request, $listingId, \App\Services\FirebaseService $firebase)
     {
         $userId = Auth::id();
 
@@ -204,17 +204,58 @@ class ListingFollowUpController extends Controller
             ], 404);
         }
 
+        $reminderNumber = $listing->follow_up_count + 1;
+
+        // Debug mode: send straight to ONE fcm_token passed in the body and return
+        // the raw FCM result (message_id / error). Isolates "is MY device reachable?"
+        // from the 29 other tokens on this account.
+        if ($request->filled('fcm_token')) {
+            $raw = $firebase->sendToToken(
+                $request->input('fcm_token'),
+                'Did you sell it?',
+                'How is your listing "' . $listing->title . '" going? Let us know if it sold.',
+                [
+                    'type' => 'listing_follow_up',
+                    'listing_id' => (string) $listing->id,
+                    'listing_title' => (string) $listing->title,
+                    'reminder_number' => (string) $reminderNumber,
+                    'entity_type' => 'App\\Models\\Listing',
+                    'entity_id' => (string) $listing->id,
+                    'timestamp' => now()->toIso8601String(),
+                ],
+                ['android' => ['priority' => 'high', 'notification' => ['sound' => 'default']]]
+            );
+
+            return response()->json([
+                'message' => 'Direct single-token send.',
+                'listing_id' => $listing->id,
+                'fcm_result' => $raw, // { success, message_id | error }
+            ]);
+        }
+
+        // Normal mode: goes to every active token on the account (same path as the real reminder).
         $result = $this->notificationService->notifyListingFollowUp(
             $listing->seller,
             $listing,
-            $listing->follow_up_count + 1 // preview number only — not persisted
+            $reminderNumber // preview number only — not persisted
         );
+
+        $tokens = \App\Models\NotificationToken::where('user_id', $userId)
+            ->where('is_active', true)
+            ->get(['device_type', 'device_name', 'fcm_token', 'last_used_at'])
+            ->map(fn ($t) => [
+                'device_type' => $t->device_type,
+                'device_name' => $t->device_name,
+                'token_tail' => '…' . substr($t->fcm_token, -12),
+                'last_used_at' => $t->last_used_at,
+            ]);
 
         return response()->json([
             'message' => 'Test follow-up notification sent (schedule untouched — call again anytime).',
             'listing_id' => $listing->id,
             'listing_title' => $listing->title,
             'push_results' => $result['push_results'] ?? null,
+            'active_tokens' => $tokens, // check YOUR device's token tail is in here
         ]);
     }
 
