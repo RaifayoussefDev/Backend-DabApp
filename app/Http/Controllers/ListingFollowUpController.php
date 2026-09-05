@@ -181,7 +181,7 @@ class ListingFollowUpController extends Controller
      * follow_up_sent_at / next_follow_up_at — so it can't desync the schedule
      * and is safe to spam-test.
      */
-    private const TEST_USER_IDS = [83];
+    private const TEST_USER_IDS = [83, 65];
 
     public function testFollowUpNotification(Request $request, $listingId, \App\Services\FirebaseService $firebase)
     {
