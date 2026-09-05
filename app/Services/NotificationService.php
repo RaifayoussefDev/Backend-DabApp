@@ -587,6 +587,7 @@ class NotificationService
         ], [
             'entity' => $listing,
             'priority' => 'normal',
+            'channels' => ['push'], // push only — never email for the "did it sell?" check-in
         ]);
     }
 
