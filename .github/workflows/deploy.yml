@@ -1,9 +1,12 @@
 name: Build & Deploy
 
 on:
-  push:
-    branches: [prod, dev, test]
   workflow_dispatch:
+  # Auto-deploy on push is DISABLED until the GitHub Environments
+  # (prod / dev / test) and their secrets are configured.
+  # Re-enable by uncommenting:
+  # push:
+  #   branches: [prod, dev, test]
 
 concurrency:
   group: deploy-${{ github.ref_name }}
