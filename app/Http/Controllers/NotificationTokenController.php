@@ -119,6 +119,23 @@ class NotificationTokenController extends Controller
             'last_used_at' => now(),
         ]);
 
+        // FCM tokens rotate — retire this device's older tokens so a single phone
+        // doesn't pile up dozens of active rows (and get N copies of every push).
+        // Prefer the stable device_id; fall back to device_name + type.
+        if (!empty($validated['device_id'])) {
+            NotificationToken::where('user_id', $user->id)
+                ->where('device_id', $validated['device_id'])
+                ->where('id', '!=', $token->id)
+                ->update(['is_active' => false]);
+        } elseif (!empty($validated['device_name'])) {
+            NotificationToken::where('user_id', $user->id)
+                ->whereNull('device_id')
+                ->where('device_name', $validated['device_name'])
+                ->where('device_type', $validated['device_type'])
+                ->where('id', '!=', $token->id)
+                ->update(['is_active' => false]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Token registered successfully',

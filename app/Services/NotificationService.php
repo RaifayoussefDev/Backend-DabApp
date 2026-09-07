@@ -177,9 +177,17 @@ class NotificationService
      */
     protected function sendPushNotification(User $user, Notification $notification, array $options = []): array
     {
+        // One push per physical device, not per historical FCM token. The app
+        // re-registers a fresh token on rotation without retiring the old rows,
+        // so a single phone can accumulate dozens of active tokens — dedupe to
+        // the most recently used one per device (device_id, else device_name+type).
         $tokens = NotificationToken::where('user_id', $user->id)
             ->where('is_active', true)
-            ->get();
+            ->orderByDesc('last_used_at')
+            ->orderByDesc('id')
+            ->get()
+            ->unique(fn ($t) => $t->device_id ?: (($t->device_name ?? '') . '|' . $t->device_type))
+            ->values();
 
         if ($tokens->isEmpty()) {
             return [
