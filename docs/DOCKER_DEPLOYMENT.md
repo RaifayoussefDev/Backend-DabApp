@@ -5,7 +5,7 @@ API **Laravel 12 / PHP 8.2**. Un conteneur applicatif (`app`) fait tourner, via
 `redis` l'accompagne. La base MySQL est **externe** (serveur dédié).
 
 - Doc de passation (secrets, migration données, checklist) : [HANDOVER.md](DEPLOYMENT_HANDOVER.md)
-- Fichiers : `Dockerfile`, `docker-compose.yml`, `docker/`, `.env.docker.example`, `.github/workflows/deploy.yml`
+- Fichiers : `Dockerfile`, `docker-compose.yml`, `docker/`, `.env.docker.example`
 
 ---
 
@@ -16,7 +16,7 @@ API **Laravel 12 / PHP 8.2**. Un conteneur applicatif (`app`) fait tourner, via
    Internet ─ 443 ─▶ reverse-proxy hôte (nginx/traefik + TLS)                                   │
                     │        │                                                                  │
                     │        ▼  :8000                                                           │
-                    │   ┌────────────── conteneur "app" (image GHCR) ──────────────┐            │
+                    │   ┌────────────── conteneur "app" (image buildée du repo) ──────────────┐            │
                     │   │  supervisord                                             │            │
                     │   │   ├─ nginx  :80  ──▶ php-fpm :9000  (routes /api/*)      │            │
                     │   │   ├─ php artisan queue:work                             │            │
@@ -43,7 +43,7 @@ Le reverse-proxy de l'hôte doit :
 | Où | Quoi |
 |---|---|
 | Poste dev | Docker Desktop / Docker Engine + plugin `compose` |
-| CI | GitHub Actions (fourni) |
+| Build | Dokploy — build du `Dockerfile` (aucun registre) |
 | Serveur | Docker Engine + `docker compose`, un user dans le groupe `docker` |
 | Serveur DB | MySQL 8 (ou MariaDB 10.6+), 3 bases + 3 users, port ouvert aux seules IP des serveurs app |
 
@@ -85,8 +85,8 @@ Voir aussi [reference: Local MySQL via XAMPP] dans la mémoire projet si `migrat
 ## 4. Construire l'image manuellement
 
 ```bash
-docker build -t ghcr.io/fadel-b-g/dabapp-backend:local .
-docker run --rm -p 8000:80 --env-file .env ghcr.io/fadel-b-g/dabapp-backend:local
+docker build -t dabapp-backend:local .
+docker run --rm -p 8000:80 --env-file .env dabapp-backend:local
 ```
 
 Build multi-stage :
@@ -120,68 +120,72 @@ Build multi-stage :
 | `PAYTABS_ENVIRONMENT` | `live` | `test` | |
 | `PAYTABS_LIVE_*` / `PAYTABS_TEST_*` | secret | secret | |
 | `AISENSY_API_KEY` | secret | secret | OTP WhatsApp |
-| `FIREBASE_PROJECT_ID` | `dabapp-3d853` | idem | + fichier monté (voir §7) |
+| `FIREBASE_PROJECT_ID` | `dabapp-3d853` | idem | + fichier monté (voir §6.1) |
 | `FILESYSTEM_DISK` | `local` ou `s3` | idem | décision ouverte |
 | `SWAGGER_USER` / `SWAGGER_PASSWORD` | secret | secret | |
 | `RUN_MIGRATIONS` | `true` | `true` | mettre `false` sur un nœud secondaire |
 | `GENERATE_SWAGGER` | `false` | `true` si docs exposées | |
 
-Knobs lus par `docker-compose.yml` (pas Laravel) : `IMAGE`, `IMAGE_TAG`, `HTTP_PORT`.
+Knobs lus par `docker-compose.yml` (pas Laravel) : `IMAGE_TAG`, `HTTP_PORT`, `GENERATE_SWAGGER`.
 
 ---
 
-## 6. Déploiement
+## 6. Déploiement — Dokploy (build depuis la source)
 
-### 6.1 Automatique (CI)
+L'image est **construite depuis le dépôt** : `docker-compose.yml` a `build: .` et
+**aucune** référence `ghcr.io`. Pas de registre, pas de credentials, pas de GitHub Actions.
 
-`git push` sur `prod` / `dev` / `test` →
-1. **build** : image taguée `:<branch>` et `:<branch>-<sha>`, poussée sur GHCR
-2. **deploy** : SSH → `docker login ghcr.io` → `docker compose pull` → `docker compose up -d`
-   → l'entrypoint reconstruit les caches et applique `migrate --force`
+### 6.1 Dokploy — type « Compose »
 
-GitHub → *Settings → Environments* : `prod`, `dev`, `test`, chacun avec les secrets
-`SSH_HOST`, `SSH_USER`, `SSH_KEY`, `DEPLOY_PATH`, `GHCR_USER`, `GHCR_TOKEN`.
-Protéger `prod` avec *required reviewers*.
+1. Nouveau service **Compose** → source = repo `Fadel-B-G/Dabapp-Backend`, branche `prod`.
+2. Fichier : `docker-compose.yml`. Dokploy fait `docker compose up -d --build`.
+3. **Environnement** : coller le contenu du `.env` (basé sur `.env.docker.example`) dans
+   l'onglet *Environment* de Dokploy (ou fournir un fichier `.env`).
+4. **Fichiers secrets** (onglet *Advanced → Volumes / File Mounts* de Dokploy) — créer :
+   - `secrets/firebase_credentials.json`
+   - `secrets/google-service-account.json`
+5. **Domaine** : `be.dabapp.co` → service `app`, port conteneur `80`. TLS par Dokploy.
+   Le WebSocket Reverb (`/app`, `/apps`) passe par le même domaine — Traefik/Dokploy
+   gère l'upgrade automatiquement.
+6. **Auto Deploy** (webhook) activé → chaque `git push` sur `prod` reconstruit + migre
+   (l'entrypoint lance `migrate --force`).
 
-### 6.2 Manuel (dépannage)
+### 6.2 Manuel (serveur avec Docker)
 
 ```bash
-ssh user@serveur
+git clone -b prod https://github.com/Fadel-B-G/Dabapp-Backend.git /opt/dabapp
 cd /opt/dabapp
-echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-export IMAGE=ghcr.io/fadel-b-g/dabapp-backend
-export IMAGE_TAG=prod-<sha>
-docker compose pull && docker compose up -d
-docker compose logs -f app
+mkdir -p secrets
+#   -> déposer .env, secrets/firebase_credentials.json, secrets/google-service-account.json
+docker compose up -d --build
+docker compose logs -f app        # vérifier migrations + "ready"
 ```
 
----
+### 6.3 Base de données (serveur MySQL séparé)
 
-## 7. Setup initial d'un serveur (une seule fois)
+```sql
+CREATE DATABASE dabapp_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'dabapp_prod'@'10.0.0.%' IDENTIFIED BY '...';
+GRANT ALL PRIVILEGES ON dabapp_prod.* TO 'dabapp_prod'@'10.0.0.%';
+```
+Port `3306` ouvert **uniquement** aux IP des serveurs applicatifs.
+
+### 6.4 Charger les uploads existants
 
 ```bash
-sudo mkdir -p /opt/dabapp/secrets && cd /opt/dabapp
-
-# 1. fichiers
-#    - docker-compose.yml         (copié depuis ce dossier / le repo)
-#    - .env                       (rempli depuis .env.docker.example)
-#    - secrets/firebase_credentials.json
-#    - secrets/google-service-account.json
-
-# 2. registre
-docker login ghcr.io -u <user> -p <token>
-
-# 3. démarrage
-export IMAGE_TAG=prod
-docker compose up -d
-docker compose logs -f app        # vérifier migrations + "ready"
-
-# 4. charger les uploads existants dans le volume
 docker compose cp ./storage-seed/. app:/var/www/html/storage/app/
 docker compose exec app php artisan storage:link
 ```
 
-Serveur DB : créer les bases + users, restreindre l'accès réseau.
+### 6.5 Note build
+
+Le stage Node (Vite) + Chromium alourdit le build. Prévoir de la RAM / du swap sur
+l'hôte Dokploy ; en cas d'OOM au `npm run build`, ajouter du swap.
+
+### 6.6 GitHub Actions
+
+`.github/workflows/deploy.yml` (modèle GHCR + SSH) n'est **plus utilisé** — laissé en
+`workflow_dispatch` seul, peut être supprimé.
 
 ```sql
 CREATE DATABASE dabapp_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -191,7 +195,7 @@ GRANT ALL PRIVILEGES ON dabapp_prod.* TO 'dabapp_prod'@'10.0.0.%';
 
 ---
 
-## 8. Opérations courantes
+## 7. Opérations courantes
 
 ```bash
 # logs (tous les process passent par stdout/stderr du conteneur)
@@ -215,7 +219,7 @@ docker compose exec app php artisan schedule:list
 
 ---
 
-## 9. Rollback
+## 8. Rollback
 
 Les images sont taguées `:<branch>-<sha>` (immuables). Pour revenir en arrière :
 
@@ -231,7 +235,7 @@ migration. Prévoir une migration `down` testée ou un dump avant chaque déploi
 
 ---
 
-## 10. Dépannage
+## 9. Dépannage
 
 | Symptôme | Piste |
 |---|---|
@@ -247,7 +251,7 @@ migration. Prévoir une migration `down` testée ou un dump avant chaque déploi
 
 ---
 
-## 11. Changement de code déjà appliqué
+## 10. Changement de code déjà appliqué
 
 `app/Http/Controllers/PlateGeneratorController.php` : le chemin de Chrome était figé
 sur un chemin Cloudways (`.cache/puppeteer/chrome/linux-143…`). Il lit désormais

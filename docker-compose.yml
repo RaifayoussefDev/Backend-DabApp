@@ -1,10 +1,15 @@
-# Runs on each target server (prod / dev / test).
-# The CI pipeline sets IMAGE_TAG=<branch>-<sha> and runs `docker compose up -d`.
+# DabApp backend — Laravel 12 (php-fpm + nginx + queue + scheduler + reverb).
+# Built FROM SOURCE (no registry): Dokploy / `docker compose up -d --build`
+# clones the repo and builds the Dockerfile. No GHCR pull, no credentials.
+# MySQL is external (separate DB server) — set DB_* in .env.
 name: dabapp-backend
 
 services:
   app:
-    image: ${IMAGE:-ghcr.io/fadel-b-g/dabapp-backend}:${IMAGE_TAG:-prod}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dabapp-backend:${IMAGE_TAG:-prod}
     restart: unless-stopped
     env_file: .env
     environment:
