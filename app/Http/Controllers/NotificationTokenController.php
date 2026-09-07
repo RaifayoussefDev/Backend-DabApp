@@ -121,15 +121,10 @@ class NotificationTokenController extends Controller
 
         // FCM tokens rotate — retire this device's older tokens so a single phone
         // doesn't pile up dozens of active rows (and get N copies of every push).
-        // Prefer the stable device_id; fall back to device_name + type.
-        if (!empty($validated['device_id'])) {
+        // Keyed on device_name + device_type: the app's device_id is not stable
+        // yet, so it can't be trusted for this.
+        if (!empty($validated['device_name'])) {
             NotificationToken::where('user_id', $user->id)
-                ->where('device_id', $validated['device_id'])
-                ->where('id', '!=', $token->id)
-                ->update(['is_active' => false]);
-        } elseif (!empty($validated['device_name'])) {
-            NotificationToken::where('user_id', $user->id)
-                ->whereNull('device_id')
                 ->where('device_name', $validated['device_name'])
                 ->where('device_type', $validated['device_type'])
                 ->where('id', '!=', $token->id)
