@@ -20,6 +20,67 @@ class ListingFollowUpController extends Controller
     }
 
     /**
+     * Localize a response message from `users.language` of the current caller —
+     * same convention as NotificationService (default Arabic, English only when
+     * language is exactly 'en'). Nothing for the mobile team to change: the
+     * `message` field in every response below just comes back in the right
+     * language already.
+     */
+    private const MESSAGES = [
+        'unauthorized' => [
+            'en' => 'Unauthorized. User must be logged in.',
+            'ar' => 'غير مصرح. يجب تسجيل الدخول.',
+        ],
+        'listing_not_found' => [
+            'en' => 'Listing not found.',
+            'ar' => 'الإعلان غير موجود.',
+        ],
+        'forbidden_answer' => [
+            'en' => 'Only the seller can answer the follow-up for this listing.',
+            'ar' => 'فقط البائع يمكنه الرد على المتابعة الخاصة بهذا الإعلان.',
+        ],
+        'forbidden_undo' => [
+            'en' => 'Only the seller can undo this listing.',
+            'ar' => 'فقط البائع يمكنه التراجع عن هذا الإعلان.',
+        ],
+        'listing_inactive' => [
+            'en' => 'This listing is no longer active.',
+            'ar' => 'هذا الإعلان لم يعد نشطًا.',
+        ],
+        'validation_failed' => [
+            'en' => 'Validation failed',
+            'ar' => 'فشل التحقق من البيانات',
+        ],
+        'not_sold_success' => [
+            'en' => 'Thanks for letting us know. Your listing stays active.',
+            'ar' => 'شكرًا لإخبارنا. سيبقى إعلانك نشطًا.',
+        ],
+        'sold_success' => [
+            'en' => 'Congratulations on the sale!',
+            'ar' => 'مبروك على البيع!',
+        ],
+        'sold_failed' => [
+            'en' => 'Failed to mark listing as sold',
+            'ar' => 'فشل في تحديد الإعلان كمُباع',
+        ],
+        'undo_invalid' => [
+            'en' => 'This listing was not sold via the follow-up and cannot be undone here.',
+            'ar' => 'لم يتم بيع هذا الإعلان عبر المتابعة ولا يمكن التراجع عنه هنا.',
+        ],
+        'undo_success' => [
+            'en' => 'Undone — your listing is active again.',
+            'ar' => 'تم التراجع — إعلانك نشط من جديد.',
+        ],
+    ];
+
+    private function msg(string $key): string
+    {
+        $language = (Auth::user()?->language === 'en') ? 'en' : 'ar';
+
+        return self::MESSAGES[$key][$language] ?? self::MESSAGES[$key]['en'];
+    }
+
+    /**
      * The single listing (if any) the mobile app should show the follow-up
      * bottom sheet for right now. Lets the app show it in-session when the
      * seller opens the app before the day-7 push has fired, instead of
@@ -32,7 +93,7 @@ class ListingFollowUpController extends Controller
 
         if (!$userId) {
             return response()->json([
-                'message' => 'Unauthorized. User must be logged in.',
+                'message' => $this->msg('unauthorized'),
             ], 401);
         }
 
@@ -57,7 +118,7 @@ class ListingFollowUpController extends Controller
 
         if (!$userId) {
             return response()->json([
-                'message' => 'Unauthorized. User must be logged in.',
+                'message' => $this->msg('unauthorized'),
             ], 401);
         }
 
@@ -65,19 +126,19 @@ class ListingFollowUpController extends Controller
 
         if (!$listing) {
             return response()->json([
-                'message' => 'Listing not found.',
+                'message' => $this->msg('listing_not_found'),
             ], 404);
         }
 
         if ($listing->seller_id != $userId) {
             return response()->json([
-                'message' => 'Only the seller can answer the follow-up for this listing.',
+                'message' => $this->msg('forbidden_answer'),
             ], 403);
         }
 
         if ($listing->status !== 'published') {
             return response()->json([
-                'message' => 'This listing is no longer active.',
+                'message' => $this->msg('listing_inactive'),
                 'current_status' => $listing->status,
             ], 422);
         }
@@ -90,7 +151,7 @@ class ListingFollowUpController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => $this->msg('validation_failed'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -111,7 +172,7 @@ class ListingFollowUpController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Thanks for letting us know. Your listing stays active.',
+            'message' => $this->msg('not_sold_success'),
             'data' => $listing->fresh(),
         ]);
     }
@@ -128,7 +189,7 @@ class ListingFollowUpController extends Controller
 
         if (!$userId) {
             return response()->json([
-                'message' => 'Unauthorized. User must be logged in.',
+                'message' => $this->msg('unauthorized'),
             ], 401);
         }
 
@@ -136,19 +197,19 @@ class ListingFollowUpController extends Controller
 
         if (!$listing) {
             return response()->json([
-                'message' => 'Listing not found.',
+                'message' => $this->msg('listing_not_found'),
             ], 404);
         }
 
         if ($listing->seller_id != $userId) {
             return response()->json([
-                'message' => 'Only the seller can undo this listing.',
+                'message' => $this->msg('forbidden_undo'),
             ], 403);
         }
 
         if ($listing->status !== 'sold' || $listing->follow_up_response !== 'sold') {
             return response()->json([
-                'message' => 'This listing was not sold via the follow-up and cannot be undone here.',
+                'message' => $this->msg('undo_invalid'),
                 'current_status' => $listing->status,
             ], 422);
         }
@@ -166,7 +227,7 @@ class ListingFollowUpController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Undone — your listing is active again.',
+            'message' => $this->msg('undo_success'),
             'data' => $listing->fresh(),
         ]);
     }
@@ -299,7 +360,7 @@ class ListingFollowUpController extends Controller
             DB::commit();
 
             return response()->json([
-                'message' => 'Congratulations on the sale!',
+                'message' => $this->msg('sold_success'),
                 'data' => $listing->fresh(),
                 'rejected_sooms_count' => $rejectedSoomsCount,
             ]);
@@ -307,7 +368,7 @@ class ListingFollowUpController extends Controller
             DB::rollBack();
 
             return response()->json([
-                'error' => 'Failed to mark listing as sold',
+                'error' => $this->msg('sold_failed'),
                 'details' => $e->getMessage(),
             ], 500);
         }
