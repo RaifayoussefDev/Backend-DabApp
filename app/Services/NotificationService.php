@@ -448,6 +448,113 @@ class NotificationService
         ];
     }
 
+    // ==================== ADMIN BROADCAST (mass-send) ====================
+
+    /**
+     * Create the in-app Notification row for one recipient of an admin broadcast.
+     * Row only — push and email are handled in bulk by MassNotificationJob so the
+     * whole broadcast goes out in a handful of FCM batch calls instead of one
+     * HTTP request per user.
+     */
+    public function createBroadcastNotification(
+        User $user,
+        string $title,
+        string $message,
+        array $data = [],
+        ?int $adminId = null,
+        ?int $batchId = null
+    ): Notification {
+        $entityInfo = $this->extractEntityInfo($data, []);
+
+        return Notification::create([
+            'user_id'             => $user->id,
+            'batch_id'            => $batchId,
+            'type'               => $data['type'] ?? 'admin_custom',
+            'title'              => $title,
+            'message'            => $message,
+            'data'               => $data,
+            'related_entity_type' => $entityInfo['entity_type'],
+            'related_entity_id'  => $entityInfo['entity_id'],
+            'action_url'         => $entityInfo['action_url'],
+            'icon'               => 'notifications',
+            'color'              => '#FF6B6B',
+            'sound'              => 'default',
+            'priority'           => 'high',
+            'image_url'          => $data['image_url'] ?? null,
+            'is_custom'          => true,
+            'sent_by_admin'      => $adminId,
+        ]);
+    }
+
+    /**
+     * The distinct active FCM tokens a push should go to for this user — one per
+     * physical device, newest token per (device_name + device_type). Same dedupe
+     * rule as sendPushNotification().
+     *
+     * @return \Illuminate\Support\Collection<int,NotificationToken>
+     */
+    public function activeTokensFor(User $user)
+    {
+        return NotificationToken::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->orderByDesc('last_used_at')
+            ->orderByDesc('id')
+            ->get()
+            ->unique(fn ($t) => strtolower(trim(($t->device_name ?? 'unknown') . '|' . $t->device_type)))
+            ->values();
+    }
+
+    /**
+     * Build FirebaseService::sendBatch() items for one broadcast Notification —
+     * one item per active device token, each carrying its own notification_id so
+     * tap-to-open / mark-as-read behaves exactly like a per-user push.
+     *
+     * @return array<int,array{token:string,title:string,body:string,data:array<string,string>,android:?array,apns:?array,_meta:array}>
+     */
+    public function broadcastPushItemsFor(Notification $notification, User $user): array
+    {
+        $items = [];
+
+        foreach ($this->activeTokensFor($user) as $token) {
+            $pushData = [
+                'notification_id' => (string) $notification->id,
+                'type'            => $notification->type,
+                'entity_type'     => $notification->related_entity_type,
+                'entity_id'       => (string) $notification->related_entity_id,
+                'action_url'      => $notification->action_url ?? $notification->action_route,
+                'timestamp'       => now()->toIso8601String(),
+            ];
+
+            if ($notification->data) {
+                $pushData = array_merge($notification->data, $pushData);
+            }
+
+            $stringData = [];
+            foreach ($pushData as $key => $value) {
+                $stringData[$key] = is_array($value) ? json_encode($value) : (string) $value;
+            }
+
+            $platform = $this->buildPlatformOptions($token->device_type, $notification, ['priority' => 'high']);
+
+            $items[] = [
+                'token'   => $token->fcm_token,
+                'title'   => $notification->title,
+                'body'    => $notification->message,
+                'data'    => $stringData,
+                'android' => $platform['android'] ?? null,
+                'apns'    => $platform['apns'] ?? null,
+                '_meta'   => [
+                    'user_id'         => $user->id,
+                    'notification_id' => $notification->id,
+                    'device_type'     => $token->device_type,
+                    'device_id'       => $token->device_id,
+                ],
+            ];
+        }
+
+        return $items;
+    }
+
     // ==================== LISTINGS ====================
 
     /**

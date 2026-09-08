@@ -117,6 +117,97 @@ class FirebaseService
     }
 
     /**
+     * Send a batch of individually-targeted messages in as few FCM HTTP calls as
+     * possible. FCM caps a batch request at 500 messages, so a larger list is
+     * split into 500-message calls to `Messaging::sendAll()`.
+     *
+     * Each $item: [
+     *   'token'   => string,                 // FCM registration token
+     *   'title'   => string,
+     *   'body'    => string,
+     *   'data'    => array<string,string>,   // FCM requires string values
+     *   'android' => array|null,             // AndroidConfig::fromArray shape
+     *   'apns'    => array|null,             // ApnsConfig::fromArray shape
+     * ]
+     *
+     * @return array{
+     *   sent: int,
+     *   failed: int,
+     *   invalid_tokens: string[],            // permanently dead — caller should deactivate
+     *   results: array<string,bool>          // fcm_token => delivered?
+     * }
+     */
+    public function sendBatch(array $items): array
+    {
+        $out = ['sent' => 0, 'failed' => 0, 'invalid_tokens' => [], 'results' => []];
+
+        if (empty($items)) {
+            return $out;
+        }
+
+        try {
+            $this->initialize();
+        } catch (\Throwable $e) {
+            // Credentials/init failure — nothing can be delivered.
+            foreach ($items as $item) {
+                $out['results'][$item['token']] = false;
+                $out['failed']++;
+            }
+            return $out;
+        }
+
+        foreach (array_chunk($items, 500) as $chunk) {
+            $messages = [];
+            foreach ($chunk as $item) {
+                $message = CloudMessage::withTarget('token', $item['token'])
+                    ->withNotification(Notification::create($item['title'], $item['body']))
+                    ->withData($item['data'] ?? []);
+
+                if (!empty($item['android'])) {
+                    $message = $message->withAndroidConfig(AndroidConfig::fromArray($item['android']));
+                }
+                if (!empty($item['apns'])) {
+                    $message = $message->withApnsConfig(ApnsConfig::fromArray($item['apns']));
+                }
+
+                $messages[] = $message;
+            }
+
+            try {
+                $report = $this->messaging->sendAll($messages);
+            } catch (\Throwable $e) {
+                // Whole-chunk failure (network, auth, quota) — count every token as failed
+                // but keep going with the remaining chunks.
+                \Log::error('FirebaseService::sendBatch chunk failed: ' . $e->getMessage());
+                foreach ($chunk as $item) {
+                    $out['results'][$item['token']] = false;
+                    $out['failed']++;
+                }
+                continue;
+            }
+
+            foreach ($report->getItems() as $sendReport) {
+                $token = $sendReport->target()->value();
+
+                if ($sendReport->isSuccess()) {
+                    $out['results'][$token] = true;
+                    $out['sent']++;
+                    continue;
+                }
+
+                $out['results'][$token] = false;
+                $out['failed']++;
+
+                if ($sendReport->messageTargetWasInvalid() || $sendReport->messageWasSentToUnknownToken()) {
+                    $out['invalid_tokens'][] = $token;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Envoyer une notification à plusieurs tokens
      */
     public function sendToMultipleTokens(array $tokens, string $title, string $body, array $data = [], array $options = []): array

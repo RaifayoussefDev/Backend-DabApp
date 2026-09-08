@@ -3,18 +3,35 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use App\Models\NotificationToken;
 use App\Models\User;
 use App\Models\NotificationBatch;
+use App\Models\NotificationLog;
+use App\Services\FirebaseService;
 use App\Services\NotificationService;
+use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
-class MassNotificationJob implements ShouldQueue
+class MassNotificationJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /**
+     * Broadcasting to a large audience is network-bound on FCM. Give the job
+     * plenty of room and never retry it — a retry restarts handle() from the top
+     * and re-notifies everyone it already reached. Recovery is manual (re-send).
+     */
+    public int $timeout = 1800;
+    public int $tries = 1;
+
+    /** Auto-release the ShouldBeUnique lock even if the job dies without cleanup. */
+    public int $uniqueFor = 7200;
 
     protected int $batchId;
     protected array $filters;
@@ -38,11 +55,18 @@ class MassNotificationJob implements ShouldQueue
         $this->adminId = $adminId;
     }
 
+    /** One in-flight job per batch — a second worker can't double-send this broadcast. */
+    public function uniqueId(): string
+    {
+        return (string) $this->batchId;
+    }
+
     /**
      * Execute the job. Never accumulates a per-user list in memory — only running counts,
-     * flushed to the NotificationBatch row once per chunk so this scales to any user count.
+     * flushed to the NotificationBatch row once per chunk. Push goes out in FCM batch
+     * calls (up to 500 messages each) rather than one HTTP request per token.
      */
-    public function handle(NotificationService $notificationService)
+    public function handle(NotificationService $notifications, FirebaseService $firebase)
     {
         $batch = NotificationBatch::find($this->batchId);
         if (!$batch) {
@@ -57,6 +81,9 @@ class MassNotificationJob implements ShouldQueue
         // job must not overwrite either.
         $sharedWithGuestJob = ($batch->audience ?? 'users') === 'both';
 
+        $wantsPush  = in_array('push', $this->channels, true);
+        $wantsEmail = in_array('email', $this->channels, true);
+
         $query = User::query()->applyFilters($this->filters);
         $totalUsers = $query->count();
 
@@ -69,56 +96,109 @@ class MassNotificationJob implements ShouldQueue
 
         Log::info("MassNotificationJob: starting batch {$batch->id} for {$totalUsers} users.");
 
-        // Process in chunks to bound memory regardless of how many users match the filter.
-        $query->chunk(200, function ($users) use ($notificationService, $batch) {
-            $sentInChunk = 0;
-            $failedInChunk = 0;
+        $query->with('notificationPreference')
+            ->chunkById(500, function ($users) use ($notifications, $firebase, $batch, $wantsPush, $wantsEmail) {
+                $pushItems      = [];   // flat list for FirebaseService::sendBatch()
+                $reachedUserIds = [];   // users reached via email this chunk (push resolved after send)
+                $chunkCount     = $users->count();
 
-            foreach ($users as $user) {
-                try {
-                    $lang = $user->language ?? 'en';
-                    $title = ($lang === 'ar' && !empty($this->content['title_ar']))
-                        ? $this->content['title_ar']
-                        : ($this->content['title_en'] ?? 'Notification');
+                foreach ($users as $user) {
+                    try {
+                        $lang = $user->language ?? 'en';
+                        $title = ($lang === 'ar' && !empty($this->content['title_ar']))
+                            ? $this->content['title_ar']
+                            : ($this->content['title_en'] ?? 'Notification');
+                        $message = ($lang === 'ar' && !empty($this->content['body_ar']))
+                            ? $this->content['body_ar']
+                            : ($this->content['body_en'] ?? '');
 
-                    $message = ($lang === 'ar' && !empty($this->content['body_ar']))
-                        ? $this->content['body_ar']
-                        : ($this->content['body_en'] ?? '');
+                        $data = [
+                            'type' => $this->content['type'] ?? 'info',
+                            'original_content' => $this->content,
+                        ];
+                        if (!empty($this->content['action_url'])) {
+                            $data['action_url'] = $this->content['action_url'];
+                        }
 
-                    $data = [
-                        'type' => $this->content['type'] ?? 'info',
-                        'original_content' => $this->content,
-                    ];
-                    // Optional deep-link → flows to Notification.action_url and the push data payload.
-                    if (!empty($this->content['action_url'])) {
-                        $data['action_url'] = $this->content['action_url'];
+                        $notification = $notifications->createBroadcastNotification(
+                            $user, $title, $message, $data, $this->adminId, $batch->id
+                        );
+
+                        $pref = $user->notificationPreference;
+
+                        if ($wantsPush && $pref && $pref->canSendPush()) {
+                            foreach ($notifications->broadcastPushItemsFor($notification, $user) as $item) {
+                                $pushItems[] = $item;
+                            }
+                        }
+
+                        if ($wantsEmail && $pref && $pref->canSendEmail() && $user->email) {
+                            // Queued, not sent inline — 5000 synchronous SMTP sends would
+                            // blow the job timeout on their own.
+                            Mail::to($user->email)->queue(new NotificationMail($notification, $message, $data));
+                            $reachedUserIds[$user->id] = true;
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("MassNotificationJob: failed to prepare user {$user->id}: " . $e->getMessage());
                     }
-
-                    $result = $notificationService->sendCustomNotification($user, $title, $message, $data, [
-                        'channels' => $this->channels,
-                        'priority' => 'high',
-                        'batch_id' => $batch->id,
-                        'sent_by_admin' => $this->adminId,
-                    ]);
-
-                    $pushSent = isset($result['push_results']['sent']) && $result['push_results']['sent'] > 0;
-                    $emailSent = ($result['email_result'] ?? null) === 'sent';
-
-                    if ($pushSent || $emailSent) {
-                        $sentInChunk++;
-                    } else {
-                        $failedInChunk++;
-                    }
-                } catch (\Exception $e) {
-                    $failedInChunk++;
-                    Log::error("MassNotificationJob: failed to notify user {$user->id}: " . $e->getMessage());
                 }
-            }
 
-            // One UPDATE per chunk (200 users), never one per user.
-            $batch->increment('sent_count', $sentInChunk);
-            $batch->increment('failed_count', $failedInChunk);
-        });
+                // Single batched push send for the whole chunk.
+                $report = $firebase->sendBatch(array_map(
+                    fn ($i) => \Illuminate\Support\Arr::except($i, '_meta'),
+                    $pushItems
+                ));
+
+                $logRows      = [];
+                $sentNotifIds = [];
+                $now          = now();
+
+                foreach ($pushItems as $item) {
+                    $meta = $item['_meta'];
+                    $ok   = $report['results'][$item['token']] ?? false;
+
+                    $logRows[] = [
+                        'notification_id' => $meta['notification_id'],
+                        'user_id'         => $meta['user_id'],
+                        'channel'         => 'push',
+                        'fcm_token'       => $item['token'],
+                        'device_type'     => $meta['device_type'],
+                        'device_id'       => $meta['device_id'],
+                        'status'          => $ok ? 'sent' : 'failed',
+                        'error_message'   => $ok ? null : 'Broadcast push not delivered',
+                        'queued_at'       => $now,
+                        'sent_at'         => $ok ? $now : null,
+                        'failed_at'       => $ok ? null : $now,
+                        'created_at'      => $now,
+                        'updated_at'      => $now,
+                    ];
+
+                    if ($ok) {
+                        $reachedUserIds[$meta['user_id']] = true;
+                        $sentNotifIds[$meta['notification_id']] = true;
+                    }
+                }
+
+                if ($logRows) {
+                    foreach (array_chunk($logRows, 500) as $slice) {
+                        NotificationLog::insert($slice);
+                    }
+                }
+
+                if ($sentNotifIds) {
+                    \App\Models\Notification::whereIn('id', array_keys($sentNotifIds))
+                        ->update(['push_sent' => true, 'push_sent_at' => $now]);
+                }
+
+                if (!empty($report['invalid_tokens'])) {
+                    NotificationToken::whereIn('fcm_token', array_unique($report['invalid_tokens']))
+                        ->update(['is_active' => false]);
+                }
+
+                $reached = count($reachedUserIds);
+                $batch->increment('sent_count', $reached);
+                $batch->increment('failed_count', max(0, $chunkCount - $reached));
+            }, 'users.id', 'id');
 
         if ($sharedWithGuestJob) {
             // Guest job finalises the batch; keep the controller's combined total.
@@ -135,5 +215,18 @@ class MassNotificationJob implements ShouldQueue
             'sent' => $batch->fresh()->sent_count,
             'failed' => $batch->fresh()->failed_count,
         ]);
+    }
+
+    /** Never leave the batch stuck on 'processing' if the job throws. */
+    public function failed(\Throwable $e): void
+    {
+        $batch = NotificationBatch::find($this->batchId);
+
+        if ($batch && !in_array($batch->status, ['completed', 'cancelled'], true)
+            && ($batch->audience ?? 'users') !== 'both') {
+            $batch->update(['status' => 'failed']);
+        }
+
+        Log::error("MassNotificationJob: batch {$this->batchId} failed: " . $e->getMessage());
     }
 }
