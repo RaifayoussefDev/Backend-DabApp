@@ -82,10 +82,19 @@ class ListingFollowUpController extends Controller
 
     /**
      * The single listing (if any) the mobile app should show the follow-up
-     * bottom sheet for right now. Lets the app show it in-session when the
-     * seller opens the app before the day-7 push has fired, instead of
-     * making them wait for the notification. At most one result — if a
-     * seller has several listings due, the oldest one is shown first.
+     * bottom sheet for right now. At most one result — if a seller has several
+     * listings due, the oldest one is shown first.
+     *
+     * Shows a listing in either case:
+     *  - due per the normal schedule (Listing::scopeDueForFollowUp) — lets the
+     *    app show it in-session when the seller opens the app before the
+     *    day-7/17/32/… push has actually fired;
+     *  - OR already sent a reminder the seller never answered. This matters
+     *    because SendListingFollowUps advances `next_follow_up_at` to the NEXT
+     *    cycle in the very same write that sends the push — so without this
+     *    branch, `dueForFollowUp()` goes false the instant the push is sent,
+     *    and a seller tapping the push they just received would land on "no
+     *    pending listing" instead of the question it was about.
      */
     public function pendingFollowUp(Request $request)
     {
@@ -97,10 +106,15 @@ class ListingFollowUpController extends Controller
             ], 401);
         }
 
-        // Same predicate as the recurring push (Listing::scopeDueForFollowUp) so the
-        // in-app bottom sheet and the notification stay in lock-step.
         $listing = Listing::where('seller_id', $userId)
-            ->dueForFollowUp()
+            ->where('status', 'published')
+            ->where(fn ($q) => $q->whereNull('follow_up_response')->orWhere('follow_up_response', '!=', 'sold'))
+            ->where(function ($q) {
+                $q->where('next_follow_up_at', '<=', now())
+                    ->orWhere(function ($q2) {
+                        $q2->whereNotNull('follow_up_sent_at')->whereNull('follow_up_responded_at');
+                    });
+            })
             ->orderBy('published_at', 'asc')
             ->first();
 
