@@ -178,6 +178,7 @@ class AdminNotificationController extends Controller
             'filters.category_id' => 'nullable|exists:categories,id',
             'filters.brand_in_garage' => 'nullable|exists:motorcycle_brands,id',
             'filters.has_points_of_interest' => 'nullable|boolean',
+            'filters.has_listing' => 'nullable|boolean',
             'filters.last_login_from' => 'nullable|date',
             'filters.date_from' => 'nullable|date',
             'filters.date_to' => 'nullable|date',
