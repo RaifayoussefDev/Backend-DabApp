@@ -2372,3 +2372,8 @@ Route::delete('/dev/trainers/reset-all', function () {
         'message' => 'All trainers and related data deleted. trainer_levels and specialties kept.',
     ]);
 });
+
+// ============================================
+// MARKETPLACE (own file, own Swagger docs)
+// ============================================
+require __DIR__ . '/marketplace.php';

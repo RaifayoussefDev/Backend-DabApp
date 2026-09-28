@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver;
 use Illuminate\Support\Str;
@@ -281,6 +284,69 @@ class ImageUploadController extends Controller
             Log::error('Image upload (no watermark) failed: ' . $e->getMessage());
             return response()->json(['error' => 'An error occurred while uploading images.'], 500);
         }
+    }
+
+    /**
+     * Marketplace images (vendor logo/cover, category image, brand logo, product photos): same pattern as
+     * listings — a standalone upload, decoupled from creating/editing the resource. The caller uploads
+     * here first, gets back plain URL strings, then sends those strings as a normal field
+     * (logo_path, cover_image_path, image_path) on the marketplace create/update endpoints, exactly the
+     * way listings pass image_url strings to POST /listings. No watermark: these are catalog/branding
+     * assets, not the peer-to-peer listing photos the watermark exists to protect.
+     * Swagger for this endpoint is documented in MarketplaceSwagger.php (marketplace doc), not here.
+     */
+    private const MARKETPLACE_UPLOAD_FOLDERS = [
+        'vendor'   => 'marketplace/vendors',
+        'category' => 'marketplace/categories',
+        'brand'    => 'marketplace/brands',
+        'product'  => 'marketplace/products',
+    ];
+
+    /** category / brand are admin-managed catalog data: only an admin may upload images for them. */
+    private const MARKETPLACE_ADMIN_ONLY_TYPES = ['category', 'brand'];
+
+    public function uploadMarketplaceImage(Request $request): JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'type'     => ['required', 'string', Rule::in(array_keys(self::MARKETPLACE_UPLOAD_FOLDERS))],
+            'images'   => 'required|array|min:1|max:10',
+            'images.*' => 'required|image|mimes:jpeg,jpg,png,webp|max:8192',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $type = $request->input('type');
+
+        if (in_array($type, self::MARKETPLACE_ADMIN_ONLY_TYPES, true) && (int) optional(Auth::user())->role_id !== 1) {
+            return response()->json([
+                'message' => "Only admins can upload {$type} images",
+                'code'    => 'ADMIN_ONLY',
+            ], 403);
+        }
+
+        $folder = self::MARKETPLACE_UPLOAD_FOLDERS[$type];
+        $paths = [];
+
+        try {
+            foreach ($request->file('images') as $uploadedFile) {
+                $filename = Str::random(20) . '.' . $uploadedFile->getClientOriginalExtension();
+                $processedImage = $this->processImage($uploadedFile);
+                $imagePath = $this->saveImage($processedImage, "{$folder}/{$filename}");
+                $paths[] = asset('storage/' . $imagePath);
+            }
+        } catch (\Exception $e) {
+            Log::error('Marketplace image upload failed: ' . $e->getMessage());
+
+            return response()->json(['error' => 'An error occurred while uploading images.'], 500);
+        }
+
+        return response()->json([
+            'message' => 'Images uploaded successfully',
+            'type'    => $type,
+            'paths'   => $paths,
+        ]);
     }
 
     /**

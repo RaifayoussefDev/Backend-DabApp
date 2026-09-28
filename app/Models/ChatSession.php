@@ -13,6 +13,8 @@ class ChatSession extends Model
         'booking_id',
         'user_id',
         'provider_id',
+        'vendor_id',
+        'product_id',
         'session_price',
         'session_status',
         'started_at',
@@ -41,6 +43,17 @@ class ChatSession extends Model
     public function provider()
     {
         return $this->belongsTo(ServiceProvider::class, 'provider_id');
+    }
+
+    /** Marketplace chat: set when the session is a buyer <-> vendor conversation. */
+    public function vendor()
+    {
+        return $this->belongsTo(\App\Models\Marketplace\Vendor::class, 'vendor_id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(\App\Models\Marketplace\Product::class, 'product_id');
     }
 
     public function messages()

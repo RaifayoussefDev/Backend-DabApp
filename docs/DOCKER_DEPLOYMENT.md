@@ -124,7 +124,8 @@ Build multi-stage :
 | `FILESYSTEM_DISK` | `local` ou `s3` | idem | décision ouverte |
 | `SWAGGER_USER` / `SWAGGER_PASSWORD` | secret | secret | |
 | `RUN_MIGRATIONS` | `true` | `true` | mettre `false` sur un nœud secondaire |
-| `GENERATE_SWAGGER` | `false` | `true` si docs exposées | |
+| `GENERATE_SWAGGER` | `false` | `true` si docs exposées | régénère tous les docs (`--all` : `api`, `admin`, `marketplace`, `marketplace_admin`) |
+| `SEED_MARKETPLACE_DEMO` | `false` | `true` sur test uniquement | vendors/produits/commandes de démo pour QA et le mobile ; refusé côté code si `APP_ENV=production` même si mis à `true` par erreur |
 
 Knobs lus par `docker-compose.yml` (pas Laravel) : `IMAGE_TAG`, `HTTP_PORT`, `GENERATE_SWAGGER`.
 

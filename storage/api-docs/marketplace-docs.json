@@ -1,0 +1,1950 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "DabApp Marketplace API",
+        "description": "Storefront API of the parts & accessories marketplace, for the mobile app and the web.\n\n## Before you call anything\n\n| Rule | Value |\n|---|---|\n| Base path | `/api/marketplace/...` (same host as the rest of the DabApp API) |\n| Header on **every** call | `Accept: application/json` |\n| Logged-in calls | `Authorization: Bearer <JWT>` (the same token as the rest of the app). In this page click **Authorize** once and paste the token. |\n| Uploads (logo, cover...) | `multipart/form-data`. A file field is sent as a file part, not as base64. |\n| Files | Every `*_url` is an absolute URL, or `null` when there is no file. |\n| Languages | Names come as `name` and `name_ar`. The app picks the one that matches the user's language. |\n\n## Who can call what\n\n| Level | Token | A guest gets |\n|---|---|---|\n| **Public** | not needed | the data |\n| **User** | required | `401` with `requires_auth: true` |\n\nA guest hitting a *User* endpoint gets exactly this. Open your login screen, then repeat the call:\n\n```json\n{ \"success\": false, \"error\": \"Unauthenticated\", \"message\": \"You must be authenticated to access this resource.\", \"requires_auth\": true, \"action\": \"login\" }\n```\n\n## Response shapes\n\n| Case | Status | Body |\n|---|---|---|\n| Read | 200 | `{ \"data\": ... }` |\n| Write | 200 / 201 | `{ \"message\": \"...\", \"data\": ... }` |\n| List | 200 | `{ \"data\": [...], \"meta\": { \"current_page\", \"per_page\", \"last_page\", \"total\" } }`. Ask with `?page=1&per_page=15` (max 50). |\n| Not found | 404 | `{ \"message\": \"...\" }` |\n| Refused | 403 / 409 | `{ \"message\": \"...\", \"code\": \"SOME_CODE\" }`. **Use `code` in your logic, show `message` to the user.** |\n| Invalid input | 422 | `{ \"errors\": { \"field\": [\"message\"] } }`. Show each message under its field. |\n\n## Flows worth knowing\n\n- **Browse**: categories, brands, shops. No login.\n- **Become a seller**: `POST /vendor/apply`, then poll `GET /vendor/me` and use its `status` to pick the screen: `pending`, `rejected` (show `status_reason`, let the user resubmit), `suspended`, `active`.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/marketplace/brands": {
+            "get": {
+                "tags": [
+                    "Marketplace - Brands"
+                ],
+                "summary": "List brands",
+                "description": "Active brands with their number of visible products. With category_id (sub-categories included) only brands that have products there are returned. Access: Public.",
+                "operationId": "2481d73935f7f11633111641e6b7e724",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Only brands with products in this category or its descendants",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 12
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Name contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "mich"
+                        }
+                    },
+                    {
+                        "name": "featured",
+                        "in": "query",
+                        "description": "1 = featured brands only",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Max rows (1-100)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brands, featured first then A-Z. products_count counts visible products (with category_id: only those inside that category).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceBrand"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "examples": {
+                                    "all": {
+                                        "summary": "All Brands screen",
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 23,
+                                                    "slug": "akrapovic",
+                                                    "name": "Akrapovic",
+                                                    "logo_url": "https://api.dabapp.co/storage/marketplace/brands/akrapovic.png",
+                                                    "is_featured": true,
+                                                    "products_count": 1
+                                                },
+                                                {
+                                                    "id": 22,
+                                                    "slug": "brembo",
+                                                    "name": "Brembo",
+                                                    "logo_url": "https://api.dabapp.co/storage/marketplace/brands/brembo.png",
+                                                    "is_featured": true,
+                                                    "products_count": 2
+                                                },
+                                                {
+                                                    "id": 30,
+                                                    "slug": "oxford",
+                                                    "name": "Oxford",
+                                                    "logo_url": null,
+                                                    "is_featured": false,
+                                                    "products_count": 1
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "empty": {
+                                        "summary": "Nothing matches (search=zzz): an empty list, never a 404",
+                                        "value": {
+                                            "data": []
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/categories": {
+            "get": {
+                "tags": [
+                    "Marketplace - Categories"
+                ],
+                "summary": "List categories",
+                "description": "Without parent_id: top-level categories. With parent_id: its direct children. With tree=1 every level is nested under 'children'. Only active categories. Access: Public.",
+                "operationId": "3cbf46ea024ae44e24df9ebffb7684b3",
+                "parameters": [
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "description": "Return the children of this category instead of the top level",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    },
+                    {
+                        "name": "tree",
+                        "in": "query",
+                        "description": "1 = nested tree of every descendant",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 0,
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categories, ordered as the admin arranged them.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceCategory"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "examples": {
+                                    "top_level": {
+                                        "summary": "No parameter: top-level categories (home screen)",
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 1,
+                                                    "parent_id": null,
+                                                    "slug": "parts",
+                                                    "name": "Parts",
+                                                    "name_ar": "قطع الغيار",
+                                                    "image_url": null,
+                                                    "children_count": 5,
+                                                    "products_count": 11
+                                                },
+                                                {
+                                                    "id": 15,
+                                                    "parent_id": null,
+                                                    "slug": "oils-care",
+                                                    "name": "Oils & Care",
+                                                    "name_ar": "الزيوت والعناية",
+                                                    "image_url": null,
+                                                    "children_count": 2,
+                                                    "products_count": 2
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "children": {
+                                        "summary": "parent_id=2: the sub-categories of Tyres",
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 3,
+                                                    "parent_id": 2,
+                                                    "slug": "tyres-front",
+                                                    "name": "Front tyres",
+                                                    "name_ar": "إطارات أمامية",
+                                                    "image_url": null,
+                                                    "children_count": 0,
+                                                    "products_count": 2
+                                                },
+                                                {
+                                                    "id": 4,
+                                                    "parent_id": 2,
+                                                    "slug": "tyres-rear",
+                                                    "name": "Rear tyres",
+                                                    "name_ar": "إطارات خلفية",
+                                                    "image_url": null,
+                                                    "children_count": 0,
+                                                    "products_count": 3
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "tree": {
+                                        "summary": "tree=1: every level nested under children (leaves have an empty children list)",
+                                        "value": {
+                                            "data": [
+                                                {
+                                                    "id": 1,
+                                                    "parent_id": null,
+                                                    "slug": "parts",
+                                                    "name": "Parts",
+                                                    "name_ar": "قطع الغيار",
+                                                    "image_url": null,
+                                                    "children_count": 1,
+                                                    "products_count": 5,
+                                                    "children": [
+                                                        {
+                                                            "id": 2,
+                                                            "parent_id": 1,
+                                                            "slug": "tyres",
+                                                            "name": "Tyres",
+                                                            "name_ar": "إطارات",
+                                                            "image_url": null,
+                                                            "children_count": 1,
+                                                            "products_count": 5,
+                                                            "children": [
+                                                                {
+                                                                    "id": 3,
+                                                                    "parent_id": 2,
+                                                                    "slug": "tyres-front",
+                                                                    "name": "Front tyres",
+                                                                    "name_ar": "إطارات أمامية",
+                                                                    "image_url": null,
+                                                                    "children_count": 0,
+                                                                    "products_count": 2,
+                                                                    "children": []
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "parent_id does not exist or is inactive",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Category not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/categories/{idOrSlug}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Categories"
+                ],
+                "summary": "Category detail",
+                "description": "Category with its breadcrumb (root to parent) and direct children. Access: Public.",
+                "operationId": "24bc2980b592befb97e4c67676fb7914",
+                "parameters": [
+                    {
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "description": "Numeric id or slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "tyres"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MarketplaceCategory"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "description": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "breadcrumb": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name_ar": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 2,
+                                        "parent_id": 1,
+                                        "slug": "tyres",
+                                        "name": "Tyres",
+                                        "name_ar": "إطارات",
+                                        "image_url": null,
+                                        "children_count": 3,
+                                        "products_count": 5,
+                                        "description": null,
+                                        "breadcrumb": [
+                                            {
+                                                "id": 1,
+                                                "slug": "parts",
+                                                "name": "Parts",
+                                                "name_ar": "قطع الغيار"
+                                            }
+                                        ],
+                                        "children": [
+                                            {
+                                                "id": 3,
+                                                "parent_id": 2,
+                                                "slug": "tyres-front",
+                                                "name": "Front tyres",
+                                                "name_ar": "إطارات أمامية",
+                                                "image_url": null,
+                                                "children_count": 0,
+                                                "products_count": 2
+                                            },
+                                            {
+                                                "id": 4,
+                                                "parent_id": 2,
+                                                "slug": "tyres-rear",
+                                                "name": "Rear tyres",
+                                                "name_ar": "إطارات خلفية",
+                                                "image_url": null,
+                                                "children_count": 0,
+                                                "products_count": 3
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found or inactive",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Category not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/home": {
+            "get": {
+                "tags": [
+                    "Marketplace - Home"
+                ],
+                "summary": "Marketplace home screen",
+                "description": "Everything the home screen needs in one call, in the order the screen shows them: Shops, Accessories (categories), Bike Type, Brand. bike_types and bike_brands come from the app's existing vehicle tables (the same ones the moto listings use), not from the marketplace catalog: 'Bike Brand' means Honda / KTM / Yamaha (who made the bike), never a marketplace parts brand like Michelin. Access: Public.",
+                "operationId": "91c78bf736c3a1ac3d4098d9fa0f29bc",
+                "responses": {
+                    "200": {
+                        "description": "Home sections",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "shops": {
+                                                    "description": "Featured shops first, then best rated. View All -> GET /marketplace/vendors.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MarketplaceVendorCard"
+                                                    }
+                                                },
+                                                "categories": {
+                                                    "description": "Top-level marketplace categories (the 'Accessories' row on the screen is one example; every root category — Parts, Oils & Care, Accessories, Riding gear — comes back here). View All / tapping one -> GET /marketplace/categories or /marketplace/categories/{id}.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/MarketplaceCategory"
+                                                    }
+                                                },
+                                                "bike_types": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 3
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Standard"
+                                                            },
+                                                            "name_ar": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "icon": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "bike_brands": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 7
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Honda"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "shops": [
+                                            {
+                                                "id": 4,
+                                                "slug": "moto-parts-riyadh",
+                                                "shop_name": "Moto Parts Riyadh",
+                                                "shop_name_ar": "مركز قطع الغيار الرياض",
+                                                "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-logo.png",
+                                                "cover_image_url": null,
+                                                "brand_color": "#E63946",
+                                                "is_featured": true,
+                                                "rating_avg": 4.5,
+                                                "reviews_count": 2,
+                                                "products_count": 13,
+                                                "city": {
+                                                    "id": 1,
+                                                    "name": "Riyadh"
+                                                }
+                                            }
+                                        ],
+                                        "categories": [
+                                            {
+                                                "id": 18,
+                                                "parent_id": null,
+                                                "slug": "accessories",
+                                                "name": "Accessories",
+                                                "name_ar": "الإكسسوارات",
+                                                "image_url": null,
+                                                "children_count": 4,
+                                                "products_count": 9
+                                            }
+                                        ],
+                                        "bike_types": [
+                                            {
+                                                "id": 3,
+                                                "name": "Standard",
+                                                "name_ar": null,
+                                                "icon": null
+                                            },
+                                            {
+                                                "id": 4,
+                                                "name": "Racing",
+                                                "name_ar": null,
+                                                "icon": null
+                                            }
+                                        ],
+                                        "bike_brands": [
+                                            {
+                                                "id": 7,
+                                                "name": "Honda"
+                                            },
+                                            {
+                                                "id": 9,
+                                                "name": "Yamaha"
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/upload-image": {
+            "post": {
+                "tags": [
+                    "Marketplace - Images"
+                ],
+                "summary": "Upload one or more images",
+                "description": "Resizes to fit inside 1200x800, no watermark (these are catalog/branding assets, not the peer-to-peer listing photos the watermark protects). Returns one absolute URL per file, in the same order. Nothing is attached to any resource yet: pass the URL(s) as a plain string field on the next call (see each resource's endpoint). type=category and type=brand are admin-only (403 ADMIN_ONLY for a regular user). Access: User.",
+                "operationId": "9278df5ec5f6f7fa7baf3420a633fbbd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "images"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "Picks the storage folder. vendor: shop logo/cover. product: product photos. category/brand: admin only.",
+                                        "type": "string",
+                                        "enum": [
+                                            "vendor",
+                                            "category",
+                                            "brand",
+                                            "product"
+                                        ],
+                                        "example": "vendor"
+                                    },
+                                    "images": {
+                                        "description": "1 to 10 files, jpg/png/webp, max 8 MB each",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "format": "binary"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Images uploaded successfully"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "example": "vendor"
+                                        },
+                                        "paths": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "example": [
+                                                "https://api.dabapp.co/storage/marketplace/vendors/aB3dE9fGh1JkLmN0pQrS.jpg"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "type=category or type=brand from a non-admin token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Only admins can upload category images",
+                                    "code": "ADMIN_ONLY"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/apply": {
+            "post": {
+                "tags": [
+                    "Marketplace - Vendor account"
+                ],
+                "summary": "Apply to become a vendor",
+                "description": "Creates the user's shop with status pending, waiting for admin approval. One shop per user: 409 ALREADY_APPLIED (pending), ALREADY_VENDOR (active) or VENDOR_SUSPENDED. A rejected application can be sent again: it reopens the same shop as pending. Status, slug and commission cannot be set by the user. Access: User.\n     *\n     * For a logo or a cover, call POST /api/marketplace/upload-image (type=vendor) first and send the URL(s) it returns as logo_path / cover_image_path. The city must belong to the country (422 on `city_id` otherwise). Load the pickers from `GET /api/countries-list` and `GET /api/cities?country_id=`.",
+                "operationId": "edf946b5e96591ce61a437ece12efb91",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shop_name",
+                                    "phone",
+                                    "country_id",
+                                    "city_id"
+                                ],
+                                "properties": {
+                                    "shop_name": {
+                                        "type": "string",
+                                        "example": "Moto Parts Riyadh"
+                                    },
+                                    "shop_name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+966500000000"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "description": "Must belong to country_id",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "brand_color": {
+                                        "description": "#RRGGBB",
+                                        "type": "string",
+                                        "example": "#E63946"
+                                    },
+                                    "logo_path": {
+                                        "description": "URL returned by POST /api/marketplace/upload-image (type=vendor)",
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/vendors/aB3dE9fGh1JkLmN0pQrS.jpg",
+                                        "nullable": true
+                                    },
+                                    "cover_image_path": {
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/vendors/zY8xW7vU6tS5rQ4pO3nM.jpg",
+                                        "nullable": true
+                                    },
+                                    "bank_name": {
+                                        "type": "string"
+                                    },
+                                    "iban": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Application created. Show the 'under review' screen.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Application sent, waiting for approval"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceMyVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Application sent, waiting for approval",
+                                    "data": {
+                                        "id": 200,
+                                        "slug": "moto-parts-riyadh",
+                                        "shop_name": "Moto Parts Riyadh",
+                                        "shop_name_ar": "مركز قطع الغيار",
+                                        "description": "Tyres and brakes",
+                                        "description_ar": null,
+                                        "logo_url": null,
+                                        "cover_image_url": null,
+                                        "brand_color": "#E63946",
+                                        "phone": "+966500000000",
+                                        "email": null,
+                                        "country": {
+                                            "id": 1,
+                                            "name": "Saudi Arabia"
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "name": "Riyadh"
+                                        },
+                                        "status": "pending",
+                                        "status_reason": null,
+                                        "can_sell": false,
+                                        "approved_at": null,
+                                        "bank_name": null,
+                                        "iban": null,
+                                        "rating_avg": 0,
+                                        "reviews_count": 0,
+                                        "products_count": 0,
+                                        "created_at": "2026-09-22T01:51:36+03:00"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "A rejected application was sent again: same shop (same id), back to pending, reason cleared.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Application sent again, waiting for approval"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceMyVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Application sent again, waiting for approval",
+                                    "data": {
+                                        "id": 200,
+                                        "slug": "moto-parts-riyadh",
+                                        "shop_name": "Moto Parts Riyadh (fixed)",
+                                        "shop_name_ar": null,
+                                        "description": "Tyres and brakes",
+                                        "description_ar": null,
+                                        "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/logo.png",
+                                        "cover_image_url": null,
+                                        "brand_color": "#E63946",
+                                        "phone": "+966500000000",
+                                        "email": null,
+                                        "country": {
+                                            "id": 1,
+                                            "name": "Saudi Arabia"
+                                        },
+                                        "city": {
+                                            "id": 1,
+                                            "name": "Riyadh"
+                                        },
+                                        "status": "pending",
+                                        "status_reason": null,
+                                        "can_sell": false,
+                                        "approved_at": null,
+                                        "bank_name": null,
+                                        "iban": null,
+                                        "rating_avg": 0,
+                                        "reviews_count": 0,
+                                        "products_count": 0,
+                                        "created_at": "2026-09-22T01:51:36+03:00"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "409": {
+                        "description": "The user already has a shop. Use `code`, not the message, to choose the screen.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                },
+                                "examples": {
+                                    "already_applied": {
+                                        "summary": "Still waiting for the admin",
+                                        "value": {
+                                            "message": "Your application is already waiting for approval",
+                                            "code": "ALREADY_APPLIED",
+                                            "status": "pending"
+                                        }
+                                    },
+                                    "already_vendor": {
+                                        "summary": "Already approved",
+                                        "value": {
+                                            "message": "You already have a vendor account",
+                                            "code": "ALREADY_VENDOR",
+                                            "status": "active"
+                                        }
+                                    },
+                                    "suspended": {
+                                        "summary": "Suspended by the admin",
+                                        "value": {
+                                            "message": "Your shop is suspended",
+                                            "code": "VENDOR_SUSPENDED",
+                                            "status": "suspended"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/me": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor account"
+                ],
+                "summary": "My shop",
+                "description": "The shop owned by the logged-in user, whatever its status, so the app can show 'under review', 'rejected (with the reason)', 'suspended' or the seller space. 404 NO_VENDOR when the user never applied. Access: User.",
+                "operationId": "d3984f678e42e20708b60451eef1511c",
+                "responses": {
+                    "200": {
+                        "description": "My shop. Pick the screen from `status`: pending = under review, rejected = show `status_reason` and a Resubmit button, suspended = show `status_reason`, active = seller space (`can_sell` is true).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceMyVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "examples": {
+                                    "pending": {
+                                        "summary": "Under review",
+                                        "value": {
+                                            "data": {
+                                                "id": 200,
+                                                "slug": "moto-parts-riyadh",
+                                                "shop_name": "Moto Parts Riyadh",
+                                                "shop_name_ar": "مركز قطع الغيار",
+                                                "description": "Tyres and brakes",
+                                                "description_ar": null,
+                                                "logo_url": null,
+                                                "cover_image_url": null,
+                                                "brand_color": "#E63946",
+                                                "phone": "+966500000000",
+                                                "email": null,
+                                                "country": {
+                                                    "id": 1,
+                                                    "name": "Saudi Arabia"
+                                                },
+                                                "city": {
+                                                    "id": 1,
+                                                    "name": "Riyadh"
+                                                },
+                                                "status": "pending",
+                                                "status_reason": null,
+                                                "can_sell": false,
+                                                "approved_at": null,
+                                                "bank_name": null,
+                                                "iban": null,
+                                                "rating_avg": 0,
+                                                "reviews_count": 0,
+                                                "products_count": 0,
+                                                "created_at": "2026-09-22T01:51:36+03:00"
+                                            }
+                                        }
+                                    },
+                                    "rejected": {
+                                        "summary": "Rejected: show the reason and a Resubmit button",
+                                        "value": {
+                                            "data": {
+                                                "id": 200,
+                                                "slug": "moto-parts-riyadh",
+                                                "shop_name": "Moto Parts Riyadh",
+                                                "shop_name_ar": "مركز قطع الغيار",
+                                                "description": "Tyres and brakes",
+                                                "description_ar": null,
+                                                "logo_url": null,
+                                                "cover_image_url": null,
+                                                "brand_color": "#E63946",
+                                                "phone": "+966500000000",
+                                                "email": null,
+                                                "country": {
+                                                    "id": 1,
+                                                    "name": "Saudi Arabia"
+                                                },
+                                                "city": {
+                                                    "id": 1,
+                                                    "name": "Riyadh"
+                                                },
+                                                "status": "rejected",
+                                                "status_reason": "Photos are missing",
+                                                "can_sell": false,
+                                                "approved_at": null,
+                                                "bank_name": null,
+                                                "iban": null,
+                                                "rating_avg": 0,
+                                                "reviews_count": 0,
+                                                "products_count": 0,
+                                                "created_at": "2026-09-22T01:51:36+03:00"
+                                            }
+                                        }
+                                    },
+                                    "active": {
+                                        "summary": "Approved: the seller space opens",
+                                        "value": {
+                                            "data": {
+                                                "id": 200,
+                                                "slug": "moto-parts-riyadh",
+                                                "shop_name": "Moto Parts Riyadh",
+                                                "shop_name_ar": "مركز قطع الغيار",
+                                                "description": "Tyres and brakes",
+                                                "description_ar": null,
+                                                "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/logo.png",
+                                                "cover_image_url": null,
+                                                "brand_color": "#E63946",
+                                                "phone": "+966500000000",
+                                                "email": null,
+                                                "country": {
+                                                    "id": 1,
+                                                    "name": "Saudi Arabia"
+                                                },
+                                                "city": {
+                                                    "id": 1,
+                                                    "name": "Riyadh"
+                                                },
+                                                "status": "active",
+                                                "status_reason": null,
+                                                "can_sell": true,
+                                                "approved_at": "2026-09-23T10:02:11+03:00",
+                                                "bank_name": null,
+                                                "iban": null,
+                                                "rating_avg": 0,
+                                                "reviews_count": 0,
+                                                "products_count": 0,
+                                                "created_at": "2026-09-22T01:51:36+03:00"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "The user never applied: show the 'Become a seller' screen.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Marketplace - Vendor account"
+                ],
+                "summary": "Update my shop",
+                "description": "Send only the fields to change. Allowed while pending or active (suspended: 403 VENDOR_SUSPENDED, rejected: use apply to send it again). Send logo_path / cover_image_path: null to remove that image, or omit it to leave it untouched. slug, status and commission are not editable here. Access: User.",
+                "operationId": "2b8808660c650e99d6017ac52c35ae30",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "shop_name": {
+                                        "type": "string"
+                                    },
+                                    "shop_name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "country_id": {
+                                        "type": "integer"
+                                    },
+                                    "city_id": {
+                                        "type": "integer"
+                                    },
+                                    "brand_color": {
+                                        "type": "string",
+                                        "example": "#1D3557"
+                                    },
+                                    "logo_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "cover_image_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "bank_name": {
+                                        "type": "string"
+                                    },
+                                    "iban": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated. The response is the whole shop, ready to replace what the app holds.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shop updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceMyVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "message": "Shop updated successfully",
+                                    "data": {
+                                        "id": 200,
+                                        "slug": "moto-parts-riyadh",
+                                        "shop_name": "Moto Parts Riyadh",
+                                        "shop_name_ar": "مركز قطع الغيار",
+                                        "description": "New description",
+                                        "description_ar": null,
+                                        "logo_url": null,
+                                        "cover_image_url": null,
+                                        "brand_color": "#1D3557",
+                                        "phone": "+966500000000",
+                                        "email": null,
+                                        "country": {
+                                            "id": 1,
+                                            "name": "Saudi Arabia"
+                                        },
+                                        "city": {
+                                            "id": 2,
+                                            "name": "Jeddah"
+                                        },
+                                        "status": "pending",
+                                        "status_reason": null,
+                                        "can_sell": false,
+                                        "approved_at": null,
+                                        "bank_name": null,
+                                        "iban": null,
+                                        "rating_avg": 0,
+                                        "reviews_count": 0,
+                                        "products_count": 0,
+                                        "created_at": "2026-09-22T01:51:36+03:00"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "The shop is suspended: show the reason, nothing can be edited.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Your shop is suspended",
+                                    "code": "VENDOR_SUSPENDED",
+                                    "reason": "Repeated complaints about fake parts"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "The user never applied.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "The application was rejected: it cannot be edited, send it again with POST /vendor/apply.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Your application was rejected, apply again to reopen it",
+                                    "code": "APPLICATION_REJECTED",
+                                    "reason": "Photos are missing"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendors": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendors"
+                ],
+                "summary": "List shops (All Shops)",
+                "description": "Active vendors only. products_count = active products of the shop. Access: Public.",
+                "operationId": "002212233423663446f9b666fbc1a640",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "shop_name / shop_name_ar contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "moto"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Default rating (the All Shops 'Top Rated' tab)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "rating",
+                            "enum": [
+                                "rating",
+                                "newest",
+                                "name",
+                                "products"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "featured",
+                        "in": "query",
+                        "description": "1 = only admin-curated shops (the Featured badge)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "1-50",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shops, best rated first by default. Load the next page with page+1 until current_page = last_page.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceVendorCard"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 41
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": 4,
+                                            "slug": "moto-parts-riyadh",
+                                            "shop_name": "Moto Parts Riyadh",
+                                            "shop_name_ar": "مركز قطع الغيار الرياض",
+                                            "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-logo.png",
+                                            "cover_image_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-cover.png",
+                                            "brand_color": "#E63946",
+                                            "is_featured": true,
+                                            "rating_avg": 4.5,
+                                            "reviews_count": 2,
+                                            "products_count": 13,
+                                            "city": {
+                                                "id": 1,
+                                                "name": "Riyadh"
+                                            }
+                                        },
+                                        {
+                                            "id": 5,
+                                            "slug": "riders-gear-jeddah",
+                                            "shop_name": "Rider's Gear Jeddah",
+                                            "shop_name_ar": "معدات الراكب جدة",
+                                            "logo_url": null,
+                                            "cover_image_url": null,
+                                            "brand_color": "#1D3557",
+                                            "is_featured": false,
+                                            "rating_avg": 4,
+                                            "reviews_count": 1,
+                                            "products_count": 10,
+                                            "city": {
+                                                "id": 2,
+                                                "name": "Jeddah"
+                                            }
+                                        }
+                                    ],
+                                    "meta": {
+                                        "current_page": 1,
+                                        "per_page": 15,
+                                        "last_page": 1,
+                                        "total": 2
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/vendors/{idOrSlug}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendors"
+                ],
+                "summary": "Shop page",
+                "description": "Shop header: branding, rating, contact location, categories the shop sells in, and its enabled shipping methods (flat rate). Bank data, commission and carrier keys are never exposed. Access: Public.",
+                "operationId": "2828e767ef8fa4f8c60f0edec880e11a",
+                "parameters": [
+                    {
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "description": "Numeric id or slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "moto-parts-riyadh"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shop",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MarketplaceVendorCard"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "description": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "description_ar": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "country": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "categories": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "slug": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name_ar": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "products_count": {
+                                                                        "type": "integer"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "shipping_methods": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "provider": {
+                                                                        "type": "string",
+                                                                        "example": "DHL"
+                                                                    },
+                                                                    "code": {
+                                                                        "type": "string",
+                                                                        "example": "dhl"
+                                                                    },
+                                                                    "flat_rate": {
+                                                                        "type": "number",
+                                                                        "example": 35
+                                                                    },
+                                                                    "estimated_days_min": {
+                                                                        "type": "integer",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "estimated_days_max": {
+                                                                        "type": "integer",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 4,
+                                        "slug": "moto-parts-riyadh",
+                                        "shop_name": "Moto Parts Riyadh",
+                                        "shop_name_ar": "مركز قطع الغيار الرياض",
+                                        "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-logo.png",
+                                        "cover_image_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-cover.png",
+                                        "brand_color": "#E63946",
+                                        "is_featured": true,
+                                        "rating_avg": 4.5,
+                                        "reviews_count": 2,
+                                        "products_count": 13,
+                                        "city": {
+                                            "id": 1,
+                                            "name": "Riyadh"
+                                        },
+                                        "description": "Tyres, brakes and engine parts for sport and touring bikes.",
+                                        "description_ar": null,
+                                        "country": {
+                                            "id": 1,
+                                            "name": "Saudi Arabia"
+                                        },
+                                        "categories": [
+                                            {
+                                                "id": 11,
+                                                "slug": "air-filters",
+                                                "name": "Air filters",
+                                                "name_ar": "فلاتر الهواء",
+                                                "products_count": 1
+                                            },
+                                            {
+                                                "id": 14,
+                                                "slug": "batteries",
+                                                "name": "Batteries",
+                                                "name_ar": "البطاريات",
+                                                "products_count": 1
+                                            }
+                                        ],
+                                        "shipping_methods": [
+                                            {
+                                                "id": 8,
+                                                "provider": "DabApp Shipping",
+                                                "code": "dabapp",
+                                                "flat_rate": 25,
+                                                "estimated_days_min": 3,
+                                                "estimated_days_max": 6
+                                            },
+                                            {
+                                                "id": 7,
+                                                "provider": "DHL",
+                                                "code": "dhl",
+                                                "flat_rate": 35,
+                                                "estimated_days_min": 2,
+                                                "estimated_days_max": 4
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Unknown shop, or a shop that is not approved (pending, rejected, suspended). Both look the same to the app.",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Vendor not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "MarketplaceCategory": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "tyres"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Tyres"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "example": "إطارات",
+                        "nullable": true
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "children_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "products_count": {
+                        "description": "Visible products in this category and all its sub-categories",
+                        "type": "integer",
+                        "example": 24
+                    },
+                    "children": {
+                        "description": "Only when tree=1",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MarketplaceCategory"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceVendorCard": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "moto-parts-riyadh"
+                    },
+                    "shop_name": {
+                        "type": "string",
+                        "example": "Moto Parts Riyadh"
+                    },
+                    "shop_name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "brand_color": {
+                        "type": "string",
+                        "example": "#E63946",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "description": "Curated by an admin: the Featured badge on All Shops and eligible for the Marketplace home Shops row",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.6
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 23
+                    },
+                    "products_count": {
+                        "description": "Active products of the shop",
+                        "type": "integer",
+                        "example": 128
+                    },
+                    "city": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Riyadh"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceMyVendor": {
+                "description": "The owner's view of their own shop (any status).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "moto-parts-riyadh"
+                    },
+                    "shop_name": {
+                        "type": "string"
+                    },
+                    "shop_name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "brand_color": {
+                        "type": "string",
+                        "example": "#E63946",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "city": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "active",
+                            "suspended",
+                            "rejected"
+                        ],
+                        "example": "pending"
+                    },
+                    "status_reason": {
+                        "description": "Why it was rejected or suspended",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "can_sell": {
+                        "description": "true only when status is active",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "approved_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "bank_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "iban": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "example": 0
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "products_count": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceConflict": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Your application is already waiting for approval"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "ALREADY_APPLIED"
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceValidationError": {
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "phone": [
+                                "The phone field is required."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceBrand": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "michelin"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Michelin"
+                    },
+                    "logo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "products_count": {
+                        "type": "integer",
+                        "example": 58
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "responses": {
+            "Unauthenticated": {
+                "description": "Guest, or the token expired. Open the login screen, then repeat the call.",
+                "content": {
+                    "application/json": {
+                        "schema": {},
+                        "example": {
+                            "success": false,
+                            "error": "Unauthenticated",
+                            "message": "You must be authenticated to access this resource.",
+                            "requires_auth": true,
+                            "action": "login"
+                        }
+                    }
+                }
+            },
+            "ValidationFailed": {
+                "description": "Invalid input. Show each message under its field.",
+                "content": {
+                    "application/json": {
+                        "schema": {},
+                        "example": {
+                            "errors": {
+                                "phone": [
+                                    "The phone field is required."
+                                ],
+                                "city_id": [
+                                    "The selected city id is invalid."
+                                ]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter token in format: Bearer <your-token>"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Marketplace - Brands",
+            "description": "Product brands (All Brands screen). Public, no token needed."
+        },
+        {
+            "name": "Marketplace - Categories",
+            "description": "Category tree of the marketplace (unlimited depth). Public, no token needed."
+        },
+        {
+            "name": "Marketplace - Home",
+            "description": "One call for the Marketplace home screen. Public, no token needed."
+        },
+        {
+            "name": "Marketplace - Images",
+            "description": "Upload images before you use them, the same way listings do it: a standalone endpoint that returns URL strings, decoupled from creating or editing the resource. Send those strings as logo_path / cover_image_path / image_path on the vendor, category, brand or product endpoints — those endpoints take plain JSON, never files."
+        },
+        {
+            "name": "Marketplace - Vendor account",
+            "description": "A logged-in user applies to become a vendor and manages their own shop profile. Access: User (Bearer JWT). A guest gets the structured 401 (requires_auth=true). Being a vendor = owning a shop whose status is active; an admin approves applications from the Admin Panel. logo_path / cover_image_path are URLs from POST /api/marketplace/upload-image (type=vendor), not files: upload first, then send the strings here."
+        },
+        {
+            "name": "Marketplace - Vendors",
+            "description": "Shops (All Shops screen and shop page). Public, no token needed. Only approved (active) vendors are ever visible."
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}

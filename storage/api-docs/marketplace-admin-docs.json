@@ -1,0 +1,2706 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "DabApp Marketplace Admin API",
+        "description": "Back-office API for the marketplace (catalog, vendors, orders, payouts, moderation). Every route needs an admin Bearer token (middleware auth.admin) and role_id = 1.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/admin/marketplace/brands": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Brands"
+                ],
+                "summary": "List brands (Admin)",
+                "description": "Active and inactive brands. per_page empty = everything, no pagination.",
+                "operationId": "6f8ed6b2d46598e1ecdfc747df3409a6",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Name / slug contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brands",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceBrand"
+                                            }
+                                        },
+                                        "meta": {
+                                            "description": "Only when paginated",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Brands"
+                ],
+                "summary": "Create a brand",
+                "description": "To add a logo, call POST /api/marketplace/upload-image (type=brand) first and send the URL it returns as logo_path.",
+                "operationId": "8f1498d9ac5f49861dec9a14949ad7b0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Michelin"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "michelin"
+                                    },
+                                    "logo_path": {
+                                        "description": "URL returned by POST /api/marketplace/upload-image (type=brand)",
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/brands/aB3dE9fGh1JkLmN0pQrS.jpg",
+                                        "nullable": true
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Brand created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceBrand"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/brands/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Brands"
+                ],
+                "summary": "Brand detail (Admin)",
+                "operationId": "be417d703fc3540fc51d92dc9c5b2cfa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Brand",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceBrand"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Brands"
+                ],
+                "summary": "Update a brand",
+                "description": "Send only the fields to change. Send logo_path: null to remove the logo, or omit it to leave it untouched.",
+                "operationId": "c0c265d4ba22c102bae4cb47623a1c5c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "logo_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Brand updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceBrand"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Brands"
+                ],
+                "summary": "Delete a brand",
+                "description": "Soft delete. Products of this brand stay, with no brand shown (deactivate the brand instead if you only want to hide it from filters).",
+                "operationId": "97b05c53c014024fa025cf9a1a2879ab",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Brand deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/categories": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "List categories (Admin)",
+                "description": "Flat list, active and inactive. Filter by parent (parent_id=root for top-level). per_page empty = everything, no pagination.",
+                "operationId": "3d95384a1a0a28fd8234739000a9579d",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Name / name_ar / slug contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "parent_id",
+                        "in": "query",
+                        "description": "Parent id, or the word root for top-level categories",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "root"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "1-100, empty = all",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Categories",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceCategory"
+                                            }
+                                        },
+                                        "meta": {
+                                            "description": "Only when paginated",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Missing or invalid admin token"
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "Create a category",
+                "description": "slug is generated from the name when omitted. order_position defaults to the end of its siblings. To add an image, call POST /api/marketplace/upload-image (type=category) first and send the URL it returns as image_path.",
+                "operationId": "4ea92b2d086dab78f39e31e1252cf70b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Tyres"
+                                    },
+                                    "name_ar": {
+                                        "type": "string",
+                                        "example": "إطارات"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "tyres"
+                                    },
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "example": 3,
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "image_path": {
+                                        "description": "URL returned by POST /api/marketplace/upload-image (type=category)",
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/categories/aB3dE9fGh1JkLmN0pQrS.jpg",
+                                        "nullable": true
+                                    },
+                                    "order_position": {
+                                        "type": "integer",
+                                        "example": 0
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceCategory"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "Category detail (Admin)",
+                "operationId": "cf67e3373f76fd1710dec3e196fe09d3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceCategory"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "Update a category",
+                "description": "Send only the fields to change. Send image_path: null to remove the image, or omit it to leave it untouched. A category cannot be moved under itself or one of its descendants.",
+                "operationId": "1584461c0c33ae1802fcb3dce0073772",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "parent_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "image_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "order_position": {
+                                        "type": "integer"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceCategory"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "Delete a category",
+                "description": "Soft delete. Refused with 409 while the category has sub-categories (HAS_CHILDREN) or products (HAS_PRODUCTS).",
+                "operationId": "8f3c93fe2df669823ef793e6dcd685ef",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Category deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Has children or products",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/categories/reorder": {
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Categories"
+                ],
+                "summary": "Reorder categories",
+                "description": "Sets order_position for the given ids (same pattern as guide-categories/reorder).",
+                "operationId": "2d922291a6344a9d43487e88d3b02116",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "items"
+                                ],
+                                "properties": {
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "id",
+                                                "order_position"
+                                            ],
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reordered",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Categories reordered successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/shipping-providers": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Shipping providers"
+                ],
+                "summary": "List shipping providers (Admin)",
+                "description": "Small list, never paginated.",
+                "operationId": "ead8d8ba92926a7899b8fb90dca59268",
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Providers",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceShippingProvider"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Shipping providers"
+                ],
+                "summary": "Create a shipping provider",
+                "operationId": "f0f88fc2bdc6da437e77611b985f8748",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "code"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Aramex"
+                                    },
+                                    "code": {
+                                        "description": "Unique, letters/digits/dash/underscore",
+                                        "type": "string",
+                                        "example": "aramex"
+                                    },
+                                    "requires_api_key": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping provider created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceShippingProvider"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/shipping-providers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Shipping providers"
+                ],
+                "summary": "Shipping provider detail (Admin)",
+                "operationId": "81a38506cb6cd8d40572dc47b3ea1b89",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Provider",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceShippingProvider"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Shipping providers"
+                ],
+                "summary": "Update a shipping provider",
+                "description": "Send only the fields to change. Deactivating a provider hides it from the vendor picker but keeps existing vendor methods.",
+                "operationId": "ed8f9bf9bb3955afda9e7a3e82a05946",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "code": {
+                                        "type": "string"
+                                    },
+                                    "requires_api_key": {
+                                        "type": "boolean"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping provider updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceShippingProvider"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Shipping providers"
+                ],
+                "summary": "Delete a shipping provider",
+                "description": "Soft delete. Refused with 409 (IN_USE) while vendors still have a shipping method on it: deactivate it instead.",
+                "operationId": "03a45b069e67ad3fcca5c56b4f9c0fec",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping provider deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Used by vendors",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "List vendors (Admin)",
+                "description": "All statuses. The IBAN is never in the list (open the detail). per_page empty = everything, no pagination.",
+                "operationId": "729dabcefa40064098fe94114a6f791b",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "shop name, slug, or owner name / email / phone",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "active",
+                                "suspended",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "country_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "city_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "newest",
+                            "enum": [
+                                "newest",
+                                "name",
+                                "rating",
+                                "products"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vendors",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                            }
+                                        },
+                                        "meta": {
+                                            "description": "Only when paginated",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Create a vendor",
+                "description": "A user can own one shop. status defaults to pending; creating it as active stamps approved_at / approved_by. slug is generated from shop_name when omitted. city_id must belong to country_id. For logo / cover_image, call POST /api/marketplace/upload-image (type=vendor) first and send the URLs it returns.",
+                "operationId": "ea728d82053f29be87ff4e862f26c15d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "shop_name"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "description": "Owner account",
+                                        "type": "integer",
+                                        "example": 42
+                                    },
+                                    "shop_name": {
+                                        "type": "string",
+                                        "example": "Moto Parts Riyadh"
+                                    },
+                                    "shop_name_ar": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "logo_path": {
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/vendors/aB3dE9fGh1JkLmN0pQrS.jpg",
+                                        "nullable": true
+                                    },
+                                    "cover_image_path": {
+                                        "type": "string",
+                                        "example": "https://api.dabapp.co/storage/marketplace/vendors/zY8xW7vU6tS5rQ4pO3nM.jpg",
+                                        "nullable": true
+                                    },
+                                    "brand_color": {
+                                        "description": "#RRGGBB",
+                                        "type": "string",
+                                        "example": "#E63946"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "country_id": {
+                                        "type": "integer"
+                                    },
+                                    "city_id": {
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "active",
+                                            "suspended",
+                                            "rejected"
+                                        ]
+                                    },
+                                    "is_featured": {
+                                        "description": "Shown on the Marketplace home Shops row and the Featured badge on All Shops",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "commission_override": {
+                                        "description": "0-100, empty = category or global rate",
+                                        "type": "number",
+                                        "example": 12.5
+                                    },
+                                    "bank_name": {
+                                        "type": "string"
+                                    },
+                                    "iban": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/stats": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Vendor counters",
+                "description": "Totals per status, for the tabs of the vendors screen.",
+                "operationId": "29ff1e6297f425e4324c0afafa0e868f",
+                "responses": {
+                    "200": {
+                        "description": "Counters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "pending": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "active": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "suspended": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "rejected": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Vendor detail (Admin)",
+                "description": "Full record including bank name, IBAN and commission override.",
+                "operationId": "bd8b66d3a8011cd84e5410e6a2b10465",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vendor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Update a vendor",
+                "description": "Send only the fields to change. Send logo_path / cover_image_path: null to remove that image, or omit it to leave it untouched. Status changes go through approve / suspend / reject, not this endpoint. Empty commission_override clears the override.",
+                "operationId": "cab0b16b945fae2fe0afedcc554a7b20",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "user_id": {
+                                        "description": "Transfer the shop to another account",
+                                        "type": "integer"
+                                    },
+                                    "shop_name": {
+                                        "type": "string"
+                                    },
+                                    "shop_name_ar": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "logo_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "cover_image_path": {
+                                        "description": "URL from POST /api/marketplace/upload-image, or null to remove it",
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "brand_color": {
+                                        "type": "string",
+                                        "example": "#1D3557"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "country_id": {
+                                        "type": "integer"
+                                    },
+                                    "city_id": {
+                                        "type": "integer"
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean"
+                                    },
+                                    "commission_override": {
+                                        "type": "number"
+                                    },
+                                    "bank_name": {
+                                        "type": "string"
+                                    },
+                                    "iban": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Delete a vendor",
+                "description": "Soft delete. Refused with 409 HAS_ORDERS once the shop has sold something (suspend it instead). Its products leave the storefront.",
+                "operationId": "ecbf75395137c447ef06aa963217ea35",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Has orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Approve a vendor",
+                "description": "pending, rejected or suspended becomes active (reactivation). 409 INVALID_STATE if already active. Stamps approved_at / approved_by and clears the reason. Its active products become visible in the storefront.",
+                "operationId": "e12c22cd003413895c431213266bae7d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Approved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor approved successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Already active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{id}/suspend": {
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Suspend a vendor",
+                "description": "active becomes suspended: the shop and all its products disappear from the storefront (orders already placed are not touched). A reason is required. 409 INVALID_STATE if not active.",
+                "operationId": "35f60744c8dca699552fe4a0e0bd067d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Repeated complaints about fake parts"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Suspended",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor suspended successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Reason missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Vendors"
+                ],
+                "summary": "Reject a vendor application",
+                "description": "pending becomes rejected. A reason is required. 409 INVALID_STATE if not pending.",
+                "operationId": "72bbf38606e1f97622a755bcd4e1d225",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Missing commercial registration"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rejected",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Vendor rejected successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendor"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Not pending",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Reason missing",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{vendorId}/shipping-methods": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Vendor shipping methods"
+                ],
+                "summary": "List a vendor's shipping methods",
+                "operationId": "fb8942870a622777b16878be78132725",
+                "parameters": [
+                    {
+                        "name": "vendorId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Methods",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceVendorShippingMethod"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Vendor not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Add a shipping method to a vendor",
+                "description": "A vendor can have a given provider only once. The provider must be active. uses_own_api=true requires credentials (key/value object, e.g. {api_key, account_number}); they are stored encrypted and never returned. Without an own API the flat_rate is used, no carrier call is made (v1).",
+                "operationId": "04d638366af8d54870bf1d1a2dc66e81",
+                "parameters": [
+                    {
+                        "name": "vendorId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "provider_id",
+                                    "flat_rate"
+                                ],
+                                "properties": {
+                                    "provider_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "flat_rate": {
+                                        "type": "number",
+                                        "example": 35
+                                    },
+                                    "uses_own_api": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "credentials": {
+                                        "type": "object",
+                                        "example": {
+                                            "api_key": "xxxx",
+                                            "account_number": "123456"
+                                        }
+                                    },
+                                    "estimated_days_min": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "estimated_days_max": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendorShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Vendor not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/vendors/{vendorId}/shipping-methods/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Shipping method detail",
+                "operationId": "7271e5b97c723bc6613788367606c91e",
+                "parameters": [
+                    {
+                        "name": "vendorId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Method",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendorShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Update a shipping method",
+                "description": "Send only the fields to change. credentials replaces the stored keys when sent; clear_credentials=true removes them. Turning uses_own_api off also wipes the keys. The provider cannot be changed (delete and add another).",
+                "operationId": "4479efeb98d9d8aed843a87c6e29f601",
+                "parameters": [
+                    {
+                        "name": "vendorId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "flat_rate": {
+                                        "type": "number"
+                                    },
+                                    "uses_own_api": {
+                                        "type": "boolean"
+                                    },
+                                    "credentials": {
+                                        "type": "object"
+                                    },
+                                    "clear_credentials": {
+                                        "type": "boolean"
+                                    },
+                                    "estimated_days_min": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "estimated_days_max": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceVendorShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Remove a shipping method",
+                "description": "Soft delete. Orders already placed keep their shipping snapshot.",
+                "operationId": "82231962167dec00cdd757486c15c9cb",
+                "parameters": [
+                    {
+                        "name": "vendorId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "AdminMarketplaceCategory": {
+                "properties": {
+                    "id": {
+                        "description": "Swagger root for the marketplace Admin Panel documentation.\nUI: /marketplace-admin/documentation",
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "parent_id": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Tyres"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "example": "إطارات",
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "tyres"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "image_path": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "order_position": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "children_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "products_count": {
+                        "description": "Direct products only",
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "example": "2026-09-22T00:21:33.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceBrand": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Michelin"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "michelin"
+                    },
+                    "logo_path": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "products_count": {
+                        "type": "integer",
+                        "example": 8
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceShippingProvider": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "DHL"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "dhl"
+                    },
+                    "requires_api_key": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "vendor_methods_count": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceVendor": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "shop_name": {
+                        "type": "string",
+                        "example": "Moto Parts Riyadh"
+                    },
+                    "shop_name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "moto-parts-riyadh"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_path": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "logo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cover_image_path": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "brand_color": {
+                        "type": "string",
+                        "example": "#E63946",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "country_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "active",
+                            "suspended",
+                            "rejected"
+                        ],
+                        "example": "active"
+                    },
+                    "is_featured": {
+                        "description": "Curated by an admin: shown on the Marketplace home Shops row and the Featured badge on All Shops",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "status_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "approved_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "commission_override": {
+                        "description": "% ; null = category or global rate",
+                        "type": "number",
+                        "example": 12.5,
+                        "nullable": true
+                    },
+                    "bank_name": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "iban": {
+                        "description": "Detail only. The list never returns it.",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "example": 4.5
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "products_count": {
+                        "type": "integer",
+                        "example": 13
+                    },
+                    "owner": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "last_name": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceVendorShippingMethod": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "provider_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "provider": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "DHL"
+                            },
+                            "code": {
+                                "type": "string",
+                                "example": "dhl"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "uses_own_api": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_credentials": {
+                        "description": "Keys are write-only: only this flag is ever returned",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "flat_rate": {
+                        "type": "number",
+                        "example": 35
+                    },
+                    "estimated_days_min": {
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "estimated_days_max": {
+                        "type": "integer",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "ConflictError": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Category has products and cannot be deleted"
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "HAS_PRODUCTS"
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationError": {
+                "properties": {
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "name": [
+                                "The name field is required."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Enter token in format: Bearer <your-token>"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Admin Marketplace - Brands",
+            "description": "Product brands. logo_path is a URL from POST /api/marketplace/upload-image (type=brand), not a file: upload first, then send the string here."
+        },
+        {
+            "name": "Admin Marketplace - Categories",
+            "description": "Category tree management (unlimited depth). image_path is a URL from POST /api/marketplace/upload-image (type=category), not a file: upload first, then send the string here."
+        },
+        {
+            "name": "Admin Marketplace - Shipping providers",
+            "description": "Global list of carriers (DHL, Aramex, SMSA, DabApp Shipping, Manual). Vendors pick from this list."
+        },
+        {
+            "name": "Admin Marketplace - Vendors",
+            "description": "Shops: creation, branding (logo, cover, brand color), approval workflow, commission override. logo_path / cover_image_path are URLs from POST /api/marketplace/upload-image (type=vendor), not files: upload first, then send the strings here."
+        },
+        {
+            "name": "Admin Marketplace - Vendor shipping methods",
+            "description": "What a vendor actually offers: one or more carriers from the global providers list, each with a flat rate. Carrier API keys are write-only, encrypted at rest and never returned (only has_credentials)."
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}
