@@ -4,8 +4,10 @@ namespace Tests\Feature\Marketplace;
 
 use App\Models\Marketplace\Category;
 use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductMotorcycle;
 use App\Models\Marketplace\Vendor;
 use App\Models\MotorcycleBrand;
+use App\Models\MotorcycleModel;
 use App\Models\MotorcycleType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -93,22 +95,48 @@ class HomePublicTest extends TestCase
         $this->assertArrayNotHasKey('children', $row, 'home never nests: use GET /marketplace/categories?parent_id= to drill down');
     }
 
-    public function test_bike_types_and_brands_come_from_the_existing_vehicle_tables(): void
+    /**
+     * bike_types / bike_brands come from the existing vehicle tables, but only the ones with at least one
+     * compatible marketplace product: the full generic catalog (500+ brands, most with zero parts) is
+     * useless to tap into, so Home filters it down via marketplace_product_motorcycles.
+     */
+    public function test_bike_types_and_brands_only_show_when_a_product_is_compatible(): void
     {
-        $type = MotorcycleType::create(['name' => 'Home Test Type ' . Str::random(5)]);
-        // Home orders brands alphabetically within a small limit, and the shared table already has 500+ real
-        // rows: a "0" prefix guarantees this one sorts first regardless of what else exists.
-        $shownBrand = MotorcycleBrand::create(['name' => '0 Home Test Brand ' . Str::random(5), 'is_displayed' => true]);
+        // "0" prefix: Home orders alphabetically within a small limit, and the shared tables already have
+        // hundreds of real rows — this guarantees the test rows would sort first if they were shown at all.
+        $type = MotorcycleType::create(['name' => '0 Home Test Type ' . Str::random(5)]);
+        $brand = MotorcycleBrand::create(['name' => '0 Home Test Brand ' . Str::random(5), 'is_displayed' => true]);
+        $model = MotorcycleModel::create(['name' => '0 Model ' . Str::random(5), 'brand_id' => $brand->id, 'type_id' => $type->id]);
+
+        $orphanType = MotorcycleType::create(['name' => '0 Orphan Type ' . Str::random(5)]);
+        $orphanBrand = MotorcycleBrand::create(['name' => '0 Orphan Brand ' . Str::random(5), 'is_displayed' => true]);
         $hiddenBrand = MotorcycleBrand::create(['name' => '0 Hidden Brand ' . Str::random(5), 'is_displayed' => false]);
+
+        // Neither the orphans nor the hidden brand have a product yet: none should show.
+        $before = $this->getJson('/api/marketplace/home')->json('data');
+        $this->assertFalse(collect($before['bike_types'])->pluck('name')->contains($type->name), 'not shown before any product is compatible with it');
+        $this->assertFalse(collect($before['bike_brands'])->pluck('name')->contains($brand->name));
+
+        $vendor = $this->vendor();
+        $category = Category::create(['name' => 'Home Compat Cat', 'slug' => 'home-compat-' . Str::random(6)]);
+        $product = Product::create([
+            'vendor_id' => $vendor->id, 'category_id' => $category->id, 'reference' => 'HC-' . Str::random(8),
+            'slug' => 'hc-' . Str::random(8), 'name' => 'P', 'price' => 5, 'status' => 'active',
+        ]);
+        ProductMotorcycle::create(['product_id' => $product->id, 'moto_brand_id' => $brand->id, 'moto_model_id' => $model->id]);
+        // Give the hidden brand a compatible product too, to prove is_displayed still wins over "has products".
+        ProductMotorcycle::create(['product_id' => $product->id, 'moto_brand_id' => $hiddenBrand->id]);
 
         $data = $this->getJson('/api/marketplace/home')->json('data');
 
-        $this->assertTrue(collect($data['bike_types'])->pluck('name')->contains($type->name));
+        $this->assertTrue(collect($data['bike_types'])->pluck('name')->contains($type->name), 'shown once a compatible product exists (via its model)');
+        $this->assertFalse(collect($data['bike_types'])->pluck('name')->contains($orphanType->name), 'a type with no compatible product stays out');
         $this->assertEqualsCanonicalizing(['id', 'name', 'name_ar', 'icon'], array_keys($data['bike_types'][0]));
 
         $brandNames = collect($data['bike_brands'])->pluck('name');
-        $this->assertTrue($brandNames->contains($shownBrand->name));
-        $this->assertFalse($brandNames->contains($hiddenBrand->name), 'is_displayed=false brands are hidden');
+        $this->assertTrue($brandNames->contains($brand->name));
+        $this->assertFalse($brandNames->contains($orphanBrand->name), 'a brand with no compatible product stays out');
+        $this->assertFalse($brandNames->contains($hiddenBrand->name), 'is_displayed=false stays out even with a compatible product');
         $this->assertEqualsCanonicalizing(['id', 'name'], array_keys($data['bike_brands'][0]));
     }
 }

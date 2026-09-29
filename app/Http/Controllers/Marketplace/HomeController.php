@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
 use App\Models\Marketplace\Category;
+use App\Models\Marketplace\Product;
+use App\Models\Marketplace\ProductMotorcycle;
 use App\Models\Marketplace\Vendor;
 use App\Models\MotorcycleBrand;
+use App\Models\MotorcycleModel;
 use App\Models\MotorcycleType;
 use Illuminate\Http\JsonResponse;
 
@@ -21,7 +24,7 @@ class HomeController extends Controller
      * @OA\Get(
      *     path="/api/marketplace/home",
      *     summary="Marketplace home screen",
-     *     description="Everything the home screen needs in one call, in the order the screen shows them: Shops, Accessories (categories), Bike Type, Brand. bike_types and bike_brands come from the app's existing vehicle tables (the same ones the moto listings use), not from the marketplace catalog: 'Bike Brand' means Honda / KTM / Yamaha (who made the bike), never a marketplace parts brand like Michelin. Access: Public.",
+     *     description="Everything the home screen needs in one call, in the order the screen shows them: Shops, Accessories (categories), Bike Type, Brand. bike_types and bike_brands come from the app's existing vehicle tables (the same ones the moto listings use), not from the marketplace catalog: 'Bike Brand' means Honda / KTM / Yamaha (who made the bike), never a marketplace parts brand like Michelin. Both are filtered down to only the ones that have at least one compatible product in the marketplace — a brand or type with nothing to sell stays out, so this list is never the full vehicle catalog (500+ brands). Access: Public.",
      *     tags={"Marketplace - Home"},
      *     @OA\Response(response=200, description="Home sections", @OA\JsonContent(
      *         @OA\Property(property="data", type="object",
@@ -59,8 +62,19 @@ class HomeController extends Controller
             ])->values();
 
         // Existing vehicle tables (moto listings), not the new marketplace ones: "Bike Type" = Standard/Racing/..., "Bike Brand" = Honda/KTM/...
-        $bikeTypes = MotorcycleType::orderBy('name')->limit(12)->get(['id', 'name', 'name_ar', 'icon']);
-        $bikeBrands = MotorcycleBrand::where('is_displayed', true)->orderBy('name')->limit(12)->get(['id', 'name']);
+        // Only brands/types that actually have a compatible product: a full generic catalog (500+ brands with
+        // zero parts) is useless to tap into, and it drowned Honda/KTM under alphabetically-earlier unknowns.
+        $compatibleBrandIds = ProductMotorcycle::whereNotNull('moto_brand_id')
+            ->whereHas('product', fn ($q) => $q->visible())
+            ->distinct()->pluck('moto_brand_id');
+
+        $compatibleModelIds = ProductMotorcycle::whereNotNull('moto_model_id')
+            ->whereHas('product', fn ($q) => $q->visible())
+            ->distinct()->pluck('moto_model_id');
+        $compatibleTypeIds = MotorcycleModel::whereIn('id', $compatibleModelIds)->whereNotNull('type_id')->distinct()->pluck('type_id');
+
+        $bikeTypes = MotorcycleType::whereIn('id', $compatibleTypeIds)->orderBy('name')->limit(12)->get(['id', 'name', 'name_ar', 'icon']);
+        $bikeBrands = MotorcycleBrand::where('is_displayed', true)->whereIn('id', $compatibleBrandIds)->orderBy('name')->limit(12)->get(['id', 'name']);
 
         return response()->json(['data' => [
             'shops'       => $shops,

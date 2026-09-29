@@ -418,7 +418,7 @@
                     "Marketplace - Home"
                 ],
                 "summary": "Marketplace home screen",
-                "description": "Everything the home screen needs in one call, in the order the screen shows them: Shops, Accessories (categories), Bike Type, Brand. bike_types and bike_brands come from the app's existing vehicle tables (the same ones the moto listings use), not from the marketplace catalog: 'Bike Brand' means Honda / KTM / Yamaha (who made the bike), never a marketplace parts brand like Michelin. Access: Public.",
+                "description": "Everything the home screen needs in one call, in the order the screen shows them: Shops, Accessories (categories), Bike Type, Brand. bike_types and bike_brands come from the app's existing vehicle tables (the same ones the moto listings use), not from the marketplace catalog: 'Bike Brand' means Honda / KTM / Yamaha (who made the bike), never a marketplace parts brand like Michelin. Both are filtered down to only the ones that have at least one compatible product in the marketplace — a brand or type with nothing to sell stays out, so this list is never the full vehicle catalog (500+ brands). Access: Public.",
                 "operationId": "91c78bf736c3a1ac3d4098d9fa0f29bc",
                 "responses": {
                     "200": {
