@@ -6,11 +6,13 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
+# composer:2 ships its own PHP (8.5, no gd/calendar); this stage only fetches packages.
+# Platform requirements are verified against the real PHP 8.2 runtime in stage 3.
 RUN composer install \
       --no-dev --no-scripts --no-autoloader \
-      --prefer-dist --no-interaction --no-progress
+      --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
 COPY . .
-RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
+RUN composer dump-autoload --optimize --classmap-authoritative --no-dev --ignore-platform-reqs
 
 # ───────────────────────────────────────────────
 # Stage 2 — Front-end build (Vite) + puppeteer
@@ -37,7 +39,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         chromium fonts-liberation fonts-noto-core fonts-kacst \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
-        pdo_mysql mbstring bcmath gd zip intl exif pcntl opcache sockets \
+        pdo_mysql mbstring bcmath gd zip intl exif pcntl opcache sockets calendar \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
@@ -56,6 +58,10 @@ COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /app/vendor       ./vendor
 COPY --from=assets --chown=www-data:www-data /app/public/build ./public/build
 COPY --from=assets --chown=www-data:www-data /app/node_modules ./node_modules
+
+# Fail the build if the runtime is missing an extension / PHP version the lock file needs
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer check-platform-reqs --no-dev
 
 # Browsershot / puppeteer -> use the system Chromium (see PlateGeneratorController)
 ENV NODE_BINARY_PATH=/usr/bin/node \
