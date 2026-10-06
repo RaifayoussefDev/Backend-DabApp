@@ -96,6 +96,67 @@ use App\Http\Controllers\Controller;
  * )
  *
  * @OA\Schema(
+ *     schema="MarketplaceProductCard",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=21),
+ *     @OA\Property(property="slug", type="string", example="michelin-pilot-road-5-120-70-17"),
+ *     @OA\Property(property="reference", type="string", example="MP-00021"),
+ *     @OA\Property(property="name", type="string", example="Michelin Pilot Road 5 120/70-17"),
+ *     @OA\Property(property="name_ar", type="string", nullable=true),
+ *     @OA\Property(property="price", type="number", format="float", example=420, description="The cheapest variant's price when has_variants is true, otherwise the product's own price"),
+ *     @OA\Property(property="price_max", type="number", format="float", nullable=true, example=null, description="Set only when has_variants is true and variant prices differ - show as a 'from-to' range"),
+ *     @OA\Property(property="compare_at_price", type="number", format="float", nullable=true, example=null, description="Strikethrough original price"),
+ *     @OA\Property(property="condition", type="string", enum={"new","used"}, example="new"),
+ *     @OA\Property(property="in_stock", type="boolean", example=true),
+ *     @OA\Property(property="has_variants", type="boolean", example=false, description="true = sold by variant (color/size/...), open the detail for the variants array"),
+ *     @OA\Property(property="cover_image_url", type="string", nullable=true),
+ *     @OA\Property(property="rating_avg", type="number", format="float", example=4.5),
+ *     @OA\Property(property="reviews_count", type="integer", example=3),
+ *     @OA\Property(property="likes_count", type="integer", example=12),
+ *     @OA\Property(property="is_featured", type="boolean", example=false),
+ *     @OA\Property(property="vendor", type="object", nullable=true,
+ *         @OA\Property(property="id", type="integer"), @OA\Property(property="slug", type="string"),
+ *         @OA\Property(property="shop_name", type="string"), @OA\Property(property="shop_name_ar", type="string", nullable=true)),
+ *     @OA\Property(property="category", type="object", nullable=true,
+ *         @OA\Property(property="id", type="integer"), @OA\Property(property="slug", type="string"),
+ *         @OA\Property(property="name", type="string"), @OA\Property(property="name_ar", type="string", nullable=true)),
+ *     @OA\Property(property="brand", type="object", nullable=true, description="Parts brand (Michelin), not the bike's manufacturer",
+ *         @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string"), @OA\Property(property="logo_url", type="string", nullable=true))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="MarketplaceProductVariant",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="sku", type="string", example="MP-00022-BLK-XS"),
+ *     @OA\Property(property="option1_name", type="string", nullable=true, example="Color"),
+ *     @OA\Property(property="option1_value", type="string", nullable=true, example="Black"),
+ *     @OA\Property(property="color_hex", type="string", nullable=true, example="#000000"),
+ *     @OA\Property(property="option2_name", type="string", nullable=true, example="Size"),
+ *     @OA\Property(property="option2_value", type="string", nullable=true, example="XS"),
+ *     @OA\Property(property="price", type="number", example=34.99),
+ *     @OA\Property(property="compare_at_price", type="number", nullable=true, example=49.99),
+ *     @OA\Property(property="in_stock", type="boolean", example=true),
+ *     @OA\Property(property="image_url", type="string", nullable=true, description="Falls back to the product's own cover image when null"),
+ *     @OA\Property(property="is_default", type="boolean", example=true, description="Pre-selected on the product page")
+ * )
+ *
+ * @OA\Schema(
+ *     schema="MarketplaceProductReview",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=301),
+ *     @OA\Property(property="rating", type="integer", example=5),
+ *     @OA\Property(property="title", type="string", nullable=true, example="Great Product!!"),
+ *     @OA\Property(property="comment", type="string", nullable=true),
+ *     @OA\Property(property="tags", type="array", @OA\Items(type="string"), example={"Build Quality","Delivery Time"}),
+ *     @OA\Property(property="image_urls", type="array", @OA\Items(type="string")),
+ *     @OA\Property(property="verified_purchase", type="boolean", example=false, description="Always false for now - there is no Orders/Cart yet to verify a purchase against"),
+ *     @OA\Property(property="author", type="object", nullable=true, description="null when the reviewer chose is_anonymous",
+ *         @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string")),
+ *     @OA\Property(property="created_at", type="string")
+ * )
+ *
+ * @OA\Schema(
  *     schema="MarketplaceBrand",
  *     type="object",
  *     @OA\Property(property="id", type="integer", example=4),

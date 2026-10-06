@@ -3632,7 +3632,8 @@ class ListingController extends Controller
                 'email' => $isGuest ? null : $listing->seller?->email,
                 'phone' => $isGuest ? null : $listing->seller?->phone,
                 'address' => $isGuest ? null : $listing->seller?->address,
-                'member_since' => $isGuest ? null : $listing->seller?->created_at?->format('Y-m-d H:i:s'),
+                // Public (not contact info): guests see it too — null made old clients show 1970.
+                'member_since' => $listing->seller?->created_at?->format('Y-m-d H:i:s'),
                 'dealer_address' => $isGuest ? null : $listing->seller?->dealer_address,
                 'dealer_phone' => $isGuest ? null : $listing->seller?->dealer_phone,
                 'points_of_interest' => $isGuest ? null : $listing->seller?->pointsOfInterest,
@@ -4597,6 +4598,133 @@ class ListingController extends Controller
         return response()->json([
             'bike_part_brands' => $bike_part_brands
         ]);
+    }
+
+    /**
+     * Compatible-motorcycle filters for spare parts: only brands / models / years
+     * that at least one published spare-part listing is compatible with.
+     * Same response shape as getBrandsWithListingCount(), getModelsWithListingsByBrand()
+     * and getYearsWithListingsByBrandAndModel() so the web filter handles both alike.
+     */
+    // ── Brand → Year → Model lookups (listing filters). Years are the manufacturing
+    // year values (2020…), not motorcycle_years ids — those belong to one model.
+
+    /** Published motorcycle listings of a brand, grouped by manufacturing year. */
+    public function getYearsWithListingsByBrand($brandId)
+    {
+        $years = DB::table('motorcycles')
+            ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->join('motorcycle_years', 'motorcycles.year_id', '=', 'motorcycle_years.id')
+            ->where('motorcycles.brand_id', $brandId)
+            ->where('listings.status', 'published')
+            ->groupBy('motorcycle_years.year')
+            ->select('motorcycle_years.year')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_years.year', 'DESC')
+            ->get();
+
+        return response()->json(['years' => $years]);
+    }
+
+    /** Models of a brand with published listings for one manufacturing year. */
+    public function getModelsWithListingsByBrandAndYear($brandId, $year)
+    {
+        $models = DB::table('motorcycles')
+            ->join('listings', 'motorcycles.listing_id', '=', 'listings.id')
+            ->join('motorcycle_years', 'motorcycles.year_id', '=', 'motorcycle_years.id')
+            ->join('motorcycle_models', 'motorcycles.model_id', '=', 'motorcycle_models.id')
+            ->where('motorcycles.brand_id', $brandId)
+            ->where('motorcycle_years.year', $year)
+            ->where('listings.status', 'published')
+            ->groupBy('motorcycle_models.id', 'motorcycle_models.name')
+            ->select('motorcycle_models.id', 'motorcycle_models.name')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_models.name')
+            ->get();
+
+        return response()->json(['models' => $models]);
+    }
+
+    /** Spare parts: manufacturing years of a brand that some published part fits. */
+    public function getSparePartMotorcycleYearValuesWithListings($brandId)
+    {
+        $years = $this->sparePartCompatibilityQuery()
+            ->join('motorcycle_years', 'spare_part_motorcycles.year_id', '=', 'motorcycle_years.id')
+            ->where('spare_part_motorcycles.brand_id', $brandId)
+            ->groupBy('motorcycle_years.year')
+            ->select('motorcycle_years.year')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_years.year', 'DESC')
+            ->get();
+
+        return response()->json(['years' => $years]);
+    }
+
+    /** Spare parts: models of a brand, for one manufacturing year, that some published part fits. */
+    public function getSparePartMotorcycleModelsByYearWithListings($brandId, $year)
+    {
+        $models = $this->sparePartCompatibilityQuery()
+            ->join('motorcycle_years', 'spare_part_motorcycles.year_id', '=', 'motorcycle_years.id')
+            ->join('motorcycle_models', 'spare_part_motorcycles.model_id', '=', 'motorcycle_models.id')
+            ->where('spare_part_motorcycles.brand_id', $brandId)
+            ->where('motorcycle_years.year', $year)
+            ->groupBy('motorcycle_models.id', 'motorcycle_models.name')
+            ->select('motorcycle_models.id', 'motorcycle_models.name')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_models.name')
+            ->get();
+
+        return response()->json(['models' => $models]);
+    }
+
+    private function sparePartCompatibilityQuery()
+    {
+        return DB::table('spare_part_motorcycles')
+            ->join('spare_parts', 'spare_part_motorcycles.spare_part_id', '=', 'spare_parts.id')
+            ->join('listings', 'spare_parts.listing_id', '=', 'listings.id')
+            ->where('listings.status', 'published');
+    }
+
+    public function getSparePartMotorcycleBrandsWithListings()
+    {
+        $brands = $this->sparePartCompatibilityQuery()
+            ->join('motorcycle_brands', 'spare_part_motorcycles.brand_id', '=', 'motorcycle_brands.id')
+            ->groupBy('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->select('motorcycle_brands.id', 'motorcycle_brands.name')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_brands.name')
+            ->get();
+
+        return response()->json(['motorcycle_brands' => $brands]);
+    }
+
+    public function getSparePartMotorcycleModelsWithListings($brandId)
+    {
+        $models = $this->sparePartCompatibilityQuery()
+            ->join('motorcycle_models', 'spare_part_motorcycles.model_id', '=', 'motorcycle_models.id')
+            ->where('spare_part_motorcycles.brand_id', $brandId)
+            ->groupBy('motorcycle_models.id', 'motorcycle_models.name')
+            ->select('motorcycle_models.id', 'motorcycle_models.name')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_models.name')
+            ->get();
+
+        return response()->json(['models' => $models]);
+    }
+
+    public function getSparePartMotorcycleYearsWithListings($brandId, $modelId)
+    {
+        $years = $this->sparePartCompatibilityQuery()
+            ->join('motorcycle_years', 'spare_part_motorcycles.year_id', '=', 'motorcycle_years.id')
+            ->where('spare_part_motorcycles.brand_id', $brandId)
+            ->where('spare_part_motorcycles.model_id', $modelId)
+            ->groupBy('spare_part_motorcycles.year_id', 'motorcycle_years.year')
+            ->select('spare_part_motorcycles.year_id', 'motorcycle_years.year')
+            ->selectRaw('COUNT(DISTINCT listings.id) as listings_count')
+            ->orderBy('motorcycle_years.year', 'DESC')
+            ->get();
+
+        return response()->json(['years' => $years]);
     }
 
     /**

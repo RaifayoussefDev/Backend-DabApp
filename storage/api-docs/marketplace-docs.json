@@ -653,6 +653,1096 @@
                 ]
             }
         },
+        "/api/marketplace/products": {
+            "get": {
+                "tags": [
+                    "Marketplace - Products"
+                ],
+                "summary": "List products (catalog, search & filters)",
+                "description": "Active products of active vendors only. category_id also matches its sub-categories (Tyres also returns Front tyres / Rear tyres). moto_brand_id / moto_model_id / moto_year_id match a product's explicit bike-compatibility rows plus universal parts. attributes[Label][]=Value filters on the spec table (e.g. attributes[Grip Style][]=Open Ended) - see GET /marketplace/products/filters for which labels/values exist in a given view. Access: Public.",
+                "operationId": "157b058a5d4f661bdd89de1c3ce48470",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "name / name_ar / reference contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "tyre"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Includes its sub-categories",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "description": "Parts brand (Michelin) - not the bike's manufacturer",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 4
+                        }
+                    },
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    },
+                    {
+                        "name": "moto_brand_id",
+                        "in": "query",
+                        "description": "Bike manufacturer (Honda, KTM)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2
+                        }
+                    },
+                    {
+                        "name": "moto_model_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "moto_year_id",
+                        "in": "query",
+                        "description": "The 'Shop By [year]' filter",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "condition",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "used"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "price_min",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "example": 100
+                        }
+                    },
+                    {
+                        "name": "price_max",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "example": 500
+                        }
+                    },
+                    {
+                        "name": "rating_min",
+                        "in": "query",
+                        "description": "e.g. 4 = 4 stars and up",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "example": 4
+                        }
+                    },
+                    {
+                        "name": "in_stock",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "featured",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "attributes",
+                        "in": "query",
+                        "description": "Map of label to one or more values, e.g. attributes[Finish][]=Matte",
+                        "required": false,
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Default newest. relevance=default, most_recent=newest, lowest_price=price_low, highest_price=price_high (app naming -> API naming)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "newest",
+                            "enum": [
+                                "newest",
+                                "price_low",
+                                "price_high",
+                                "rating",
+                                "popular"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "1-50",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Products, newest first by default. Load the next page with page+1 until current_page = last_page.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceProductCard"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": 21,
+                                            "slug": "michelin-pilot-road-5-120-70-17",
+                                            "reference": "MP-00021",
+                                            "name": "Michelin Pilot Road 5 120/70-17",
+                                            "name_ar": null,
+                                            "price": 420,
+                                            "price_max": null,
+                                            "compare_at_price": null,
+                                            "condition": "new",
+                                            "in_stock": true,
+                                            "has_variants": false,
+                                            "cover_image_url": "https://api.dabapp.co/storage/marketplace/products/a1b2c3.jpg",
+                                            "rating_avg": 4.5,
+                                            "reviews_count": 3,
+                                            "likes_count": 12,
+                                            "is_featured": true,
+                                            "vendor": {
+                                                "id": 4,
+                                                "slug": "moto-parts-riyadh",
+                                                "shop_name": "Moto Parts Riyadh",
+                                                "shop_name_ar": null
+                                            },
+                                            "category": {
+                                                "id": 3,
+                                                "slug": "tyres-front",
+                                                "name": "Front tyres",
+                                                "name_ar": "إطارات أمامية"
+                                            },
+                                            "brand": {
+                                                "id": 4,
+                                                "name": "Michelin",
+                                                "logo_url": null
+                                            }
+                                        },
+                                        {
+                                            "id": 22,
+                                            "slug": "bilt-sprint-gloves",
+                                            "reference": "MP-00022",
+                                            "name": "BILT Sprint Gloves",
+                                            "name_ar": null,
+                                            "price": 34.99,
+                                            "price_max": 120.99,
+                                            "compare_at_price": 49.99,
+                                            "condition": "new",
+                                            "in_stock": true,
+                                            "has_variants": true,
+                                            "cover_image_url": null,
+                                            "rating_avg": 4.8,
+                                            "reviews_count": 108,
+                                            "likes_count": 0,
+                                            "is_featured": false,
+                                            "vendor": {
+                                                "id": 5,
+                                                "slug": "riders-gear-jeddah",
+                                                "shop_name": "Rider's Gear Jeddah",
+                                                "shop_name_ar": null
+                                            },
+                                            "category": {
+                                                "id": 20,
+                                                "slug": "gloves",
+                                                "name": "Gloves",
+                                                "name_ar": null
+                                            },
+                                            "brand": null
+                                        }
+                                    ],
+                                    "meta": {
+                                        "current_page": 1,
+                                        "per_page": 15,
+                                        "last_page": 1,
+                                        "total": 2
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "category_id does not exist",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Category not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/products/filters": {
+            "get": {
+                "tags": [
+                    "Marketplace - Products"
+                ],
+                "summary": "Available filters for a catalog view (facets)",
+                "description": "Call it with the same scoping params as the list (category_id, search, vendor_id, brand_id, moto_brand_id/model_id/year_id) to get the options worth showing in the Filters sheet for that exact view, each with how many products it would leave. price reflects the real price (the variant range for products that have variants, not the fallback products.price column). Access: Public.",
+                "operationId": "267cd605ab60a7b25bbe37690af7499d",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "moto_brand_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "moto_model_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "moto_year_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Facets",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "price": {
+                                                    "properties": {
+                                                        "min": {
+                                                            "type": "number",
+                                                            "nullable": true
+                                                        },
+                                                        "max": {
+                                                            "type": "number",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "brands": {
+                                                    "description": "Parts brand (Michelin) - use with brand_id",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "moto_brands": {
+                                                    "description": "The bike's manufacturer (Honda, BMW, KTM) - the Filters sheet's 'Brand' chip. Use with moto_brand_id, not brand_id.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "years": {
+                                                    "description": "Bike compatibility years ('Shop By'). Use with moto_year_id.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "year": {
+                                                                "type": "integer"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "attributes": {
+                                                    "description": "Map of attribute label to a list of its values with how many products have that value, e.g. Grip Style: Open Ended (12), Close Ended (3)",
+                                                    "type": "object"
+                                                },
+                                                "ratings": {
+                                                    "description": "min-rating buckets with at least one match",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "min": {
+                                                                "type": "integer",
+                                                                "example": 4
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "price": {
+                                            "min": 34.99,
+                                            "max": 8999
+                                        },
+                                        "brands": [
+                                            {
+                                                "id": 4,
+                                                "name": "Michelin",
+                                                "count": 12
+                                            }
+                                        ],
+                                        "moto_brands": [
+                                            {
+                                                "id": 2,
+                                                "name": "Honda",
+                                                "count": 9
+                                            },
+                                            {
+                                                "id": 7,
+                                                "name": "BMW",
+                                                "count": 3
+                                            }
+                                        ],
+                                        "years": [
+                                            {
+                                                "id": 140,
+                                                "year": 2024,
+                                                "count": 5
+                                            }
+                                        ],
+                                        "attributes": {
+                                            "Grip Style": [
+                                                {
+                                                    "value": "Open Ended",
+                                                    "count": 8
+                                                },
+                                                {
+                                                    "value": "Close Ended",
+                                                    "count": 3
+                                                }
+                                            ],
+                                            "Finish": [
+                                                {
+                                                    "value": "Matte",
+                                                    "count": 6
+                                                }
+                                            ]
+                                        },
+                                        "ratings": [
+                                            {
+                                                "min": 5,
+                                                "count": 2
+                                            },
+                                            {
+                                                "min": 4,
+                                                "count": 9
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "category_id does not exist",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Category not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/products/{idOrSlug}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Products"
+                ],
+                "summary": "Product detail",
+                "description": "Full gallery, specs (attributes), variants (color/size/...), bike compatibility and the selling shop. Access: Public.",
+                "operationId": "bb1befe97a13993a67ef501a53ff3018",
+                "parameters": [
+                    {
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "description": "Numeric id or slug",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "bilt-sprint-gloves"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/MarketplaceProductCard"
+                                                },
+                                                {
+                                                    "properties": {
+                                                        "description": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "description_ar": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "stock_quantity": {
+                                                            "description": "Ignore when has_variants is true - use each variant's own stock",
+                                                            "type": "integer"
+                                                        },
+                                                        "images": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer"
+                                                                    },
+                                                                    "image_url": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "is_cover": {
+                                                                        "type": "boolean"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "attributes": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "label": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "label_ar": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "value": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "value_ar": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "compatibility": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "properties": {
+                                                                    "is_universal": {
+                                                                        "type": "boolean"
+                                                                    },
+                                                                    "brand": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "model": {
+                                                                        "type": "string",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "year": {
+                                                                        "type": "integer",
+                                                                        "nullable": true
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "variants": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/components/schemas/MarketplaceProductVariant"
+                                                            }
+                                                        },
+                                                        "vendor": {
+                                                            "$ref": "#/components/schemas/MarketplaceVendorCard"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": {
+                                        "id": 22,
+                                        "slug": "bilt-sprint-gloves",
+                                        "reference": "MP-00022",
+                                        "name": "BILT Sprint Gloves",
+                                        "name_ar": null,
+                                        "price": 34.99,
+                                        "price_max": 120.99,
+                                        "compare_at_price": 49.99,
+                                        "condition": "new",
+                                        "in_stock": true,
+                                        "has_variants": true,
+                                        "stock_quantity": 0,
+                                        "cover_image_url": "https://api.dabapp.co/storage/marketplace/products/a1b2c3.jpg",
+                                        "rating_avg": 4.8,
+                                        "reviews_count": 108,
+                                        "likes_count": 0,
+                                        "is_featured": false,
+                                        "description": "Aggressive, short cuff glove for warm months.",
+                                        "description_ar": null,
+                                        "category": {
+                                            "id": 20,
+                                            "slug": "gloves",
+                                            "name": "Gloves",
+                                            "name_ar": null
+                                        },
+                                        "brand": null,
+                                        "images": [
+                                            {
+                                                "id": 101,
+                                                "image_url": "https://api.dabapp.co/storage/marketplace/products/a1b2c3.jpg",
+                                                "is_cover": true
+                                            }
+                                        ],
+                                        "attributes": [
+                                            {
+                                                "label": "Material",
+                                                "label_ar": null,
+                                                "value": "Leather",
+                                                "value_ar": null
+                                            }
+                                        ],
+                                        "compatibility": [],
+                                        "variants": [
+                                            {
+                                                "id": 1,
+                                                "sku": "MP-00022-BLK-XS",
+                                                "option1_name": "Color",
+                                                "option1_value": "Black",
+                                                "color_hex": "#000000",
+                                                "option2_name": "Size",
+                                                "option2_value": "XS",
+                                                "price": 34.99,
+                                                "compare_at_price": 49.99,
+                                                "in_stock": true,
+                                                "image_url": null,
+                                                "is_default": true
+                                            },
+                                            {
+                                                "id": 2,
+                                                "sku": "MP-00022-GRN-XS",
+                                                "option1_name": "Color",
+                                                "option1_value": "Green",
+                                                "color_hex": "#1F7A3F",
+                                                "option2_name": "Size",
+                                                "option2_value": "XS",
+                                                "price": 120.99,
+                                                "compare_at_price": null,
+                                                "in_stock": true,
+                                                "image_url": null,
+                                                "is_default": false
+                                            }
+                                        ],
+                                        "vendor": {
+                                            "id": 5,
+                                            "slug": "riders-gear-jeddah",
+                                            "shop_name": "Rider's Gear Jeddah",
+                                            "shop_name_ar": null,
+                                            "logo_url": null,
+                                            "cover_image_url": null,
+                                            "brand_color": null,
+                                            "is_featured": false,
+                                            "rating_avg": 4,
+                                            "reviews_count": 1,
+                                            "products_count": 10,
+                                            "city": {
+                                                "id": 2,
+                                                "name": "Jeddah"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found, or not visible",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Product not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/products/{idOrSlug}/reviews": {
+            "get": {
+                "tags": [
+                    "Marketplace - Reviews"
+                ],
+                "summary": "List a product's reviews",
+                "description": "Approved reviews only, newest first by default. summary.breakdown is the full count per star (1-5) across every approved review, independent of pagination and sort - build the 'Excellent/Very Good/Good/Fair/Poor' bars from it (5=Excellent ... 1=Poor). Access: Public.",
+                "operationId": "f18bf5a90da59395d1ee6e323f650abf",
+                "parameters": [
+                    {
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "bilt-sprint-gloves"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "newest",
+                            "enum": [
+                                "newest",
+                                "highest",
+                                "lowest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "1-50",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reviews",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceProductReview"
+                                            }
+                                        },
+                                        "summary": {
+                                            "properties": {
+                                                "rating_avg": {
+                                                    "type": "number",
+                                                    "example": 4.8
+                                                },
+                                                "reviews_count": {
+                                                    "type": "integer",
+                                                    "example": 108
+                                                },
+                                                "breakdown": {
+                                                    "type": "object",
+                                                    "example": {
+                                                        "5": 90,
+                                                        "4": 14,
+                                                        "3": 3,
+                                                        "2": 1,
+                                                        "1": 0
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": 301,
+                                            "rating": 5,
+                                            "title": "Great Product!!",
+                                            "comment": "Better than expected! Works fine and everything is working as great as it should be",
+                                            "tags": [
+                                                "Build Quality",
+                                                "Delivery Time"
+                                            ],
+                                            "image_urls": [],
+                                            "verified_purchase": false,
+                                            "author": {
+                                                "id": 9,
+                                                "name": "User Name"
+                                            },
+                                            "created_at": "2026-08-12T05:30:00.000000Z"
+                                        }
+                                    ],
+                                    "summary": {
+                                        "rating_avg": 4.8,
+                                        "reviews_count": 108,
+                                        "breakdown": {
+                                            "5": 90,
+                                            "4": 14,
+                                            "3": 3,
+                                            "2": 1,
+                                            "1": 0
+                                        }
+                                    },
+                                    "meta": {
+                                        "current_page": 1,
+                                        "per_page": 15,
+                                        "last_page": 8,
+                                        "total": 108
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Product not found"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Marketplace - Reviews"
+                ],
+                "summary": "Write a review",
+                "description": "One review per user per product (409 ALREADY_REVIEWED on a second attempt - edit isn't supported yet, delete isn't exposed). Updates the product's rating_avg / reviews_count right away. Photos are URLs from POST /api/marketplace/upload-image (type=product), sent as plain strings in images[]. is_anonymous hides your name from the public list (the API still knows who wrote it). Access: User.",
+                "operationId": "af7576f2470c976a3a730655176467ac",
+                "parameters": [
+                    {
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "bilt-sprint-gloves"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "rating"
+                                ],
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Great Product!!",
+                                        "nullable": true
+                                    },
+                                    "comment": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Great quality, I liked how fast it was shipped!",
+                                        "nullable": true
+                                    },
+                                    "tags": {
+                                        "description": "Freeform, e.g. the app's fixed chip list: Build Quality, Delivery Time, Versatility, Availability, Value For Money, Packaging",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "Build Quality",
+                                            "Delivery Time"
+                                        ]
+                                    },
+                                    "images": {
+                                        "description": "URLs from POST /api/marketplace/upload-image (type=product)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": []
+                                    },
+                                    "is_anonymous": {
+                                        "description": "'Hide my name from the review'",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review submitted successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceProductReview"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Product not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Product not found"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Already reviewed",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You already reviewed this product",
+                                    "code": "ALREADY_REVIEWED"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationFailed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/marketplace/vendor/apply": {
             "post": {
                 "tags": [
@@ -1577,6 +2667,185 @@
                     }
                 }
             }
+        },
+        "/api/marketplace/wishlist": {
+            "get": {
+                "tags": [
+                    "Marketplace - Wishlist"
+                ],
+                "summary": "My wishlist",
+                "description": "Products I favorited, newest first. A product that was deleted or went inactive is silently dropped from the list. Access: User.",
+                "operationId": "f6d5a79cb8f1dd503467ab88da0551fa",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "1-50",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wishlist",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceProductCard"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/wishlist/{productId}": {
+            "post": {
+                "tags": [
+                    "Marketplace - Wishlist"
+                ],
+                "summary": "Add a product to my wishlist",
+                "description": "Idempotent: adding a product that is already there just returns it, no duplicate. Access: User.",
+                "operationId": "dc1ecc1155cead83fd1f1f829647021d",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 21
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Added to wishlist"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Product not found, or not visible",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "Product not found"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Wishlist"
+                ],
+                "summary": "Remove a product from my wishlist",
+                "description": "Idempotent: removing a product that is not in the wishlist still returns 200. Access: User.",
+                "operationId": "f679683613186e7514c1c27600c324a5",
+                "parameters": [
+                    {
+                        "name": "productId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 21
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Removed from wishlist"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -1842,6 +3111,264 @@
                 },
                 "type": "object"
             },
+            "MarketplaceProductCard": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 21
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "michelin-pilot-road-5-120-70-17"
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "MP-00021"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Michelin Pilot Road 5 120/70-17"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price": {
+                        "description": "The cheapest variant's price when has_variants is true, otherwise the product's own price",
+                        "type": "number",
+                        "format": "float",
+                        "example": 420
+                    },
+                    "price_max": {
+                        "description": "Set only when has_variants is true and variant prices differ - show as a 'from-to' range",
+                        "type": "number",
+                        "format": "float",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "compare_at_price": {
+                        "description": "Strikethrough original price",
+                        "type": "number",
+                        "format": "float",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "condition": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "used"
+                        ],
+                        "example": "new"
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_variants": {
+                        "description": "true = sold by variant (color/size/...), open the detail for the variants array",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 4.5
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "likes_count": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "vendor": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "shop_name": {
+                                "type": "string"
+                            },
+                            "shop_name_ar": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "category": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "name_ar": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "brand": {
+                        "description": "Parts brand (Michelin), not the bike's manufacturer",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "logo_url": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceProductVariant": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "sku": {
+                        "type": "string",
+                        "example": "MP-00022-BLK-XS"
+                    },
+                    "option1_name": {
+                        "type": "string",
+                        "example": "Color",
+                        "nullable": true
+                    },
+                    "option1_value": {
+                        "type": "string",
+                        "example": "Black",
+                        "nullable": true
+                    },
+                    "color_hex": {
+                        "type": "string",
+                        "example": "#000000",
+                        "nullable": true
+                    },
+                    "option2_name": {
+                        "type": "string",
+                        "example": "Size",
+                        "nullable": true
+                    },
+                    "option2_value": {
+                        "type": "string",
+                        "example": "XS",
+                        "nullable": true
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 34.99
+                    },
+                    "compare_at_price": {
+                        "type": "number",
+                        "example": 49.99,
+                        "nullable": true
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "image_url": {
+                        "description": "Falls back to the product's own cover image when null",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_default": {
+                        "description": "Pre-selected on the product page",
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceProductReview": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 301
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Great Product!!",
+                        "nullable": true
+                    },
+                    "comment": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "Build Quality",
+                            "Delivery Time"
+                        ]
+                    },
+                    "image_urls": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "verified_purchase": {
+                        "description": "Always false for now - there is no Orders/Cart yet to verify a purchase against",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "author": {
+                        "description": "null when the reviewer chose is_anonymous",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
             "MarketplaceBrand": {
                 "properties": {
                     "id": {
@@ -1934,12 +3461,24 @@
             "description": "Upload images before you use them, the same way listings do it: a standalone endpoint that returns URL strings, decoupled from creating or editing the resource. Send those strings as logo_path / cover_image_path / image_path on the vendor, category, brand or product endpoints — those endpoints take plain JSON, never files."
         },
         {
+            "name": "Marketplace - Products",
+            "description": "Catalog: list with search/filters, filter facets, product detail. Public, no token needed. Only active products of active vendors are ever visible."
+        },
+        {
+            "name": "Marketplace - Reviews",
+            "description": "Product reviews: rating, a title/comment, 'what did you like' tags, photos. List is public; writing one needs a token. verified_purchase is always false for now - Orders/Cart (Step 5) aren't built yet, so there is nothing to verify a purchase against."
+        },
+        {
             "name": "Marketplace - Vendor account",
             "description": "A logged-in user applies to become a vendor and manages their own shop profile. Access: User (Bearer JWT). A guest gets the structured 401 (requires_auth=true). Being a vendor = owning a shop whose status is active; an admin approves applications from the Admin Panel. logo_path / cover_image_path are URLs from POST /api/marketplace/upload-image (type=vendor), not files: upload first, then send the strings here."
         },
         {
             "name": "Marketplace - Vendors",
             "description": "Shops (All Shops screen and shop page). Public, no token needed. Only approved (active) vendors are ever visible."
+        },
+        {
+            "name": "Marketplace - Wishlist",
+            "description": "Favorite products. Access: User (auth:api)."
         }
     ],
     "security": [

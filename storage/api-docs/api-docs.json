@@ -40242,6 +40242,20 @@
                 ]
             }
         },
+        "/api/sitemap": {
+            "get": {
+                "tags": [
+                    "SEO"
+                ],
+                "summary": "Public URLs (listings, trainers, courses, guides) for the XML sitemap",
+                "operationId": "7533fd3bdded7831e5878ceee6116a36",
+                "responses": {
+                    "200": {
+                        "description": "Sitemap data"
+                    }
+                }
+            }
+        },
         "/api/listings/{listingId}/soom": {
             "post": {
                 "tags": [
@@ -51784,6 +51798,10 @@
         {
             "name": "Role Permissions",
             "description": "Role Permissions"
+        },
+        {
+            "name": "SEO",
+            "description": "SEO"
         },
         {
             "name": "SOOMs",

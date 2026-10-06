@@ -22,6 +22,7 @@ use App\Models\Marketplace\ProductLike;
 use App\Models\Marketplace\ProductMotorcycle;
 use App\Models\Marketplace\ProductQuestion;
 use App\Models\Marketplace\ProductReview;
+use App\Models\Marketplace\ProductVariant;
 use App\Models\Marketplace\ShippingProvider;
 use App\Models\Marketplace\Vendor;
 use App\Models\Marketplace\VendorPayout;
@@ -336,10 +337,49 @@ class MarketplaceDemoSeeder extends Seeder
                 ProductMotorcycle::create(['product_id' => $product->id, 'is_universal' => true]);
             }
 
+            $this->seedVariantsFor($product, $slug);
+
             $products[] = $product->load('vendor');
         }
 
         return $products;
+    }
+
+    /**
+     * A couple of products are sold by variant (Step 4), one of each real shape: Color+Size for
+     * apparel, Wheel Location+Tyre Size for tyres. Everything else stays a plain simple product.
+     */
+    private function seedVariantsFor(Product $product, string $slug): void
+    {
+        $variants = match ($slug) {
+            'dainese-carbon-4-short-gloves' => [
+                ['Color', 'Black', '#000000', 'Size', 'S', 720, 780, 6],
+                ['Color', 'Black', '#000000', 'Size', 'M', 780, null, 10],
+                ['Color', 'Black', '#000000', 'Size', 'L', 780, null, 4],
+                ['Color', 'Red', '#B8291A', 'Size', 'M', 820, null, 0],
+            ],
+            'michelin-pilot-road-5-12070-zr17' => [
+                ['Wheel Location', 'Front', null, 'Tyre Size', '120/70-17', 649, null, 14],
+                ['Wheel Location', 'Front', null, 'Tyre Size', '110/70-17', 599, 649, 5],
+            ],
+            default => null,
+        };
+
+        if (! $variants) {
+            return;
+        }
+
+        foreach ($variants as $i => [$opt1Name, $opt1Value, $colorHex, $opt2Name, $opt2Value, $price, $compareAt, $stock]) {
+            ProductVariant::create([
+                'product_id'       => $product->id,
+                'sku'              => $product->reference . '-' . ($i + 1),
+                'option1_name'     => $opt1Name, 'option1_value' => $opt1Value, 'color_hex' => $colorHex,
+                'option2_name'     => $opt2Name, 'option2_value' => $opt2Value,
+                'price'            => $price, 'compare_at_price' => $compareAt, 'stock_quantity' => $stock,
+                'is_default'       => $i === 0,
+                'order_position'   => $i,
+            ]);
+        }
     }
 
     // ------------------------------------------------------------------ promo / addresses

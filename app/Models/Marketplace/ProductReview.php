@@ -11,11 +11,15 @@ class ProductReview extends MarketplaceModel
     protected $table = 'marketplace_product_reviews';
 
     protected $fillable = [
-        'product_id', 'user_id', 'order_item_id', 'rating', 'title', 'comment', 'verified_purchase', 'is_approved',
+        'product_id', 'user_id', 'order_item_id', 'rating', 'title', 'comment', 'tags', 'images',
+        'is_anonymous', 'verified_purchase', 'is_approved',
     ];
 
     protected $casts = [
         'rating'            => 'integer',
+        'tags'              => 'array',
+        'images'            => 'array',
+        'is_anonymous'      => 'boolean',
         'verified_purchase' => 'boolean',
         'is_approved'       => 'boolean',
     ];

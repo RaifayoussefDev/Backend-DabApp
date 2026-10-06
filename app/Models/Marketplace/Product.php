@@ -14,19 +14,20 @@ class Product extends MarketplaceModel
     protected $fillable = [
         'vendor_id', 'category_id', 'brand_id',
         'reference', 'slug', 'name', 'name_ar', 'description', 'description_ar',
-        'price', 'stock_quantity', 'condition', 'status', 'status_reason', 'is_featured', 'published_at',
+        'price', 'compare_at_price', 'stock_quantity', 'condition', 'status', 'status_reason', 'is_featured', 'published_at',
         'rating_avg', 'reviews_count', 'likes_count', 'sales_count',
     ];
 
     protected $casts = [
-        'price'          => 'decimal:2',
-        'stock_quantity' => 'integer',
-        'is_featured'    => 'boolean',
-        'published_at'   => 'datetime',
-        'rating_avg'     => 'decimal:2',
-        'reviews_count'  => 'integer',
-        'likes_count'    => 'integer',
-        'sales_count'    => 'integer',
+        'price'            => 'decimal:2',
+        'compare_at_price' => 'decimal:2',
+        'stock_quantity'   => 'integer',
+        'is_featured'      => 'boolean',
+        'published_at'     => 'datetime',
+        'rating_avg'       => 'decimal:2',
+        'reviews_count'    => 'integer',
+        'likes_count'      => 'integer',
+        'sales_count'      => 'integer',
     ];
 
     /** Only what the storefront may see: an active product of an active vendor. */
@@ -56,9 +57,44 @@ class Product extends MarketplaceModel
         });
     }
 
+    /** Ignores variant stock on purpose: call inStockEffective() once variants are loaded. */
     public function getInStockAttribute(): bool
     {
         return $this->stock_quantity > 0;
+    }
+
+    /**
+     * Pricing that accounts for variants (assumes `variants` is already eager-loaded: no query here).
+     * A product with no variants uses its own price/compare_at_price/stock_quantity directly.
+     *
+     * @return array{price: float, price_max: ?float, compare_at_price: ?float, in_stock: bool}
+     */
+    public function effectivePricing(): array
+    {
+        if ($this->relationLoaded('variants') && $this->variants->isNotEmpty()) {
+            $cheapest = $this->variants->sortBy('price')->first();
+            $min = (float) $this->variants->min('price');
+            $max = (float) $this->variants->max('price');
+
+            return [
+                'price'            => $min,
+                'price_max'        => $max > $min ? $max : null,
+                'compare_at_price' => $cheapest->compare_at_price !== null ? (float) $cheapest->compare_at_price : null,
+                'in_stock'         => $this->variants->sum('stock_quantity') > 0,
+            ];
+        }
+
+        return [
+            'price'            => (float) $this->price,
+            'price_max'        => null,
+            'compare_at_price' => $this->compare_at_price !== null ? (float) $this->compare_at_price : null,
+            'in_stock'         => $this->stock_quantity > 0,
+        ];
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class, 'product_id')->orderBy('order_position');
     }
 
     public function vendor(): BelongsTo

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\Marketplace\BrandAdminController;
 use App\Http\Controllers\Admin\Marketplace\CategoryAdminController;
+use App\Http\Controllers\Admin\Marketplace\ProductAdminController;
 use App\Http\Controllers\Admin\Marketplace\ShippingProviderAdminController;
 use App\Http\Controllers\Admin\Marketplace\VendorAdminController;
 use App\Http\Controllers\Admin\Marketplace\VendorShippingMethodAdminController;
@@ -9,8 +10,11 @@ use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\Marketplace\BrandController;
 use App\Http\Controllers\Marketplace\CategoryController;
 use App\Http\Controllers\Marketplace\HomeController;
+use App\Http\Controllers\Marketplace\ProductController;
+use App\Http\Controllers\Marketplace\ProductReviewController;
 use App\Http\Controllers\Marketplace\VendorAccountController;
 use App\Http\Controllers\Marketplace\VendorController;
+use App\Http\Controllers\Marketplace\WishlistController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,6 +49,23 @@ Route::prefix('marketplace')->group(function () {
         Route::put('/me', [VendorAccountController::class, 'update']);
     });
 
+    // ---- Step 3: catalog (public) ----
+    // /filters MUST be registered before the {idOrSlug} wildcard below, or it gets swallowed as a slug.
+    Route::get('/products/filters', [ProductController::class, 'filters']);
+    Route::get('/products', [ProductController::class, 'index']);
+    Route::get('/products/{idOrSlug}', [ProductController::class, 'show']);
+
+    // ---- Step 4: reviews (list = public, write = user auth:api) ----
+    Route::get('/products/{idOrSlug}/reviews', [ProductReviewController::class, 'index']);
+    Route::middleware('auth:api')->post('/products/{idOrSlug}/reviews', [ProductReviewController::class, 'store']);
+
+    // ---- Step 3: wishlist (user = auth:api) ----
+    Route::middleware('auth:api')->prefix('wishlist')->group(function () {
+        Route::get('/', [WishlistController::class, 'index']);
+        Route::post('/{productId}', [WishlistController::class, 'store'])->whereNumber('productId');
+        Route::delete('/{productId}', [WishlistController::class, 'destroy'])->whereNumber('productId');
+    });
+
     // ---- Images (user = auth:api). Standalone, decoupled upload: see ImageUploadController::uploadMarketplaceImage.
     // Used by every step above: upload here first, then pass the returned URL as logo_path / cover_image_path / image_path.
     Route::middleware('auth:api')->post('/upload-image', [ImageUploadController::class, 'uploadMarketplaceImage']);
@@ -67,6 +88,10 @@ Route::prefix('admin/marketplace')->middleware(['auth.admin'])->group(function (
     Route::post('/vendors/{id}/approve', [VendorAdminController::class, 'approve'])->whereNumber('id');
     Route::post('/vendors/{id}/suspend', [VendorAdminController::class, 'suspend'])->whereNumber('id');
     Route::post('/vendors/{id}/reject', [VendorAdminController::class, 'reject'])->whereNumber('id');
+
+    // ---- Step 3: products ----
+    Route::get('/products/stats', [ProductAdminController::class, 'stats']);
+    Route::apiResource('products', ProductAdminController::class)->names('admin.marketplace.products')->whereNumber('product');
 
     Route::prefix('vendors/{vendorId}/shipping-methods')->whereNumber(['vendorId', 'id'])->group(function () {
         Route::get('/', [VendorShippingMethodAdminController::class, 'index']);

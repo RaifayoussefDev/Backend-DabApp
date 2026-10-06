@@ -846,6 +846,852 @@
                 ]
             }
         },
+        "/api/admin/marketplace/products": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "List products (Admin)",
+                "description": "All statuses, every vendor. per_page empty = everything, no pagination.",
+                "operationId": "48c406fef1aef3a8f9cef9a79875fcd9",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "name / name_ar / reference contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "vendor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "brand_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "pending_review",
+                                "active",
+                                "inactive",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "condition",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "used"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "is_featured",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "newest",
+                            "enum": [
+                                "newest",
+                                "name",
+                                "price_low",
+                                "price_high"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Products",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceProduct"
+                                            }
+                                        },
+                                        "meta": {
+                                            "description": "Only when paginated",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "last_page": {
+                                                    "type": "integer"
+                                                },
+                                                "total": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "Create a product",
+                "description": "reference is the SKU (one product = no variants). slug is generated from name when omitted. status defaults to draft; setting it to active stamps published_at. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+                "operationId": "52b2f90562f0152f82efbdd386db4ad1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "vendor_id",
+                                    "category_id",
+                                    "reference",
+                                    "name",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "vendor_id": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "brand_id": {
+                                        "description": "Parts brand (Michelin), not the bike's manufacturer",
+                                        "type": "integer",
+                                        "example": 4,
+                                        "nullable": true
+                                    },
+                                    "reference": {
+                                        "description": "SKU, unique",
+                                        "type": "string",
+                                        "example": "MP-00021"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "michelin-pilot-road-5-120-70-17"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Michelin Pilot Road 5 120/70-17"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sport touring front tyre, excellent wet grip."
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "description": "Base/fallback price. Ignored by the storefront once at least one variants[] row exists - set variants[].price instead.",
+                                        "type": "number",
+                                        "example": 420
+                                    },
+                                    "compare_at_price": {
+                                        "description": "Strikethrough original price. Same ignore rule as price once variants exist.",
+                                        "type": "number",
+                                        "example": 499,
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "description": "Ignored once variants exist - stock lives on each variant.",
+                                        "type": "integer",
+                                        "example": 14
+                                    },
+                                    "condition": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "used"
+                                        ],
+                                        "example": "new"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "pending_review",
+                                            "active",
+                                            "inactive",
+                                            "rejected"
+                                        ],
+                                        "example": "active"
+                                    },
+                                    "status_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_path": {
+                                                    "type": "string",
+                                                    "example": "https://api.dabapp.co/storage/marketplace/products/a1b2c3.jpg"
+                                                },
+                                                "is_cover": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "order_position": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "attributes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "label": {
+                                                    "type": "string",
+                                                    "example": "Width"
+                                                },
+                                                "label_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "value": {
+                                                    "type": "string",
+                                                    "example": "120 mm"
+                                                },
+                                                "value_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "compatibility": {
+                                        "description": "One row per bike it fits, or one row with is_universal=true for a part that fits everything",
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "moto_brand_id": {
+                                                    "type": "integer",
+                                                    "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "moto_model_id": {
+                                                    "type": "integer",
+                                                    "example": 15,
+                                                    "nullable": true
+                                                },
+                                                "moto_year_id": {
+                                                    "type": "integer",
+                                                    "example": 140,
+                                                    "nullable": true
+                                                },
+                                                "is_universal": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "variants": {
+                                        "description": "Up to 2 option dimensions (e.g. Color+Size, or Wheel Location+Tyre Size). Presence of even one row switches the product to variant pricing/stock.",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "sku",
+                                                "price"
+                                            ],
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "string",
+                                                    "example": "MP-00022-BLK-XS"
+                                                },
+                                                "option1_name": {
+                                                    "type": "string",
+                                                    "example": "Color",
+                                                    "nullable": true
+                                                },
+                                                "option1_value": {
+                                                    "type": "string",
+                                                    "example": "Black",
+                                                    "nullable": true
+                                                },
+                                                "color_hex": {
+                                                    "description": "Swatch colour, only when option1/2 is a colour",
+                                                    "type": "string",
+                                                    "example": "#000000",
+                                                    "nullable": true
+                                                },
+                                                "option2_name": {
+                                                    "type": "string",
+                                                    "example": "Size",
+                                                    "nullable": true
+                                                },
+                                                "option2_value": {
+                                                    "type": "string",
+                                                    "example": "XS",
+                                                    "nullable": true
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 34.99
+                                                },
+                                                "compare_at_price": {
+                                                    "type": "number",
+                                                    "example": 49.99,
+                                                    "nullable": true
+                                                },
+                                                "stock_quantity": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "image_path": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "description": "Pre-selected on the product page",
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/products/stats": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "Product counters",
+                "description": "Totals per status, for the tabs of the products screen.",
+                "operationId": "5b4700aff7e21cb9ffa471df62b1ef21",
+                "responses": {
+                    "200": {
+                        "description": "Counters",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 58
+                                                },
+                                                "draft": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "pending_review": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "active": {
+                                                    "type": "integer",
+                                                    "example": 54
+                                                },
+                                                "inactive": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "rejected": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/products/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "Product detail (Admin)",
+                "description": "Full record: images, attributes and bike compatibility, any status.",
+                "operationId": "79c11f6abcb8e16d29fba076862c5769",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "Update a product",
+                "description": "Send only the fields to change. images / attributes / compatibility: send the array to REPLACE the full current set, or omit the key entirely to leave it untouched (send an empty array to clear it). Setting status to active for the first time stamps published_at.",
+                "operationId": "bf40e9a497c1b7305c505e57088f35dc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vendor_id": {
+                                        "type": "integer"
+                                    },
+                                    "category_id": {
+                                        "type": "integer"
+                                    },
+                                    "brand_id": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "reference": {
+                                        "type": "string"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "compare_at_price": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "type": "integer"
+                                    },
+                                    "condition": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "used"
+                                        ]
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "pending_review",
+                                            "active",
+                                            "inactive",
+                                            "rejected"
+                                        ]
+                                    },
+                                    "status_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_featured": {
+                                        "type": "boolean"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_path": {
+                                                    "type": "string"
+                                                },
+                                                "is_cover": {
+                                                    "type": "boolean"
+                                                },
+                                                "order_position": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "attributes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "label": {
+                                                    "type": "string"
+                                                },
+                                                "label_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                },
+                                                "value_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "compatibility": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "moto_brand_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "moto_model_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "moto_year_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "is_universal": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "variants": {
+                                        "description": "Full replace, same shape as create. An empty array removes all variants and reverts the product to its own price/stock_quantity.",
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "sku",
+                                                "price"
+                                            ],
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "string"
+                                                },
+                                                "option1_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option1_value": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "color_hex": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option2_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option2_value": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "price": {
+                                                    "type": "number"
+                                                },
+                                                "compare_at_price": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "stock_quantity": {
+                                                    "type": "integer"
+                                                },
+                                                "image_path": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketplace - Products"
+                ],
+                "summary": "Delete a product",
+                "description": "Soft delete. Refused with 409 HAS_ORDERS once the product has sold something (set it to inactive instead).",
+                "operationId": "51b4191e316831d1dd9bfe3d041a40b4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not found"
+                    },
+                    "409": {
+                        "description": "Has orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/marketplace/shipping-providers": {
             "get": {
                 "tags": [
@@ -2640,6 +3486,326 @@
                 },
                 "type": "object"
             },
+            "AdminMarketplaceProduct": {
+                "description": "List row: a cover thumbnail, no images/attributes/compatibility arrays (see the detail schema).",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 21
+                    },
+                    "vendor": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "shop_name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "category": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "brand": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "MP-00021"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "michelin-pilot-road-5-120-70-17"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Michelin Pilot Road 5 120/70-17"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price": {
+                        "description": "Cheapest variant when has_variants is true, otherwise the product's own price",
+                        "type": "number",
+                        "example": 420
+                    },
+                    "price_max": {
+                        "type": "number",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "compare_at_price": {
+                        "type": "number",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_variants": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "stock_quantity": {
+                        "description": "Ignored once has_variants is true",
+                        "type": "integer",
+                        "example": 14
+                    },
+                    "condition": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "used"
+                        ],
+                        "example": "new"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "pending_review",
+                            "active",
+                            "inactive",
+                            "rejected"
+                        ],
+                        "example": "active"
+                    },
+                    "status_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "example": 4.5
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "likes_count": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "sales_count": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceProductVariant": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "sku": {
+                        "type": "string",
+                        "example": "MP-00022-BLK-XS"
+                    },
+                    "option1_name": {
+                        "type": "string",
+                        "example": "Color",
+                        "nullable": true
+                    },
+                    "option1_value": {
+                        "type": "string",
+                        "example": "Black",
+                        "nullable": true
+                    },
+                    "color_hex": {
+                        "type": "string",
+                        "example": "#000000",
+                        "nullable": true
+                    },
+                    "option2_name": {
+                        "type": "string",
+                        "example": "Size",
+                        "nullable": true
+                    },
+                    "option2_value": {
+                        "type": "string",
+                        "example": "XS",
+                        "nullable": true
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 34.99
+                    },
+                    "compare_at_price": {
+                        "type": "number",
+                        "example": 49.99,
+                        "nullable": true
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceProductDetail": {
+                "description": "Same fields as AdminMarketplaceProduct, with the cover thumbnail replaced by the full images/attributes/compatibility arrays.",
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/AdminMarketplaceProduct"
+                    },
+                    {
+                        "properties": {
+                            "images": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "image_url": {
+                                            "type": "string"
+                                        },
+                                        "is_cover": {
+                                            "type": "boolean"
+                                        },
+                                        "order_position": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "attributes": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "label_ar": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        },
+                                        "value_ar": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "compatibility": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "is_universal": {
+                                            "type": "boolean"
+                                        },
+                                        "moto_brand_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "brand": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "moto_model_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "model": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "moto_year_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "year": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "variants": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/AdminMarketplaceProductVariant"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
             "ConflictError": {
                 "properties": {
                     "message": {
@@ -2684,6 +3850,10 @@
         {
             "name": "Admin Marketplace - Categories",
             "description": "Category tree management (unlimited depth). image_path is a URL from POST /api/marketplace/upload-image (type=category), not a file: upload first, then send the string here."
+        },
+        {
+            "name": "Admin Marketplace - Products",
+            "description": "Catalog management. No vendor self-service yet (see backlog): the admin creates and edits every product on a shop's behalf. images / attributes / compatibility / variants are plain arrays on the create/update call - each sent array REPLACES the product's current set (send the full list every time, not just what changed). A product with at least one variants row is sold by variant (color/size/...): each variant carries its own price/compare_at_price/stock, and the product's own price/stock_quantity/compare_at_price are then ignored by the storefront. image_path values are URLs from POST /api/marketplace/upload-image (type=product), not files."
         },
         {
             "name": "Admin Marketplace - Shipping providers",

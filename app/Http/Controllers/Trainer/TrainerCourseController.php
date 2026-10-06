@@ -95,6 +95,27 @@ class TrainerCourseController extends Controller
     // ---------------------------------------------------------------
 
     /**
+     * Cities that have published courses (approved trainers), most courses first —
+     * the location chips of the courses page.
+     */
+    public function citiesWithCourses()
+    {
+        $cities = TrainerCourse::query()
+            ->join('trainer_locations as tl', 'tl.id', '=', 'trainer_courses.location_id')
+            ->join('cities', 'cities.id', '=', 'tl.city_id')
+            ->where('trainer_courses.status', 'published')
+            ->where('trainer_courses.is_active', true)
+            ->whereHas('trainer', fn ($q) => $q->approved())
+            ->groupBy('cities.id', 'cities.name')
+            ->select('cities.id', 'cities.name', IlluminateSupportFacadesDB::raw('COUNT(*) as courses_count'))
+            ->orderByDesc('courses_count')
+            ->orderBy('cities.name')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $cities]);
+    }
+
+    /**
      * @OA\Get(
      *     path="/api/courses",
      *     summary="Browse all published courses",
@@ -192,6 +213,10 @@ class TrainerCourseController extends Controller
         match ($request->get('sort_by', 'newest')) {
             'price_asc'  => $query->orderBy('original_price', 'asc'),
             'price_desc' => $query->orderBy('original_price', 'desc'),
+            // Best-rated trainers first, newest course among equals.
+            'rating'     => $query->orderByDesc(
+                Trainer::select('rating_average')->whereColumn('trainers.id', 'trainer_courses.trainer_id')
+            )->latest(),
             default      => $query->latest(),
         };
 
