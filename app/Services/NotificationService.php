@@ -1297,7 +1297,7 @@ class NotificationService
             'transfer_ref' => $payout->transfer_ref,
             // Always the website page, never the raw storage file directly — the trainer
             // views the receipt inside the site's own interface, not a bare file download.
-            'action_url'   => 'https://dabapp.co/trainers/my-payouts',
+            'action_url'   => 'https://dabapp.co/profile/trainer/payouts',
         ], ['entity' => $payout, 'priority' => 'high']);
     }
 
