@@ -19,8 +19,9 @@ class PaymentHistoryController extends Controller
     public function historyPaymentByUser(Request $request): JsonResponse
     {
         try {
-            // Récupérer l'utilisateur authentifié ou un ID utilisateur spécifique
-            $userId = $request->input('user_id') ?? Auth::id();
+            // Always the signed-in user's own history — a client-sent user_id would let anyone
+            // read someone else's payments (admins use /payments/history/global).
+            $userId = Auth::id();
 
             if (!$userId) {
                 return response()->json([
@@ -116,13 +117,13 @@ class PaymentHistoryController extends Controller
     public function historyPaymentGlobal(Request $request): JsonResponse
     {
         try {
-            // Vérification des permissions admin (à adapter selon votre système)
-            // if (!Auth::user()->isAdmin()) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'Accès non autorisé'
-            //     ], 403);
-            // }
+            // Every user's payments — admins only.
+            if (!Auth::user()?->isAdmin()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Accès non autorisé'
+                ], 403);
+            }
 
             // Paramètres de pagination
             $perPage = $request->input('per_page', 20);

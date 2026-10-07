@@ -252,7 +252,9 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'phone' => $formattedPhone,
                 'password' => Hash::make($request->password),
-                'role_id' => $request->role_id ?? 1,
+                // Public sign-up always creates a regular user (roles: 1 = admin, 2 = user).
+                // Never trust a role sent by the client.
+                'role_id' => 2,
                 'verified' => false,
                 'is_active' => false,
                 'is_online' => false,
