@@ -2209,7 +2209,8 @@ class AuthController extends Controller
 
         // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(['error' => 'Current password is incorrect'], 401);
+            // 422, not 401: a 401 makes the web client think the session expired (token refresh + retry).
+            return response()->json(['error' => 'Current password is incorrect'], 422);
         }
 
         // Update password
