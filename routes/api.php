@@ -1125,6 +1125,8 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // LISTINGS MANAGEMENT
     // ============================================
+    // Counts for the profile sidebar + home dashboard (one call)
+    Route::get('/profile/summary', [\App\Http\Controllers\ProfileSummaryController::class, 'index']);
     Route::get('/my-ads', [ListingController::class, 'getMyAds']);
     Route::get('/listings', [ListingController::class, 'getAll']);
     Route::get('/listings/draft', [ListingController::class, 'getDraftListings']);

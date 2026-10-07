@@ -3055,6 +3055,30 @@ class ListingController extends Controller
             $query->where('status', $status);
         }
 
+        // Search the seller's own listings by title (or by ID when a number is typed).
+        $text = trim((string) $request->get('text', ''));
+        if ($text !== '') {
+            $query->where(function ($q) use ($text) {
+                $q->where('title', 'like', '%' . addcslashes($text, '%_\\') . '%');
+                if (ctype_digit($text)) {
+                    $q->orWhere('id', (int) $text);
+                }
+            });
+        }
+
+        // Sort: newest (default) / oldest / price.
+        switch ($request->get('sort')) {
+            case 'oldest':
+                $query->reorder()->orderBy('created_at', 'asc');
+                break;
+            case 'price_desc':
+                $query->reorder()->orderByDesc('price');
+                break;
+            case 'views':
+                $query->reorder()->orderByDesc('views_count');
+                break;
+        }
+
         // Apply pagination if requested
         if ($usePagination) {
             $listings = $query->paginate($perPage, ['*'], 'page', $page);
@@ -3536,7 +3560,8 @@ class ListingController extends Controller
             'city',
             'country',
             'country.currencyExchangeRate',
-            'seller:id,first_name,last_name,email,phone,profile_picture,created_at',
+            // verified + address are read into the seller block below — keep them in the select.
+            'seller:id,first_name,last_name,email,phone,address,profile_picture,verified,created_at',
             'seller.pointsOfInterest',
             'motorcycle.brand',
             'motorcycle.model',
@@ -3623,7 +3648,7 @@ class ListingController extends Controller
             'seller' => [
                 'id' => $listing->seller?->id,
                 'name' => trim($listing->seller?->first_name . ' ' . $listing->seller?->last_name),
-                'profile_image' => $listing->seller?->profile_image,
+                'profile_image' => $listing->seller?->profile_picture,
                 'verified' => (bool) $listing->seller?->verified,
                 'is_dealer' => (bool) $listing->seller?->is_dealer,
                 'dealer_title' => $listing->seller?->dealer_title,
