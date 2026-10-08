@@ -37,15 +37,6 @@ class CardController extends Controller
      *     summary="Get all BankCards (Admin only)",
      *     tags={"BankCards"},
      *     security={{"sanctum":{}}},
-     *     @OA\Response(response=200, description="List of BankCards")
-     * )
-     */
-    /**
-     * @OA\Get(
-     *     path="/api/BankCards",
-     *     summary="Get all BankCards (Admin only)",
-     *     tags={"BankCards"},
-     *     security={{"sanctum":{}}},
      *     @OA\Response(
      *         response=200, 
      *         description="List of BankCards with User details",

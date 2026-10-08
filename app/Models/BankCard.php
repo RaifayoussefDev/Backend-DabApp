@@ -20,6 +20,15 @@ class BankCard extends Model
         'is_default'
     ];
 
+    // Never serialize the PayTabs token (it can charge the card) nor any legacy raw card
+    // column that may still exist on older databases.
+    protected $hidden = [
+        'payment_token',
+        'card_number',
+        'cvv',
+        'expiration_date',
+    ];
+
     protected $casts = [
         'is_default' => 'boolean',
     ];

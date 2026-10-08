@@ -30,7 +30,14 @@ fi
 
 # Regenerate Swagger docs when asked
 if [ "${GENERATE_SWAGGER:-false}" = "true" ]; then
-  php artisan l5-swagger:generate || true
+  php artisan l5-swagger:generate --all || true
+fi
+
+# Marketplace demo data (vendors, products, orders...) — opt-in, test env only. The command and the
+# seeder both refuse on APP_ENV=production regardless of this flag.
+if [ "${SEED_MARKETPLACE_DEMO:-false}" = "true" ]; then
+  echo ">> Seeding marketplace demo data..."
+  php artisan marketplace:seed-demo || true
 fi
 
 php artisan queue:restart || true

@@ -18,6 +18,35 @@ class FilterController extends Controller
     /**
      * Helper method to check if a parameter has a valid value
      */
+    /**
+     * Shared by the marketplace lists: sale mode ("fixed" price vs "soom" offers — soom
+     * listings carry auction_enabled) and price sort (the price the buyer sees: fixed
+     * price, else the soom minimum; unpriced last). Newest-first is applied by the caller.
+     */
+    private function applySaleTypeAndSort($query, Request $request): void
+    {
+        $saleType = $request->input('sale_type');
+        if ($saleType === 'soom') {
+            $query->where('auction_enabled', true);
+        } elseif ($saleType === 'fixed') {
+            $query->where(function ($q) {
+                $q->where('auction_enabled', false)->orWhereNull('auction_enabled');
+            });
+        }
+
+        $sort = $request->input('sort');
+        if ($sort === 'price_asc' || $sort === 'price_desc') {
+            $query->orderByRaw('COALESCE(price, minimum_bid) IS NULL')
+                ->orderByRaw('COALESCE(price, minimum_bid) ' . ($sort === 'price_asc' ? 'ASC' : 'DESC'));
+        }
+    }
+
+    /** Real bidders only: the seller's 0-amount placeholder row has no buyer. */
+    private function bidsCountColumn()
+    {
+        return DB::raw('(SELECT COUNT(DISTINCT buyer_id) FROM auction_histories WHERE auction_histories.listing_id = listings.id AND buyer_id IS NOT NULL AND bid_amount > 0) as bids_count');
+    }
+
     private function hasValue($value)
     {
         // Check if null
@@ -183,6 +212,7 @@ class FilterController extends Controller
             $message = "Showing listings for '{$countryName}'.";
         }
 
+        $this->applySaleTypeAndSort($query, $request);
         // ✅ Tri par date DESC (plus récent en premier)
         $query->orderBy('created_at', 'desc');
 
@@ -199,7 +229,8 @@ class FilterController extends Controller
             'country_id',
             'city_id',
             'category_id',
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid'),
+            $this->bidsCountColumn()
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $motorcyclesCollection = $motorcycles->getCollection();
@@ -209,7 +240,7 @@ class FilterController extends Controller
                 $query->select('listing_id', 'image_url')->orderBy('id', 'asc');
             },
             'motorcycle' => function ($query) {
-                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'general_condition')
+                $query->select('id', 'listing_id', 'brand_id', 'model_id', 'year_id', 'type_id', 'general_condition', 'engine', 'modified')
                     ->with(['brand:id,name', 'model:id,name', 'year:id,year', 'type:id,name']);
             },
             'country:id,name',
@@ -247,8 +278,13 @@ class FilterController extends Controller
                 'year' => $listing->motorcycle?->year?->year ?? null,
                 'type' => $listing->motorcycle?->type?->name ?? null,
                 'condition' => $listing->motorcycle?->general_condition ?? null,
+                'engine' => $listing->motorcycle?->engine ?? null,
+                'modified' => (bool) ($listing->motorcycle?->modified ?? false),
+                'bids_count' => (int) ($listing->bids_count ?? 0),
                 'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
                 'image' => $listing->images->first()?->image_url ?? null,
+                // All photos (up to 8) for the swipeable listing cards — already eager-loaded.
+                'images' => $listing->images->pluck('image_url')->filter()->take(8)->values(),
                 'seller_type' => $listing->seller_type,
                 'location' => [
                     'country' => $listing->country?->name ?? null,
@@ -362,9 +398,14 @@ class FilterController extends Controller
         $motoBrands = $request->input('motorcycle_brands');
         $motoModels = $request->input('motorcycle_models');
         $motoYears = $request->input('motorcycle_years');
+        // Manufacturing year values (2020…) for the Brand → Year → Model filter.
+        $motoYearValues = $request->input('motorcycle_manufacturing_years');
 
-        if ($this->hasValue($motoBrands) || $this->hasValue($motoModels) || $this->hasValue($motoYears)) {
-            $query->whereHas('sparePart.motorcycles', function ($q) use ($motoBrands, $motoModels, $motoYears) {
+        if ($this->hasValue($motoBrands) || $this->hasValue($motoModels) || $this->hasValue($motoYears) || $this->hasValue($motoYearValues)) {
+            $query->whereHas('sparePart.motorcycles', function ($q) use ($motoBrands, $motoModels, $motoYears, $motoYearValues) {
+                if ($this->hasValue($motoYearValues)) {
+                    $q->whereIn('year_id', DB::table('motorcycle_years')->whereIn('year', (array) $motoYearValues)->select('id'));
+                }
                 if ($this->hasValue($motoBrands)) {
                     $q->whereIn('brand_id', $motoBrands);
                 }
@@ -401,6 +442,7 @@ class FilterController extends Controller
             $message = "Showing listings for '{$countryName}'.";
         }
 
+        $this->applySaleTypeAndSort($query, $request);
         // ✅ Tri par date DESC (plus récent en premier)
         $query->orderBy('created_at', 'desc');
 
@@ -417,7 +459,8 @@ class FilterController extends Controller
             'country_id',
             'city_id',
             'category_id',
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid'),
+            $this->bidsCountColumn()
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $sparePartsCollection = $spareParts->getCollection();
@@ -458,6 +501,7 @@ class FilterController extends Controller
                 'is_auction' => (bool) $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
                 'current_bid' => $listing->current_bid,
+                'bids_count' => (int) ($listing->bids_count ?? 0),
                 'currency' => $currencySymbol,
                 'category' => $listing->category?->name ?? null,
                 'brand' => $listing->sparePart?->bikePartBrand?->name ?? null,
@@ -465,6 +509,8 @@ class FilterController extends Controller
                 'condition' => $listing->sparePart?->condition ?? null,
                 'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
                 'image' => $listing->images->first()?->image_url ?? null,
+                // All photos (up to 8) for the swipeable listing cards — already eager-loaded.
+                'images' => $listing->images->pluck('image_url')->filter()->take(8)->values(),
                 'seller_type' => $listing->seller_type,
                 'location' => [
                     'country' => $listing->country?->name ?? null,
@@ -606,6 +652,7 @@ class FilterController extends Controller
             $message = "Showing listings for '{$countryName}'.";
         }
 
+        $this->applySaleTypeAndSort($query, $request);
         // ✅ Tri par date DESC (plus récent en premier)
         $query->orderBy('created_at', 'desc');
 
@@ -622,7 +669,8 @@ class FilterController extends Controller
             'country_id',
             'city_id',
             'category_id',
-            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid')
+            DB::raw('(SELECT MAX(bid_amount) FROM auction_histories WHERE auction_histories.listing_id = listings.id) as current_bid'),
+            $this->bidsCountColumn()
         ])->paginate($perPage, ['*'], 'page', $page);
 
         $resultsCollection = $results->getCollection();
@@ -663,6 +711,7 @@ class FilterController extends Controller
                 'is_auction' => (bool) $listing->auction_enabled,
                 'minimum_bid' => $listing->minimum_bid,
                 'current_bid' => $listing->current_bid,
+                'bids_count' => (int) ($listing->bids_count ?? 0),
                 'currency' => $currencySymbol,
                 'category' => $listing->category?->name ?? null,
                 'listing_date' => $listing->created_at?->format('Y-m-d H:i:s') ?? null,
@@ -672,6 +721,8 @@ class FilterController extends Controller
                     'city' => $listing->city?->name ?? null,
                 ],
                 'image' => $listing->images->first()?->image_url ?? null,
+                // All photos (up to 8) for the swipeable listing cards — already eager-loaded.
+                'images' => $listing->images->pluck('image_url')->filter()->take(8)->values(),
                 'license_plate' => [
                     'format' => $listing->licensePlate?->format?->name,
                     'plate_location' => [
@@ -704,6 +755,34 @@ class FilterController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    /**
+     * @OAGet(
+     *     path="/api/filter/license-plates/cities",
+     *     summary="Plate cities that have published plate listings, with counts",
+     *     tags={"Filters"},
+     *     @OAParameter(name="listing_country_id", in="query", required=false, @OASchema(type="integer")),
+     *     @OAResponse(response=200, description="Cities ordered by listings count")
+     * )
+     */
+    public function getLicensePlateCitiesWithListings(Request $request)
+    {
+        $countryId = $request->input('listing_country_id');
+
+        $cities = DB::table('listings')
+            ->join('license_plates', 'license_plates.listing_id', '=', 'listings.id')
+            ->join('cities', 'cities.id', '=', 'license_plates.city_id')
+            ->where('listings.category_id', 3)
+            ->where('listings.status', 'published')
+            ->when($this->hasValue($countryId), fn ($q) => $q->where('listings.country_id', $countryId))
+            ->select('cities.id', 'cities.name', DB::raw('COUNT(DISTINCT listings.id) as listings_count'))
+            ->groupBy('cities.id', 'cities.name')
+            ->orderByDesc('listings_count')
+            ->orderBy('cities.name')
+            ->get();
+
+        return response()->json(['cities' => $cities]);
     }
 
     /**

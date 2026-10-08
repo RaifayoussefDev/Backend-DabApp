@@ -666,6 +666,333 @@
                 ]
             }
         },
+        "/api/admin/contact-info": {
+            "get": {
+                "tags": [
+                    "Admin Contact Info"
+                ],
+                "summary": "Get site contact info (Admin)",
+                "operationId": "17f4d2f8627b2409023f07d7a26fcea2",
+                "responses": {
+                    "200": {
+                        "description": "Contact info retrieved",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "address_en": {
+                                            "type": "string",
+                                            "example": "King Fahd Road, Riyadh, Saudi Arabia"
+                                        },
+                                        "address_ar": {
+                                            "type": "string",
+                                            "example": "طريق الملك فهد، الرياض، المملكة العربية السعودية"
+                                        },
+                                        "phone": {
+                                            "type": "string",
+                                            "example": "+966 12 345 6789"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "support@dabapp.co"
+                                        },
+                                        "hours_en": {
+                                            "type": "string",
+                                            "example": "Sun - Thu: 9:00 AM - 6:00 PM"
+                                        },
+                                        "hours_ar": {
+                                            "type": "string",
+                                            "example": "الأحد - الخميس: 9:00 صباحاً - 6:00 مساءً"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Contact Info"
+                ],
+                "summary": "Update site contact info (Admin)",
+                "operationId": "cdd65830ab37fce6182e303f2804ffbf",
+                "requestBody": {
+                    "description": "<strong>Example payload</strong><br><pre>{<br>  &quot;address_en&quot;: &quot;King Fahd Road, Riyadh, Saudi Arabia&quot;,<br>  &quot;address_ar&quot;: &quot;طريق الملك فهد، الرياض، المملكة العربية السعودية&quot;,<br>  &quot;phone&quot;: &quot;+966 12 345 6789&quot;,<br>  &quot;email&quot;: &quot;support@dabapp.co&quot;,<br>  &quot;hours_en&quot;: &quot;Sun - Thu: 9:00 AM - 6:00 PM&quot;,<br>  &quot;hours_ar&quot;: &quot;الأحد - الخميس: 9:00 صباحاً - 6:00 مساءً&quot;<br>}</pre>",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "address_en",
+                                    "address_ar",
+                                    "phone",
+                                    "email",
+                                    "hours_en",
+                                    "hours_ar"
+                                ],
+                                "properties": {
+                                    "address_en": {
+                                        "type": "string",
+                                        "example": "King Fahd Road, Riyadh, Saudi Arabia"
+                                    },
+                                    "address_ar": {
+                                        "type": "string",
+                                        "example": "طريق الملك فهد، الرياض، المملكة العربية السعودية"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+966 12 345 6789"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "support@dabapp.co"
+                                    },
+                                    "hours_en": {
+                                        "type": "string",
+                                        "example": "Sun - Thu: 9:00 AM - 6:00 PM"
+                                    },
+                                    "hours_ar": {
+                                        "type": "string",
+                                        "example": "الأحد - الخميس: 9:00 صباحاً - 6:00 مساءً"
+                                    },
+                                    "address_visible": {
+                                        "description": "Show/hide the address block on the public page",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "phone_visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "email_visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "hours_visible": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contact info updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Contact info updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contact-info-items": {
+            "get": {
+                "tags": [
+                    "Admin Contact Info Items"
+                ],
+                "summary": "List extra contact info items (Admin)",
+                "operationId": "e7c56a4dcaa049b40318e51dd6f020a7",
+                "responses": {
+                    "200": {
+                        "description": "Items retrieved, in display order"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Contact Info Items"
+                ],
+                "summary": "Add an extra contact info item",
+                "operationId": "50470540c6e940173d84e8a05047970f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "label_en",
+                                    "value_en"
+                                ],
+                                "properties": {
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "whatsapp",
+                                        "nullable": true
+                                    },
+                                    "label_en": {
+                                        "type": "string",
+                                        "example": "WhatsApp"
+                                    },
+                                    "label_ar": {
+                                        "type": "string",
+                                        "example": "واتساب",
+                                        "nullable": true
+                                    },
+                                    "value_en": {
+                                        "type": "string",
+                                        "example": "+966 50 123 4567"
+                                    },
+                                    "value_ar": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "order": {
+                                        "type": "integer",
+                                        "example": 0
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Item created"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contact-info-items/{id}": {
+            "put": {
+                "tags": [
+                    "Admin Contact Info Items"
+                ],
+                "summary": "Update an extra contact info item",
+                "operationId": "996b768dc1a40da35229737943ac9edb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item updated"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Contact Info Items"
+                ],
+                "summary": "Delete an extra contact info item",
+                "operationId": "13dbed4760e5b075e117a70c7c322f20",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item deleted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contact-info-items/{id}/toggle": {
+            "post": {
+                "tags": [
+                    "Admin Contact Info Items"
+                ],
+                "summary": "Toggle whether an item is shown on the public page",
+                "operationId": "a22a9411653d5e9132119cea156f70d5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Item toggled"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/dashboard/stats": {
             "get": {
                 "tags": [
@@ -2856,6 +3183,124 @@
                 "responses": {
                     "200": {
                         "description": "Status updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}/sale-diagnostic": {
+            "patch": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Manually set a listing's sale diagnostic (Admin override)",
+                "description": "For listings whose seller never answered the Day-7 follow-up. Records whether/where it sold. Set mark_sold=true to also flip the listing status to 'sold'.",
+                "operationId": "2654bd5928023a371797349f83c38769",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "follow_up_response": {
+                                        "type": "string",
+                                        "enum": [
+                                            "sold",
+                                            "not_sold",
+                                            "null"
+                                        ]
+                                    },
+                                    "sale_channel": {
+                                        "type": "string",
+                                        "enum": [
+                                            "dabapp",
+                                            "other_platform",
+                                            "off_platform"
+                                        ]
+                                    },
+                                    "reason_not_sold": {
+                                        "type": "string"
+                                    },
+                                    "mark_sold": {
+                                        "type": "boolean",
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Diagnostic updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/{id}/resend-follow-up": {
+            "post": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Send the recurring 'did it sell?' reminder to the seller now",
+                "description": "Fires the reminder immediately and re-anchors the next one 30 days out.",
+                "operationId": "f19a3f4eadf9c4d3d7cad8e737f2ea3a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow-up sent"
+                    },
+                    "422": {
+                        "description": "Listing not eligible"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/listings/resend-follow-up": {
+            "post": {
+                "tags": [
+                    "Admin Listings"
+                ],
+                "summary": "Bulk (re)send the Day-7 follow-up to every eligible listing matching the filters",
+                "description": "Same filters as GET /admin/listings. Dispatches the existing SendListingFollowUps job so nothing blocks the request.",
+                "operationId": "0cca17b71387984cd833ad3eb9e4d897",
+                "responses": {
+                    "202": {
+                        "description": "Bulk follow-up queued"
                     }
                 },
                 "security": [
@@ -5435,6 +5880,103 @@
                 ]
             }
         },
+        "/api/admin/notifications/batches/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin Notifications"
+                ],
+                "summary": "Cancel a scheduled broadcast before it fires",
+                "operationId": "b0b66dfc5fea15ae2e04f577421994b1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancelled"
+                    },
+                    "400": {
+                        "description": "Only scheduled broadcasts can be cancelled"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notifications/batches": {
+            "get": {
+                "tags": [
+                    "Admin Notifications"
+                ],
+                "summary": "List broadcast batches",
+                "description": "Aggregate view of every mass-send broadcast — total targeted, sent, failed and read counts. Never lists individual recipients.",
+                "operationId": "d6ea15ef88f5c233a57a1b4818acf532",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Batches retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notifications/batches/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Notifications"
+                ],
+                "summary": "Broadcast batch detail",
+                "operationId": "c7f528f66e62407987a29bb27c2ca91d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Batch retrieved"
+                    },
+                    "404": {
+                        "description": "Not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/notification-preferences": {
             "get": {
                 "tags": [
@@ -5868,6 +6410,41 @@
                 ],
                 "summary": "Disable ALL notifications for ALL users",
                 "operationId": "97e6c0ca0039499ec5269d8997716321",
+                "responses": {
+                    "200": {
+                        "description": "Done"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/notification-preferences/mass-enable-category": {
+            "post": {
+                "tags": [
+                    "Admin Notification Preferences"
+                ],
+                "summary": "Enable a category of notifications for ALL users",
+                "operationId": "2cbd3d919e7b1339334c615198468e3d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "category": {
+                                        "type": "string",
+                                        "example": "trainer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Done"
@@ -7746,6 +8323,70 @@
                 ]
             }
         },
+        "/api/admin/pois/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Approve and publish a user-submitted POI (Admin)",
+                "operationId": "682a1618e470f944b80921df7250fa7c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI approved"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/pois/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin POIs"
+                ],
+                "summary": "Reject a user-submitted POI (Admin)",
+                "operationId": "a86d57fa07545d38154711a3229c695e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "POI rejected"
+                    },
+                    "404": {
+                        "description": "POI not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/pois/stats/overview": {
             "get": {
                 "tags": [
@@ -8878,6 +9519,70 @@
                 "responses": {
                     "200": {
                         "description": "Route deleted successfully"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/routes/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Approve and publish a user-submitted route (Admin)",
+                "operationId": "b96ed22a3e3bc29f8d267b88f7541542",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route approved"
+                    },
+                    "404": {
+                        "description": "Route not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/routes/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin - Routes"
+                ],
+                "summary": "Reject a user-submitted route (Admin)",
+                "operationId": "cd28ca15abfa06e1627b96d1e6adc323",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Route rejected"
                     },
                     "404": {
                         "description": "Route not found"
@@ -10654,6 +11359,396 @@
                     },
                     "404": {
                         "description": "Ad not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/auth-logs": {
+            "get": {
+                "tags": [
+                    "Admin Auth Logs"
+                ],
+                "summary": "List authentication logs",
+                "operationId": "356c77c6465bcfe55e21d82ca0ea22b3",
+                "parameters": [
+                    {
+                        "name": "event",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "register",
+                                "login",
+                                "logout",
+                                "otp_whatsapp",
+                                "otp_email"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "success",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Matches identifier (email/phone) or user name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Logs retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/auth-logs/summary": {
+            "get": {
+                "tags": [
+                    "Admin Auth Logs"
+                ],
+                "summary": "Auth log counts per event type (last 30 days)",
+                "operationId": "59f0f64cb4883b1fa0bdef65e1ce2a70",
+                "responses": {
+                    "200": {
+                        "description": "Summary retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contact-submissions": {
+            "get": {
+                "tags": [
+                    "Admin Contact Submissions"
+                ],
+                "summary": "List contact submissions",
+                "operationId": "365942e79603381b2f74693b55b7008b",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "read"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Matches name, email or message",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of contact submissions"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/contact-submissions/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Contact Submissions"
+                ],
+                "summary": "Get a contact submission",
+                "operationId": "fbe6b460d19275e87a7e04f824366b7b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission detail"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Contact Submissions"
+                ],
+                "summary": "Mark a contact submission as read/new",
+                "operationId": "f0886dbeb2d7a305402b909028354da9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "read"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Submission updated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guest-activity/views": {
+            "get": {
+                "tags": [
+                    "Admin Guest Activity"
+                ],
+                "summary": "Anonymous listing views (views.user_id IS NULL), deduped at write time by\nIP + user-agent per listing / 24h.",
+                "operationId": "34b6b64dcfd576f31b4edff33cbda62b",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Matches IP or listing title",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Guest views retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guest-activity/contact-reveals": {
+            "get": {
+                "tags": [
+                    "Admin Guest Activity"
+                ],
+                "summary": "Seller-contact reveals (the \"show phone\" / \"contact seller\" action). The\nendpoint that records these is auth-only, so `user` is normally set — this\nshows which registered users are chasing which listings.",
+                "operationId": "9292095fd640e2706f9f57e70e117ac8",
+                "parameters": [
+                    {
+                        "name": "listing_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "seller_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Matches IP, listing title or buyer/seller name",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 25
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Contact reveals retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/guest-activity/summary": {
+            "get": {
+                "tags": [
+                    "Admin Guest Activity"
+                ],
+                "summary": "Headline counts for the last 30 days.",
+                "operationId": "e212a0cc2c97142c30bc6fd5b1a8a045",
+                "responses": {
+                    "200": {
+                        "description": "Summary retrieved"
                     }
                 },
                 "security": [
@@ -23297,30 +24392,34 @@
                                                                 },
                                                                 "type": "object"
                                                             },
-                                                            "split": {
-                                                                "properties": {
-                                                                    "total_amount": {
-                                                                        "type": "number",
-                                                                        "format": "float",
-                                                                        "example": 150
+                                                            "splits": {
+                                                                "description": "Every booking's commission split this consolidated payout covers",
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "total_amount": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 150
+                                                                        },
+                                                                        "commission_percentage": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 20
+                                                                        },
+                                                                        "commission_amount": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 30
+                                                                        },
+                                                                        "trainer_amount": {
+                                                                            "type": "number",
+                                                                            "format": "float",
+                                                                            "example": 120
+                                                                        }
                                                                     },
-                                                                    "commission_percentage": {
-                                                                        "type": "number",
-                                                                        "format": "float",
-                                                                        "example": 20
-                                                                    },
-                                                                    "commission_amount": {
-                                                                        "type": "number",
-                                                                        "format": "float",
-                                                                        "example": 30
-                                                                    },
-                                                                    "trainer_amount": {
-                                                                        "type": "number",
-                                                                        "format": "float",
-                                                                        "example": 120
-                                                                    }
-                                                                },
-                                                                "type": "object"
+                                                                    "type": "object"
+                                                                }
                                                             }
                                                         },
                                                         "type": "object"
@@ -23538,29 +24637,33 @@
                                                     },
                                                     "type": "object"
                                                 },
-                                                "split": {
-                                                    "properties": {
-                                                        "total_amount": {
-                                                            "type": "number",
-                                                            "format": "float"
+                                                "splits": {
+                                                    "description": "Every booking's commission split this consolidated payout covers",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "total_amount": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "commission_percentage": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "commission_amount": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "trainer_amount": {
+                                                                "type": "number",
+                                                                "format": "float"
+                                                            },
+                                                            "status": {
+                                                                "type": "string"
+                                                            }
                                                         },
-                                                        "commission_percentage": {
-                                                            "type": "number",
-                                                            "format": "float"
-                                                        },
-                                                        "commission_amount": {
-                                                            "type": "number",
-                                                            "format": "float"
-                                                        },
-                                                        "trainer_amount": {
-                                                            "type": "number",
-                                                            "format": "float"
-                                                        },
-                                                        "status": {
-                                                            "type": "string"
-                                                        }
-                                                    },
-                                                    "type": "object"
+                                                        "type": "object"
+                                                    }
                                                 }
                                             },
                                             "type": "object"
@@ -23649,6 +24752,87 @@
                     },
                     "422": {
                         "description": "Validation error — reason is required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/payouts/{id}/proof": {
+            "post": {
+                "tags": [
+                    "Admin - Payouts"
+                ],
+                "summary": "Attach or replace the transfer receipt",
+                "description": "Uploads (or replaces) the transfer proof/receipt for a payout that has already been marked as paid — for cases where the receipt wasn't attached at mark-paid time, or needs correcting.",
+                "operationId": "adminUploadPayoutProof",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "transfer_proof"
+                                ],
+                                "properties": {
+                                    "transfer_proof": {
+                                        "description": "Screenshot or receipt of the transfer (image or PDF, max 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Receipt uploaded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Receipt uploaded"
+                                        },
+                                        "transfer_proof_url": {
+                                            "type": "string",
+                                            "example": "https://example.com/storage/payouts/proofs/receipt.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Payout must be paid before attaching a receipt"
+                    },
+                    "404": {
+                        "description": "Payout not found"
+                    },
+                    "422": {
+                        "description": "Validation error"
                     }
                 },
                 "security": [
@@ -25157,6 +26341,236 @@
                 ]
             }
         },
+        "/api/admin/trainer-course-bookings": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Course Bookings"
+                ],
+                "summary": "List all trainer course bookings (Admin)",
+                "description": "Returns all course bookings with filters: status, trainer, course, user, payment status, date range (matched against any of the booking's session dates).",
+                "operationId": "adminListTrainerCourseBookings",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "confirmed",
+                                "in_progress",
+                                "completed",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "trainer_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "course_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "payment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "paid",
+                                "failed",
+                                "refunded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course bookings retrieved"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-course-bookings/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Trainer Course Bookings"
+                ],
+                "summary": "Get course booking details (Admin)",
+                "description": "Returns full details of a course booking including every scheduled session (dates/times/status — never the OTP codes), payment split and review if any.",
+                "operationId": "adminShowTrainerCourseBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course booking details"
+                    },
+                    "404": {
+                        "description": "Course booking not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Trainer Course Bookings"
+                ],
+                "summary": "Permanently delete a course booking (Admin)",
+                "description": "Hard-deletes the course booking row along with its sessions, payment split and review (all cascade at the DB level). Use for cleaning up test/junk data — for a real trainee booking, prefer force-cancel instead.",
+                "operationId": "adminDeleteTrainerCourseBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Course booking deleted"
+                    },
+                    "404": {
+                        "description": "Course booking not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/trainer-course-bookings/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Course Bookings"
+                ],
+                "summary": "Force-cancel a course booking (Admin)",
+                "description": "Admin force-cancel of any active course booking, cascading to every non-completed session. Requires a reason.",
+                "operationId": "adminCancelTrainerCourseBooking",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Trainer suspended due to policy violation"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Course booking cancelled"
+                    },
+                    "400": {
+                        "description": "Course booking cannot be cancelled (already completed or cancelled)"
+                    },
+                    "404": {
+                        "description": "Course booking not found"
+                    },
+                    "422": {
+                        "description": "Validation error — reason is required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/trainer-courses": {
             "get": {
                 "tags": [
@@ -25193,6 +26607,27 @@
                         "required": false,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "price_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "per_hour",
+                                "total"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "circuit"
                         }
                     },
                     {
@@ -25298,6 +26733,65 @@
                 ]
             }
         },
+        "/api/admin/trainer-courses/{id}/set-draft": {
+            "post": {
+                "tags": [
+                    "Admin - Trainer Courses"
+                ],
+                "summary": "Force a course to draft (Admin)",
+                "description": "Admin moves a published course back to draft, requiring a reason. The trainer is notified with the reason so they know why their course was taken down.",
+                "operationId": "adminSetTrainerCourseDraft",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Course pricing does not match approved level rates"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Course set to draft"
+                    },
+                    "400": {
+                        "description": "Course is already a draft"
+                    },
+                    "404": {
+                        "description": "Course not found"
+                    },
+                    "422": {
+                        "description": "Validation error — reason is required"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/trainer-levels": {
             "get": {
                 "tags": [
@@ -25340,6 +26834,10 @@
                                                     "description": {
                                                         "type": "string",
                                                         "example": "For first-time riders"
+                                                    },
+                                                    "description_ar": {
+                                                        "type": "string",
+                                                        "example": "للمتسابقين لأول مرة"
                                                     },
                                                     "required_certifications": {
                                                         "type": "array",
@@ -25404,6 +26902,9 @@
                                                         "example": "beginner"
                                                     },
                                                     "description": {
+                                                        "type": "string"
+                                                    },
+                                                    "description_ar": {
                                                         "type": "string"
                                                     },
                                                     "required_certifications": {
@@ -25473,6 +26974,10 @@
                                     "description": {
                                         "type": "string",
                                         "example": "For first-time riders"
+                                    },
+                                    "description_ar": {
+                                        "type": "string",
+                                        "example": "للمتسابقين لأول مرة"
                                     },
                                     "required_certifications": {
                                         "type": "array",
@@ -25562,6 +27067,9 @@
                                         "type": "string"
                                     },
                                     "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
                                         "type": "string"
                                     },
                                     "required_certifications": {
@@ -31410,6 +32918,10 @@
             "description": "Admin API Endpoints for managing bike part categories"
         },
         {
+            "name": "Admin Contact Info Items",
+            "description": "Extra, admin-managed contact channels shown on the public Contact Us page alongside the 4 fixed fields"
+        },
+        {
             "name": "Admin Motorcycle Brands",
             "description": "Admin API Endpoints for managing motorcycle brands"
         },
@@ -31484,6 +32996,18 @@
         {
             "name": "Admin - Route Waypoints",
             "description": "API Endpoints for Managing Route Waypoints by Admins"
+        },
+        {
+            "name": "Admin Auth Logs",
+            "description": "Read-only audit trail of authentication events (register, login, logout, OTP delivery)"
+        },
+        {
+            "name": "Admin Contact Submissions",
+            "description": "Manage public contact-us form submissions"
+        },
+        {
+            "name": "Admin Guest Activity",
+            "description": "Traceability for non-authenticated (guest) marketplace traffic: anonymous listing views and seller-contact reveals."
         },
         {
             "name": "Admin - Guides",
@@ -31618,6 +33142,10 @@
             "description": "Admin management of trainer profiles, reviews, and comments"
         },
         {
+            "name": "Admin - Trainer Course Bookings",
+            "description": "Admin read-only oversight of trainee course bookings, with a force-cancel escape hatch"
+        },
+        {
             "name": "Admin - Trainer Courses",
             "description": "Admin view and moderation of trainer courses"
         },
@@ -31636,6 +33164,10 @@
         {
             "name": "Admin App Version",
             "description": "Admin App Version"
+        },
+        {
+            "name": "Admin Contact Info",
+            "description": "Admin Contact Info"
         },
         {
             "name": "Admin Statistics",

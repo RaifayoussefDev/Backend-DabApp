@@ -252,7 +252,9 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'phone' => $formattedPhone,
                 'password' => Hash::make($request->password),
-                'role_id' => $request->role_id ?? 1,
+                // Public sign-up always creates a regular user (roles: 1 = admin, 2 = user).
+                // Never trust a role sent by the client.
+                'role_id' => 2,
                 'verified' => false,
                 'is_active' => false,
                 'is_online' => false,
@@ -1456,16 +1458,8 @@ class AuthController extends Controller
             'pointsOfInterest',
         ])->find($user->id);
 
-        // Decrypt CVV
-        foreach ($userWithData->bankCards as $card) {
-            if (!empty($card->cvv)) {
-                try {
-                    $card->cvv = decrypt($card->cvv);
-                } catch (\Exception $e) {
-                    $card->cvv = null;
-                }
-            }
-        }
+        // Card data stays tokenized: the CVV is never stored or sent back (PCI DSS), and the
+        // BankCard model hides payment_token — the client only sees brand / last four / expiry.
 
         // Helper profile summary
         $helperProfile = \App\Models\Assist\HelperProfile::where('user_id', $user->id)
@@ -2215,7 +2209,8 @@ class AuthController extends Controller
 
         // Verify current password
         if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(['error' => 'Current password is incorrect'], 401);
+            // 422, not 401: a 401 makes the web client think the session expired (token refresh + retry).
+            return response()->json(['error' => 'Current password is incorrect'], 422);
         }
 
         // Update password

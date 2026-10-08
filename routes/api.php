@@ -685,9 +685,12 @@ Route::prefix('guest')->middleware('throttle:60,1')->group(function () {
 // ============================================
 // FILTERS (PUBLIC)
 // ============================================
+// Public URLs for the website's XML sitemaps (src/server.ts on the frontend).
+Route::get('/sitemap', [\App\Http\Controllers\SitemapController::class, 'index']);
 Route::get('/filter/motorcycles', [FilterController::class, 'filterMotorcycles']);
 Route::get('/filter/spare-parts', [FilterController::class, 'filterSpareParts']);
 Route::get('/filter/license-plates', [FilterController::class, 'filterLicensePlates']);
+Route::get('/filter/license-plates/cities', [FilterController::class, 'getLicensePlateCitiesWithListings']);
 Route::get('/filter-options-license-plates', [FilterController::class, 'getLicensePlateFilterOptions']);
 Route::get('/filter-license-plates', [FilterController::class, 'filterLicensePlates']);
 
@@ -710,6 +713,11 @@ Route::apiResource('bike-part-categories', BikePartCategoryController::class);
 // no listings_count — silently won instead, showing empty "()" on every filter).
 Route::get('/bike-part-categories', [ListingController::class, 'getBikePartCategoriesWithListingCount']);
 Route::get('/bike-part-brands', [ListingController::class, 'getBikePartBrandsWithListingCount']);
+
+// Spare-parts "compatible motorcycle" filter: only brands/models/years with published listings.
+Route::get('/spare-parts/compatible/brands', [ListingController::class, 'getSparePartMotorcycleBrandsWithListings']);
+Route::get('/spare-parts/compatible/brands/{brandId}/models', [ListingController::class, 'getSparePartMotorcycleModelsWithListings'])->where('brandId', '[0-9]+');
+Route::get('/spare-parts/compatible/brands/{brandId}/models/{modelId}/years', [ListingController::class, 'getSparePartMotorcycleYearsWithListings'])->where(['brandId' => '[0-9]+', 'modelId' => '[0-9]+']);
 
 // ============================================
 // LICENSE PLATES (PUBLIC)
@@ -1117,6 +1125,8 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // LISTINGS MANAGEMENT
     // ============================================
+    // Counts for the profile sidebar + home dashboard (one call)
+    Route::get('/profile/summary', [\App\Http\Controllers\ProfileSummaryController::class, 'index']);
     Route::get('/my-ads', [ListingController::class, 'getMyAds']);
     Route::get('/listings', [ListingController::class, 'getAll']);
     Route::get('/listings/draft', [ListingController::class, 'getDraftListings']);
@@ -1137,6 +1147,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
     Route::put('/listings/edit/{id}', [ListingController::class, 'editListing']);
     Route::get('/listings/{id}/edit-status', [ListingController::class, 'checkEditStatus']);
+    Route::get('/listings/{id}/for-edit', [ListingController::class, 'getListingForEdit'])->whereNumber('id');
 
     // ============================================
     // LISTING WITH AUCTION
@@ -1864,6 +1875,7 @@ Route::get('/trainer-levels',                                 [AdminTrainerLevel
 Route::get('/equipment-types',                                [AdminEquipmentTypeController::class, 'index']);
 Route::get('/trainers/{id}/training-bikes',                       [TrainerTrainingBikeController::class, 'publicIndex']);
 Route::get('/courses',                                            [TrainerCourseController::class, 'browseAll']);
+Route::get('/courses/cities',                                     [TrainerCourseController::class, 'citiesWithCourses']);
 Route::get('/trainers/{id}/courses',                              [TrainerCourseController::class, 'publicIndex']);
 Route::get('/trainers/{id}/courses/{courseId}',                   [TrainerCourseController::class, 'publicShow']);
 Route::get('/trainers/{id}/courses/{courseId}/availability',      [TrainerCourseBookingController::class, 'availability']);
@@ -2372,3 +2384,8 @@ Route::delete('/dev/trainers/reset-all', function () {
         'message' => 'All trainers and related data deleted. trainer_levels and specialties kept.',
     ]);
 });
+
+// ============================================
+// MARKETPLACE (own file, own Swagger docs)
+// ============================================
+require __DIR__ . '/marketplace.php';

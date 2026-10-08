@@ -1275,19 +1275,27 @@ class SoomController extends Controller
             $query->where('seller_id', $userId);
         })
             ->with([
-                'user:id,first_name,last_name,email',
+                'user:id,first_name,last_name,email,phone,verified',
                 'listing:id,title,description,seller_id,city_id,country_id,status',
                 'listing.images',
                 'listing.city:id,name,country_id',
                 'listing.country:id,name,code',
+                'listing.country.currencyExchangeRate:id,country_id,currency_symbol',
             ])
             ->orderBy('submission_date', 'desc')
             ->get();
 
-        // Add first image to each submission
+        // Add first image + currency to each submission
         $sooms->each(function ($soom) {
             $soom->first_image = $soom->listing->images->first()?->image_url;
             $soom->listing_status = $soom->listing->status;
+            $soom->currency = $soom->listing->country?->currencyExchangeRate?->currency_symbol;
+
+            // The bidder's contact details are shared with the seller only once the offer is accepted
+            // (cloned: eager loading shares one User instance between submissions).
+            if ($soom->status !== 'accepted' && $soom->user) {
+                $soom->setRelation('user', (clone $soom->user)->makeHidden(['email', 'phone']));
+            }
         });
 
         // Statistiques
@@ -1390,12 +1398,28 @@ class SoomController extends Controller
             ->with([
                 'listing:id,title,description,seller_id,city_id,country_id,status',
                 'listing.seller:id,first_name,last_name,email,phone',
+                'listing.images',
                 'listing.city:id,name,country_id',
                 'listing.country:id,code,name',
+                'listing.country.currencyExchangeRate:id,country_id,currency_symbol',
                 'user:id,first_name,last_name,email,phone'
             ])
             ->orderBy('submission_date', 'desc')
             ->get();
+
+        $sooms->each(function ($soom) {
+            $soom->first_image = $soom->listing?->images->first()?->image_url;
+            $soom->currency = $soom->listing?->country?->currencyExchangeRate?->currency_symbol;
+
+            // The seller's phone / email are only revealed once they accept the offer.
+            // Eager loading shares one Listing / User instance between submissions, so
+            // clone before hiding to leave the accepted ones untouched.
+            if ($soom->status !== 'accepted' && $soom->listing?->seller) {
+                $listing = clone $soom->listing;
+                $listing->setRelation('seller', (clone $soom->listing->seller)->makeHidden(['email', 'phone']));
+                $soom->setRelation('listing', $listing);
+            }
+        });
 
 
         // Statistiques

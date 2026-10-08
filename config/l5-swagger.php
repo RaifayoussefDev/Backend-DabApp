@@ -14,6 +14,13 @@ foreach ($allFiles as $file) {
         $path = $file->getPathname();
         $fileName = basename($path);
 
+        // Marketplace controllers have their own Swagger docs (see 'marketplace' and 'marketplace_admin' below)
+        $normalizedPath = str_replace(['\\', '/'], '/', $path);
+        if (str_contains($normalizedPath, '/Http/Controllers/Marketplace/')
+            || str_contains($normalizedPath, '/Http/Controllers/Admin/Marketplace/')) {
+            continue;
+        }
+
         // Explicitly handle Swagger controllers
         if (str_contains($path, 'SwaggerController.php')) {
             $appControllers[] = $path;
@@ -183,6 +190,44 @@ return [
                  * Absolute paths to directory containing the swagger annotations are stored.
                  */
                 'annotations' => $adminControllers,
+            ],
+        ],
+
+        'marketplace' => [
+            'api' => [
+                'title' => 'DabApp Marketplace API',
+            ],
+            'routes' => [
+                'api' => 'marketplace/documentation',
+                'docs' => 'marketplace/docs',
+                'oauth2_callback' => 'marketplace/oauth2-callback',
+            ],
+            'paths' => [
+                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
+                'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
+                'docs_json' => 'marketplace-docs.json',
+                'docs_yaml' => 'marketplace-docs.yaml',
+                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
+                'annotations' => [base_path('app/Http/Controllers/Marketplace')],
+            ],
+        ],
+
+        'marketplace_admin' => [
+            'api' => [
+                'title' => 'DabApp Marketplace Admin API',
+            ],
+            'routes' => [
+                'api' => 'marketplace-admin/documentation',
+                'docs' => 'marketplace-admin/docs',
+                'oauth2_callback' => 'marketplace-admin/oauth2-callback',
+            ],
+            'paths' => [
+                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
+                'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
+                'docs_json' => 'marketplace-admin-docs.json',
+                'docs_yaml' => 'marketplace-admin-docs.yaml',
+                'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
+                'annotations' => [base_path('app/Http/Controllers/Admin/Marketplace')],
             ],
         ],
     ],

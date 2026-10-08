@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class PromoCode extends Model
 {
     protected $fillable = [
+        'vendor_id',
+        'funded_by',
+        'applies_to',
         'code',
         'description',
         'description_ar',
@@ -35,6 +38,12 @@ class PromoCode extends Model
     public function isValid()
     {
         return $this->status === 'active' && $this->used_count < $this->max_uses && now()->between($this->start_date, $this->end_date);
+    }
+
+    /** Marketplace: null = DabApp code, set = code created by that vendor. */
+    public function vendor()
+    {
+        return $this->belongsTo(\App\Models\Marketplace\Vendor::class, 'vendor_id');
     }
 
     /**

@@ -58,4 +58,24 @@ class CommissionSetting extends Model
     {
         return $query->where('entity_type', 'trainer')->where('entity_id', $trainerId);
     }
+
+    public function scopeForVendor($query, int $vendorId)
+    {
+        return $query->where('entity_type', 'vendor')->where('entity_id', $vendorId);
+    }
+
+    public function scopeForCategory($query, int $categoryId)
+    {
+        return $query->where('entity_type', 'category')->where('entity_id', $categoryId);
+    }
+
+    public function vendor()
+    {
+        return $this->belongsTo(\App\Models\Marketplace\Vendor::class, 'entity_id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(\App\Models\Marketplace\Category::class, 'entity_id');
+    }
 }

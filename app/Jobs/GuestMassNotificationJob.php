@@ -7,10 +7,12 @@ use App\Models\NotificationBatch;
 use App\Models\NotificationToken;
 use App\Services\FirebaseService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -21,9 +23,14 @@ use Illuminate\Support\Facades\Log;
  * row are updated (same "never lists individual recipients" contract as the
  * user broadcast).
  */
-class GuestMassNotificationJob implements ShouldQueue
+class GuestMassNotificationJob implements ShouldQueue, ShouldBeUnique
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    /** See MassNotificationJob — long-running, never retried (a retry re-notifies). */
+    public int $timeout = 1800;
+    public int $tries = 1;
+    public int $uniqueFor = 7200;
 
     protected int $batchId;
     protected array $filters;
@@ -39,6 +46,12 @@ class GuestMassNotificationJob implements ShouldQueue
         $this->batchId = $batchId;
         $this->filters = $filters;
         $this->content = $content;
+    }
+
+    /** Per-class lock — won't collide with MassNotificationJob for a 'both' batch. */
+    public function uniqueId(): string
+    {
+        return (string) $this->batchId;
     }
 
     public function handle(FirebaseService $firebase): void
@@ -70,9 +83,9 @@ class GuestMassNotificationJob implements ShouldQueue
 
         $type = $this->content['type'] ?? 'info';
 
-        $query->chunkById(200, function ($tokens) use ($firebase, $batch, $registeredTokens, $type) {
-            $sent = 0;
-            $failed = 0;
+        $query->chunkById(500, function ($tokens) use ($firebase, $batch, $registeredTokens, $type) {
+            $items = [];   // FirebaseService::sendBatch() items
+            $meta  = [];   // parallel: index => guest token id
 
             foreach ($tokens as $token) {
                 if ($registeredTokens->has($token->fcm_token)) {
@@ -88,43 +101,61 @@ class GuestMassNotificationJob implements ShouldQueue
                     : ($this->content['body_en'] ?? '');
 
                 $pushData = [
-                    'type' => $type,
-                    'audience' => 'guest',
-                    'batch_id' => (string) $batch->id,
+                    'type'      => $type,
+                    'audience'  => 'guest',
+                    'batch_id'  => (string) $batch->id,
                     'timestamp' => now()->toIso8601String(),
                 ];
                 if (!empty($this->content['action_url'])) {
                     $pushData['action_url'] = (string) $this->content['action_url'];
                 }
 
-                try {
-                    $result = $firebase->sendToToken(
-                        $token->fcm_token,
-                        $title,
-                        $body,
-                        $pushData,
-                        ['priority' => 'high', 'sound' => 'default']
-                    );
+                $items[] = [
+                    'token' => $token->fcm_token,
+                    'title' => $title,
+                    'body'  => $body,
+                    'data'  => $pushData,
+                ];
+                $meta[] = $token->id;
+            }
 
-                    if ($result['success'] ?? false) {
-                        $sent++;
-                        $token->markNotified();
-                        if ($token->failed_attempts > 0) {
-                            $token->resetFailedAttempts();
-                        }
-                    } else {
-                        $failed++;
-                        $token->incrementFailedAttempts();
-                    }
-                } catch (\Throwable $e) {
-                    $failed++;
-                    Log::error("GuestMassNotificationJob: send failed for guest token {$token->id}: " . $e->getMessage());
+            if (empty($items)) {
+                return;
+            }
+
+            $report = $firebase->sendBatch($items);
+
+            $sentIds = [];
+            $failIds = [];
+            foreach ($items as $idx => $item) {
+                if ($report['results'][$item['token']] ?? false) {
+                    $sentIds[] = $meta[$idx];
+                } else {
+                    $failIds[] = $meta[$idx];
                 }
             }
 
-            $batch->increment('sent_count', $sent);
-            $batch->increment('failed_count', $failed);
-        });
+            if ($sentIds) {
+                GuestNotificationToken::whereIn('id', $sentIds)->update([
+                    'last_notified_at' => now(),
+                    'failed_attempts'  => 0,
+                    'last_failed_at'   => null,
+                ]);
+            }
+            if ($failIds) {
+                GuestNotificationToken::whereIn('id', $failIds)->update([
+                    'failed_attempts' => DB::raw('failed_attempts + 1'),
+                    'last_failed_at'  => now(),
+                ]);
+            }
+            if (!empty($report['invalid_tokens'])) {
+                GuestNotificationToken::whereIn('fcm_token', array_unique($report['invalid_tokens']))
+                    ->update(['is_active' => false]);
+            }
+
+            $batch->increment('sent_count', count($sentIds));
+            $batch->increment('failed_count', count($failIds));
+        }, 'id', 'id');
 
         $this->finish($batch);
     }
@@ -149,5 +180,18 @@ class GuestMassNotificationJob implements ShouldQueue
             'sent' => $batch->fresh()->sent_count,
             'failed' => $batch->fresh()->failed_count,
         ]);
+    }
+
+    /** Never leave the batch stuck on 'processing' if the job throws. */
+    public function failed(\Throwable $e): void
+    {
+        $batch = NotificationBatch::find($this->batchId);
+
+        if ($batch && in_array($batch->audience, ['guests', 'both'], true)
+            && !in_array($batch->status, ['completed', 'cancelled'], true)) {
+            $batch->update(['status' => 'failed']);
+        }
+
+        Log::error("GuestMassNotificationJob: batch {$this->batchId} failed: " . $e->getMessage());
     }
 }
