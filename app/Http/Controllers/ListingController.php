@@ -4841,6 +4841,58 @@ class ListingController extends Controller
     }
 
     /**
+     * A published listing of the current seller, in the same shape as getDraftListingById,
+     * so the web posting wizard can open it pre-filled for editing (saved via editListing).
+     * GET /api/listings/{id}/for-edit
+     */
+    public function getListingForEdit($id)
+    {
+        $sellerId = Auth::id();
+        if (!$sellerId) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $listing = Listing::with([
+            'images',
+            'category',
+            'country',
+            'city',
+            'motorcycle.brand',
+            'motorcycle.model',
+            'motorcycle.year',
+            'motorcycle.type',
+            'sparePart.bikePartBrand',
+            'sparePart.bikePartCategory',
+            'sparePart.motorcycles.brand',
+            'sparePart.motorcycles.model',
+            'sparePart.motorcycles.year',
+            'licensePlate.format',
+            'licensePlate.country',
+            'licensePlate.city',
+            'licensePlate.fieldValues.formatField',
+        ])
+            ->where('id', $id)
+            ->where('seller_id', $sellerId)
+            ->where('status', 'published')
+            ->first();
+
+        if (!$listing) {
+            return response()->json(['message' => 'Listing not found, not published, or access denied'], 404);
+        }
+
+        return response()->json([
+            'message' => 'Listing fetched successfully',
+            'data' => $listing,
+            'edit' => [
+                'edit_count' => (int) $listing->edit_count,
+                'max_edits_allowed' => 3,
+                'edits_remaining' => max(0, 3 - (int) $listing->edit_count),
+                'can_edit' => (int) $listing->edit_count < 3,
+            ],
+        ], 200);
+    }
+
+    /**
      * Summary of getDraftListingById
      * swagger get
      * @OA\Get(

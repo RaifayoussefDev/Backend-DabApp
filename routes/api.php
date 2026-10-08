@@ -1147,6 +1147,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('pricing', [ListingController::class, 'getPriceByModelId']);
     Route::put('/listings/edit/{id}', [ListingController::class, 'editListing']);
     Route::get('/listings/{id}/edit-status', [ListingController::class, 'checkEditStatus']);
+    Route::get('/listings/{id}/for-edit', [ListingController::class, 'getListingForEdit'])->whereNumber('id');
 
     // ============================================
     // LISTING WITH AUCTION
