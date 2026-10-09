@@ -4841,6 +4841,127 @@ class ListingController extends Controller
     }
 
     /**
+     * "Similar listings" for a listing page: published listings of the same category, ranked by
+     * closeness — motorcycles: same model, then same brand, then same type, then the nearest year;
+     * spare parts: same part category, then same brand; plates: same city, then same format.
+     * Ties: same country first, then newest. Read-only, additive (the detail page used to show
+     * the latest listings of the category).
+     * GET /api/listings/{id}/similar?limit=4
+     */
+    public function getSimilar($id, Request $request)
+    {
+        $limit = max(1, min((int) $request->get('limit', 4), 12));
+
+        $source = Listing::with(['motorcycle.year', 'sparePart', 'licensePlate'])->find($id);
+        if (!$source) {
+            return response()->json(['message' => 'Listing not found', 'listings' => []], 404);
+        }
+
+        $query = Listing::query()
+            ->select('listings.*')
+            ->where('listings.category_id', $source->category_id)
+            ->where('listings.status', 'published')
+            ->where('listings.id', '!=', $source->id);
+
+        // Lexical priority (not a weighted score): a closer year never beats a matching brand.
+        $eq = fn (string $col, $value) => $value !== null
+            ? ['CASE WHEN ' . $col . ' = ? THEN 1 ELSE 0 END DESC', [$value]]
+            : null;
+        $orders = [];
+
+        if ($source->category_id == 1) {
+            $query->leftJoin('motorcycles as m', 'm.listing_id', '=', 'listings.id')
+                ->leftJoin('motorcycle_years as y', 'y.id', '=', 'm.year_id');
+            $moto = $source->motorcycle;
+            $orders[] = $eq('m.model_id', $moto?->model_id);
+            $orders[] = $eq('m.brand_id', $moto?->brand_id);
+            $orders[] = $eq('m.type_id', $moto?->type_id);
+            $year = $moto?->year?->year;
+            if ($year) {
+                // Listings without a year go after every dated one.
+                $orders[] = ['COALESCE(ABS(y.year - ?), 9999) ASC', [(int) $year]];
+            }
+        } elseif ($source->category_id == 2) {
+            $query->leftJoin('spare_parts as sp', 'sp.listing_id', '=', 'listings.id');
+            $orders[] = $eq('sp.bike_part_category_id', $source->sparePart?->bike_part_category_id);
+            $orders[] = $eq('sp.bike_part_brand_id', $source->sparePart?->bike_part_brand_id);
+        } elseif ($source->category_id == 3) {
+            $query->leftJoin('license_plates as lp', 'lp.listing_id', '=', 'listings.id');
+            $orders[] = $eq('lp.city_id', $source->licensePlate?->city_id);
+            $orders[] = $eq('lp.plate_format_id', $source->licensePlate?->plate_format_id);
+        }
+        $orders[] = $eq('listings.country_id', $source->country_id);
+
+        foreach (array_filter($orders) as [$sql, $bindings]) {
+            $query->orderByRaw($sql, $bindings);
+        }
+        $query->orderByDesc('listings.created_at');
+
+        $listings = $query->limit($limit)->get();
+        $listings->load([
+            'images' => fn ($q) => $q->select('listing_id', 'image_url')->orderBy('id', 'asc'),
+            'city:id,name',
+            'country:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol',
+            'motorcycle.brand:id,name',
+            'motorcycle.model:id,name',
+            'motorcycle.year:id,year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.country',
+            'licensePlate.fieldValues.formatField',
+        ]);
+
+        $formatted = $listings->map(function ($listing) {
+            $displayPrice = ($listing->allow_submission || $listing->auction_enabled) ? $listing->minimum_bid : $listing->price;
+            $row = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'price' => $listing->price ?? $listing->minimum_bid,
+                'display_price' => (string) ($displayPrice ?? 0),
+                'currency' => $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD',
+                'city' => $listing->city?->name,
+                'country' => $listing->country?->name,
+                'images' => $listing->images->pluck('image_url'),
+            ];
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                $row['motorcycle'] = [
+                    'brand' => $listing->motorcycle->brand?->name,
+                    'model' => $listing->motorcycle->model?->name,
+                    'year' => $listing->motorcycle->year?->year,
+                ];
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                $lp = $listing->licensePlate;
+                $row['license_plate'] = [
+                    'plate_format' => [
+                        'id' => $lp->format?->id,
+                        'name' => $lp->format?->name,
+                        'pattern' => $lp->format?->pattern,
+                        'country' => $lp->format?->country,
+                    ],
+                    'city' => $lp->city?->name,
+                    'country' => $lp->country?->name,
+                    'country_id' => $lp->country_id,
+                    'fields' => $lp->fieldValues->map(fn ($fv) => [
+                        'field_id' => $fv->formatField?->id,
+                        'field_name' => $fv->formatField?->field_name,
+                        'field_position' => $fv->formatField?->position,
+                        'field_type' => $fv->formatField?->field_type,
+                        'field_label' => $fv->formatField?->field_label,
+                        'is_required' => $fv->formatField?->is_required,
+                        'max_length' => $fv->formatField?->max_length,
+                        'validation_pattern' => $fv->formatField?->validation_pattern,
+                        'value' => $fv->field_value,
+                    ])->toArray(),
+                ];
+            }
+            return $row;
+        });
+
+        return response()->json(['listings' => $formatted->values()]);
+    }
+
+    /**
      * A published listing of the current seller, in the same shape as getDraftListingById,
      * so the web posting wizard can open it pre-filled for editing (saved via editListing).
      * GET /api/listings/{id}/for-edit

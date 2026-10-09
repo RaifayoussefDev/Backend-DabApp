@@ -14787,6 +14787,174 @@
                 ]
             }
         },
+        "/api/admin/motorcycle-imports": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Import"
+                ],
+                "operationId": "7e08bd4311899936711b1faf86b060d1",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import history"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Import"
+                ],
+                "summary": "Upload the spreadsheet and start the import in background.",
+                "description": "Existing motorcycles (matched by Make + Model + Year) are updated when a\nvalue changed, new ones are inserted. Nothing is ever deleted.",
+                "operationId": "ebf659360c1d212cc4929fd61a49ce1f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file",
+                                    "default_type_id"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": ".xlsx or .csv, max 100MB",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "default_type_id": {
+                                        "description": "Type given to NEW models (the sheet has no category column)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "Import queued"
+                    },
+                    "409": {
+                        "description": "Another import is already running"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-imports/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Motorcycle Import"
+                ],
+                "operationId": "31e675826483432389a38faed237eb20",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import status, counters and row errors"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-imports/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Import"
+                ],
+                "operationId": "b6473e2996e759adc7046fbe69bdb82c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import cancelled (rows already committed stay)"
+                    },
+                    "422": {
+                        "description": "Import is not running"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/motorcycle-imports/{id}/resume": {
+            "post": {
+                "tags": [
+                    "Admin Motorcycle Import"
+                ],
+                "summary": "Restart a failed/cancelled import from its last checkpoint.",
+                "operationId": "dae718b72f5b9a4507255acea086b38d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import resumed"
+                    },
+                    "422": {
+                        "description": "Import cannot be resumed"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/poi-tags": {
             "get": {
                 "tags": [
@@ -33024,6 +33192,10 @@
         {
             "name": "Admin - Guide Tags",
             "description": "API Endpoints pour l'administration des tags de guides"
+        },
+        {
+            "name": "Admin Motorcycle Import",
+            "description": "Bulk upsert of the motorcycle catalog (brands / models / years / specs) from the scraper spreadsheet. Runs in background chunks; poll the import for progress."
         },
         {
             "name": "Admin - POI Tags",

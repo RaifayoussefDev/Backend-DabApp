@@ -404,6 +404,13 @@ Route::prefix('admin')->group(function () {
         Route::get('/motorcycle-models/stats/overview', [AdminMotorcycleModelController::class, 'stats']);
         Route::apiResource('motorcycle-models', AdminMotorcycleModelController::class)->names('admin.motorcycle-models');
 
+        // Motorcycle catalog bulk import (background, chunked)
+        Route::get('/motorcycle-imports', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'index']);
+        Route::post('/motorcycle-imports', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'store']);
+        Route::get('/motorcycle-imports/{id}', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'show'])->whereNumber('id');
+        Route::post('/motorcycle-imports/{id}/cancel', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'cancel'])->whereNumber('id');
+        Route::post('/motorcycle-imports/{id}/resume', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'resume'])->whereNumber('id');
+
         // Bike Part Brands
         Route::get('/bike-part-brands/stats/overview', [AdminBikePartBrandController::class, 'stats']);
         Route::apiResource('bike-part-brands', AdminBikePartBrandController::class)->names('admin.bike-part-brands');
@@ -646,6 +653,7 @@ Route::prefix('comparison/motorcycles')->group(function () {
 // LISTINGS (PUBLIC)
 // ============================================
 Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
+Route::get('/listings/{id}/similar', [ListingController::class, 'getSimilar'])->whereNumber('id');
 Route::get('/listings/{id}/pdf', [ListingController::class, 'generatePdf']); // PDF Route
 Route::get('/listings/search-by-model', [ListingController::class, 'searchByCategoryAndModel']);
 Route::get('/recent', [ListingController::class, 'getRecentListings']);
