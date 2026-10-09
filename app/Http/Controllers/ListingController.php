@@ -4882,10 +4882,28 @@ class ListingController extends Controller
                 $orders[] = ['COALESCE(ABS(y.year - ?), 9999) ASC', [(int) $year]];
             }
         } elseif ($source->category_id == 2) {
+            // Spare parts: same part category, then parts that fit the same motorcycle model,
+            // then the same motorcycle brand, then the same part brand.
             $query->leftJoin('spare_parts as sp', 'sp.listing_id', '=', 'listings.id');
-            $orders[] = $eq('sp.bike_part_category_id', $source->sparePart?->bike_part_category_id);
-            $orders[] = $eq('sp.bike_part_brand_id', $source->sparePart?->bike_part_brand_id);
+            $part = $source->sparePart;
+            $fits = $part ? $part->motorcycles()->get(['brand_id', 'model_id']) : collect();
+            $fitsAny = function (string $col, $ids) {
+                $ids = collect($ids)->filter()->unique()->values()->all();
+                if (!$ids) {
+                    return null;
+                }
+                $in = implode(',', array_fill(0, count($ids), '?'));
+                return [
+                    "EXISTS (SELECT 1 FROM spare_part_motorcycles spm WHERE spm.spare_part_id = sp.id AND spm.$col IN ($in)) DESC",
+                    $ids,
+                ];
+            };
+            $orders[] = $eq('sp.bike_part_category_id', $part?->bike_part_category_id);
+            $orders[] = $fitsAny('model_id', $fits->pluck('model_id'));
+            $orders[] = $fitsAny('brand_id', $fits->pluck('brand_id'));
+            $orders[] = $eq('sp.bike_part_brand_id', $part?->bike_part_brand_id);
         } elseif ($source->category_id == 3) {
+            // Plates: same city, then the same plate format.
             $query->leftJoin('license_plates as lp', 'lp.listing_id', '=', 'listings.id');
             $orders[] = $eq('lp.city_id', $source->licensePlate?->city_id);
             $orders[] = $eq('lp.plate_format_id', $source->licensePlate?->plate_format_id);
