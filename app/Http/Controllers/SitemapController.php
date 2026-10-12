@@ -64,9 +64,9 @@ class SitemapController extends Controller
 
             $guides = Guide::query()
                 ->where('status', 'published')
-                ->select('id', 'updated_at')
+                ->select('id', 'slug', 'updated_at')
                 ->get()
-                ->map(fn ($g) => ['id' => $g->id, 'updated_at' => $g->updated_at?->toAtomString()]);
+                ->map(fn ($g) => ['id' => $g->id, 'slug' => $g->slug, 'updated_at' => $g->updated_at?->toAtomString()]);
 
             return compact('listings', 'trainers', 'courses', 'guides');
         });
