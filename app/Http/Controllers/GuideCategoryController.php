@@ -43,7 +43,7 @@ class GuideCategoryController extends Controller
      */
     public function index()
     {
-        $categories = GuideCategory::withCount('guides')->get()->map(function ($category) {
+        $categories = GuideCategory::withCount(['guides' => fn ($q) => $q->where('status', 'published')->whereNotNull('published_at')->where('published_at', '<=', now())])->get()->map(function ($category) {
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -212,7 +212,7 @@ class GuideCategoryController extends Controller
      */
     public function show($id)
     {
-        $category = GuideCategory::withCount('guides')->find($id);
+        $category = GuideCategory::withCount(['guides' => fn ($q) => $q->where('status', 'published')->whereNotNull('published_at')->where('published_at', '<=', now())])->find($id);
 
         if (!$category) {
             return response()->json([

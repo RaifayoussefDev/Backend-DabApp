@@ -64,9 +64,12 @@ class GuideController extends Controller
 
         if ($request->has('search')) {
             $search = $request->search;
+            // Arabic fields too — an Arabic query (e.g. "خوذة") used to find nothing.
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('excerpt', 'like', "%{$search}%");
+                    ->orWhere('excerpt', 'like', "%{$search}%")
+                    ->orWhere('title_ar', 'like', "%{$search}%")
+                    ->orWhere('excerpt_ar', 'like', "%{$search}%");
             });
         }
 
@@ -985,6 +988,25 @@ class GuideController extends Controller
     }
 
     // Helper methods
+
+    /**
+     * Minutes to read one language version: words in the body + section titles/descriptions,
+     * at 200 words a minute, rounded up (min 1). Counts on whitespace, so it works for Arabic.
+     */
+    private function readingMinutes($guide, bool $ar): int
+    {
+        $text = (string) ($ar ? ($guide->content_ar ?: $guide->content) : ($guide->content ?: $guide->content_ar));
+        if ($guide->relationLoaded('sections')) {
+            foreach ($guide->sections as $section) {
+                $text .= ' ' . ($ar ? ($section->title_ar ?: $section->title) : ($section->title ?: $section->title_ar));
+                $text .= ' ' . ($ar ? ($section->description_ar ?: $section->description) : ($section->description ?: $section->description_ar));
+            }
+        }
+        $plain = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($text), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $words = $plain === '' ? 0 : count(preg_split('/\s+/u', $plain));
+        return max(1, (int) ceil($words / 200));
+    }
+
     private function formatGuideList($guide, $user)
     {
         $isLiked = false;
@@ -1004,6 +1026,8 @@ class GuideController extends Controller
             'excerpt_ar' => $guide->excerpt_ar,
             'featured_image' => $guide->featured_image,
             'views_count' => $guide->views_count,
+            'reading_minutes' => $this->readingMinutes($guide, false),
+            'reading_minutes_ar' => $this->readingMinutes($guide, true),
             'likes_count' => $guide->likes()->count(),
             'comments_count' => $guide->allComments()->count(),
             'is_featured' => $guide->is_featured,
@@ -1047,14 +1071,17 @@ class GuideController extends Controller
             'content_ar' => $guide->content_ar,
             'featured_image' => $guide->featured_image,
             'views_count' => $guide->views_count,
+            'reading_minutes' => $this->readingMinutes($guide, false),
+            'reading_minutes_ar' => $this->readingMinutes($guide, true),
             'likes_count' => $guide->likes()->count(),
             'comments_count' => $guide->allComments()->count(),
             'is_featured' => $guide->is_featured,
             'published_at' => $guide->published_at->format('Y-m-d H:i:s'),
+            // Public payload: never the author's email (it leaked a personal address on every
+            // article). Same author fields as the list format.
             'author' => [
                 'id' => $guide->author->id,
                 'name' => $guide->author->first_name . ' ' . $guide->author->last_name,
-                'email' => $guide->author->email,
                 'profile_picture' => $guide->author->profile_picture,
             ],
             'category' => $guide->category ? [
