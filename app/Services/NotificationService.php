@@ -57,7 +57,7 @@ class NotificationService
         $rendered = $template->render($data, $language);
 
         // Extraire les informations d'entité depuis les options ou data
-        $entityInfo = $this->extractEntityInfo($data, $options);
+        $entityInfo = $this->extractEntityInfo($data, $options, $type);
 
         // Créer la notification en BDD
         $notification = Notification::create([
@@ -126,7 +126,7 @@ class NotificationService
     /**
      * Extraire les informations d'entité depuis les données
      */
-    protected function extractEntityInfo(array $data, array $options): array
+    protected function extractEntityInfo(array $data, array $options, ?string $type = null): array
     {
         $entityInfo = [
             'entity_type' => null,
@@ -167,10 +167,120 @@ class NotificationService
             }
         }
 
-        // Action URL personnalisée ou auto-générée
-        $entityInfo['action_url'] = $data['action_url'] ?? $options['action_url'] ?? null;
+        // Action URL personnalisée, sinon deep link par type
+        $entityInfo['action_url'] = $data['action_url']
+            ?? $options['action_url']
+            ?? ($type ? $this->deepLinkFor($type, $data, $options['entity'] ?? null) : null);
 
         return $entityInfo;
+    }
+
+    /**
+     * Deep link per notification type — the same paths as the website router
+     * (/listings/:id, /guides/:slug, /trainers/:id, /profile/...), so web and
+     * mobile can share one mapping. {placeholders} are filled from $data.
+     */
+    public const DEEP_LINKS = [
+        // Listings & payment
+        'listing_created'          => '/profile/draft-posting-ads',
+        'listing_approved'         => '/listings/{listing_id}',
+        'listing_rejected'         => '/profile/my-ads',
+        'listing_updated'          => '/listings/{listing_id}',
+        'listing_sold'             => '/listings/{listing_id}',
+        'listing_follow_up'        => '/profile/my-ads',
+        'listing_message'          => '/listings/{listing_id}',
+        'new_listing_in_city'      => '/listings/{listing_id}',
+        'payment_failed'           => '/profile/draft-posting-ads',
+        'payment_success'          => '/profile/my-ads',
+        // Soom — the seller manages offers in the soom box, buyers go back to the listing
+        'soom_new_negotiation'     => '/profile/soom-box',
+        'soom_bid'                 => '/profile/soom-box',
+        'soom_outbid'              => '/listings/{listing_id}',
+        'soom_accepted'            => '/listings/{listing_id}',
+        'soom_rejected'            => '/listings/{listing_id}',
+        'soom_won'                 => '/listings/{listing_id}',
+        'soom_lost'                => '/listings/{listing_id}',
+        'soom_ending_soon'         => '/listings/{listing_id}',
+        'soom_created_by_admin'    => '/listings/{listing_id}',
+        // Guides
+        'guide_new_like'           => '/guides/{guide_slug}',
+        'guide_new_bookmark'       => '/guides/{guide_slug}',
+        'guide_new_comment'        => '/guides/{guide_slug}',
+        'guide_submitted'          => '/guides/{guide_slug}',
+        'guide_published'          => '/guides/{guide_slug}',
+        'guide_updated'            => '/guides/{guide_slug}',
+        'new_guide_published'      => '/guides/{guide_slug}',
+        // Events
+        'event_created'            => '/events/{event_id}',
+        'event_published'          => '/events/{event_id}',
+        'event_updated'            => '/events/{event_id}',
+        'event_reminder'           => '/events/{event_id}',
+        'event_starting_soon'      => '/events/{event_id}',
+        'event_cancelled'          => '/events/{event_id}',
+        'event_new_participant'    => '/events/{event_id}',
+        'event_registration_confirmed' => '/events/{event_id}',
+        // Trainer — the trainer's own space vs. the public profile / client bookings
+        'trainer_approved'                   => '/profile/trainer/dashboard',
+        'trainer_rejected'                   => '/profile/trainer/settings',
+        'trainer_suspended'                  => '/profile/trainer/settings',
+        'trainer_reactivated'                => '/profile/trainer/dashboard',
+        'trainer_review_approved'            => '/trainers/{trainer_id}',
+        'trainer_new_like'                   => '/trainers/{trainer_id}',
+        'trainer_new_favorite'               => '/trainers/{trainer_id}',
+        'trainer_new_comment'                => '/trainers/{trainer_id}',
+        'trainer_session_completed'          => '/trainers/my-bookings',
+        'trainer_booking_confirmed_by_admin' => '/trainers/my-bookings',
+        'trainer_booking_cancelled_by_admin' => '/trainers/my-bookings',
+        'trainer_course_booking_created'     => '/profile/trainer/courses',
+        'trainer_course_booking_completed'   => '/profile/my-courses',
+        'trainer_course_set_to_draft'        => '/profile/trainer/courses',
+        'trainer_payout_approved'            => '/profile/trainer/payouts',
+        'trainer_payout_rejected'            => '/profile/trainer/payouts',
+        'trainer_payout_paid'                => '/profile/trainer/payouts',
+        'new_trainer_in_city'                => '/trainers/{trainer_id}',
+        'new_course_in_city'                 => '/trainers/courses/{trainer_id}/{course_id}',
+        // POI / routes / reports
+        'poi_approved'             => '/pois/{poi_id}',
+        'poi_rejected'             => '/profile/my-pois',
+        'poi_nearby'               => '/pois/{poi_id}',
+        'route_approved'           => '/profile/my-routes',
+        'route_rejected'           => '/profile/my-routes',
+        'route_warning'            => '/map-guide',
+        'report_received'          => '/profile/home',
+        'report_status_updated'    => '/profile/home',
+        // Account / orders
+        'dealer_approved'          => '/profile/home',
+        'dealer_removed'           => '/profile/home',
+        'order_created'            => '/profile/orders',
+        'order_shipped'            => '/profile/orders',
+        'order_cancelled'          => '/profile/orders',
+        'order_status_confirmed'   => '/profile/orders',
+        'order_status_delivered'   => '/profile/orders',
+        'refund_processed'         => '/profile/orders',
+    ];
+
+    protected function deepLinkFor(string $type, array $data, $entity = null): ?string
+    {
+        $pattern = self::DEEP_LINKS[$type] ?? (str_starts_with($type, 'order_') ? '/profile/orders' : null);
+        if (!$pattern) {
+            return null;
+        }
+
+        // The linked model also provides its own id (e.g. a Listing → {listing_id})
+        if ($entity instanceof Model) {
+            $data[Str::snake(class_basename($entity)) . '_id'] ??= $entity->getKey();
+            if ($entity instanceof \App\Models\Guide) {
+                $data['guide_slug'] ??= $entity->slug;
+            }
+        }
+        if (str_contains($pattern, '{guide_slug}') && empty($data['guide_slug']) && !empty($data['guide_id'])) {
+            $data['guide_slug'] = \App\Models\Guide::whereKey($data['guide_id'])->value('slug');
+        }
+
+        $url = preg_replace_callback('/\{(\w+)\}/', fn ($m) => (string) ($data[$m[1]] ?? ''), $pattern);
+
+        // A missing id would give a broken link (/listings/) — better no link at all
+        return str_contains($url, '//') || str_ends_with($url, '/') ? null : $url;
     }
 
     /**
@@ -1187,6 +1297,7 @@ class NotificationService
                     try {
                         $this->sendToUser($user, 'new_course_in_city', [
                             'course_id' => $course->id,
+                            'trainer_id' => $course->trainer_id,
                             'course_title' => $course->title,
                             'city_name' => $location->city->name ?? 'Your City',
                             'city_name_ar' => $location->city->name_ar ?? $location->city->name ?? 'Your City',
@@ -1299,7 +1410,6 @@ class NotificationService
             'transfer_ref' => $payout->transfer_ref,
             // Always the website page, never the raw storage file directly — the trainer
             // views the receipt inside the site's own interface, not a bare file download.
-            'action_url'   => 'https://dabapp.co/profile/trainer/payouts',
         ], ['entity' => $payout, 'priority' => 'high']);
     }
 

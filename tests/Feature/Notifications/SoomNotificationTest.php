@@ -80,6 +80,10 @@ class SoomNotificationTest extends TestCase
         // soom_won used to render an empty title (it was given the Submission, not the Listing)
         $won = Notification::where('user_id', $buyerA->id)->where('type', 'soom_won')->first();
         $this->assertStringContainsString('Yamaha R1', $won->title . ' ' . $won->message);
+
+        // Deep links: buyer back to the listing, seller to the soom box
+        $this->assertSame("/listings/{$listing->id}", $won->action_url);
+        $this->assertSame('/profile/soom-box', Notification::where('user_id', $seller->id)->where('type', 'soom_new_negotiation')->value('action_url'));
     }
 
     public function test_posting_a_listing_notifies_once_per_stage(): void

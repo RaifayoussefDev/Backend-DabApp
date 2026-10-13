@@ -201,6 +201,7 @@ class GuideCommentController extends Controller
         try {
             if ($guide->author_id !== Auth::id()) {
                 $this->notificationService->sendToUser($guide->author, 'guide_new_comment', [
+                    'guide_id' => $guide->id,
                     'user_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
                     'guide_title' => $guide->title
                 ]);

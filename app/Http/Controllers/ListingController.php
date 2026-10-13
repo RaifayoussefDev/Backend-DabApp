@@ -2116,6 +2116,7 @@ class ListingController extends Controller
 
             try {
                 $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
+                    'listing_id' => $listing->id,
                     'listing_title' => $listing->title,
                 ]);
             } catch (\Exception $e) {

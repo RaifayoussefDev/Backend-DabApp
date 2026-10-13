@@ -81,6 +81,14 @@ class NotificationCoverageTest extends TestCase
         $this->assertSame([], $blocked);
     }
 
+    public function test_every_sent_type_has_a_deep_link(): void
+    {
+        // Admin broadcasts carry the URL the admin typed in
+        $types = array_diff(self::SENT_TYPES, ['admin_broadcast', 'new_report']);
+
+        $this->assertSame([], array_values(array_diff($types, array_keys(NotificationService::DEEP_LINKS))));
+    }
+
     public function test_opt_in_broadcasts_stay_off_by_default(): void
     {
         $prefs = NotificationPreference::forUser($this->userWithoutPreferences());
@@ -138,6 +146,7 @@ class NotificationCoverageTest extends TestCase
         $listing->update(['status' => 'published']);
 
         $this->assertSame(1, Notification::where('user_id', $seller->id)->where('type', 'listing_approved')->count());
+        $this->assertSame("/listings/{$listing->id}", Notification::where('user_id', $seller->id)->where('type', 'listing_approved')->value('action_url'));
     }
 
     public function test_payment_failure_notifies_once(): void
@@ -195,6 +204,7 @@ class NotificationCoverageTest extends TestCase
 
         $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_bookmark')->count());
         $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_like')->count());
+        $this->assertSame("/guides/{$guide->slug}", Notification::where('user_id', $author->id)->where('type', 'guide_new_like')->value('action_url'));
     }
 
     public function test_trainer_like_favorite_and_approved_comment_notify_the_trainer(): void
@@ -226,6 +236,7 @@ class NotificationCoverageTest extends TestCase
 
         foreach (['trainer_new_like', 'trainer_new_favorite', 'trainer_new_comment'] as $type) {
             $this->assertSame(1, Notification::where('user_id', $trainerUser->id)->where('type', $type)->count(), $type);
+            $this->assertSame("/trainers/{$trainer->id}", Notification::where('user_id', $trainerUser->id)->where('type', $type)->value('action_url'), $type);
         }
     }
 }
