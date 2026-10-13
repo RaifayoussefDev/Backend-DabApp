@@ -235,7 +235,6 @@ class NotificationPreference extends Model
             // Listing lifecycle check-in — reuse the listing_sold preference toggle
             'listing_follow_up'                  => 'listing_sold',
             // Soom
-            'soom_bid'                           => 'bid_placed',
             'soom_outbid'                        => 'bid_outbid',
             'soom_won'                           => 'soom_accepted',
             'soom_lost'                          => 'bid_rejected',

@@ -194,7 +194,6 @@ class NotificationService
         'payment_success'          => '/profile/my-ads',
         // Soom — the seller manages offers in the soom box, buyers go back to the listing
         'soom_new_negotiation'     => '/profile/soom-box',
-        'soom_bid'                 => '/profile/soom-box',
         'soom_outbid'              => '/listings/{listing_id}',
         'soom_accepted'            => '/listings/{listing_id}',
         'soom_rejected'            => '/listings/{listing_id}',
@@ -249,7 +248,7 @@ class NotificationService
         'report_received'          => '/profile/home',
         'report_status_updated'    => '/profile/home',
         // Account / orders
-        'dealer_approved'          => '/profile/home',
+        'dealer_approved'          => '/profile/my-pois',
         'dealer_removed'           => '/profile/home',
         'order_created'            => '/profile/orders',
         'order_shipped'            => '/profile/orders',
@@ -819,22 +818,7 @@ class NotificationService
     }
 
     // ==================== SOOM (ENCHÈRES) ====================
-
-    /**
-     * Notification: Nouvelle enchère placée
-     */
-    public function notifySoomBid(User $user, $soom, $bidAmount, $bidder = null): array
-    {
-        return $this->sendToUser($user, 'soom_bid', [
-            'soom_id' => $soom->id,
-            'soom_title' => $soom->title,
-            'bid_amount' => $bidAmount,
-            'bidder_name' => $bidder ? $bidder->full_name : 'Un enchérisseur',
-        ], [
-            'entity' => $soom,
-            'priority' => 'high',
-        ]);
-    }
+    // A new offer notifies the seller with 'soom_new_negotiation' (SoomController::createSoom).
 
     /**
      * Notification: Dépassé dans une enchère

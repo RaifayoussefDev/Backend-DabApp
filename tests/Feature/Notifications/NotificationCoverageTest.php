@@ -41,7 +41,7 @@ class NotificationCoverageTest extends TestCase
         'payment_failed', 'payment_success', 'refund_processed',
         'poi_approved', 'poi_rejected', 'route_approved', 'route_rejected', 'route_warning',
         'report_received', 'report_status_updated',
-        'soom_accepted', 'soom_bid', 'soom_created_by_admin', 'soom_ending_soon', 'soom_lost',
+        'soom_accepted', 'soom_created_by_admin', 'soom_ending_soon', 'soom_lost',
         'soom_new_negotiation', 'soom_outbid', 'soom_rejected', 'soom_won',
         'trainer_approved', 'trainer_booking_cancelled_by_admin', 'trainer_booking_confirmed_by_admin',
         'trainer_course_booking_completed', 'trainer_course_booking_created', 'trainer_course_set_to_draft',

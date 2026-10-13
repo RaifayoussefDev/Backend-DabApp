@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Listing;
 use App\Models\Submission;
 use App\Models\AuctionHistory;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -1006,6 +1007,13 @@ class SoomController extends Controller
             \App\Jobs\CloseListingAfterSale::dispatch($submission->listing_id)->delay(now()->addDays(5));
 
             // MAINTENANT rejeter tous les autres SOOMs pending pour ce listing
+            $losingUserIds = Submission::where('listing_id', $submission->listing_id)
+                ->where('id', '!=', $submissionId)
+                ->where('status', 'pending')
+                ->where('user_id', '!=', $submission->user_id)
+                ->distinct()
+                ->pluck('user_id');
+
             Submission::where('listing_id', $submission->listing_id)
                 ->where('id', '!=', $submissionId)
                 ->where('status', 'pending')
@@ -1081,6 +1089,15 @@ class SoomController extends Controller
                     $this->notificationService->notifyListingSold($seller, $submission->listing);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send listing_sold notification: ' . $e->getMessage());
+                }
+            }
+
+            // Other bidders whose pending offers were just closed
+            foreach (User::whereIn('id', $losingUserIds)->get() as $loser) {
+                try {
+                    $this->notificationService->notifySoomLost($loser, $submission->listing);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send soom_lost notification: ' . $e->getMessage());
                 }
             }
 
