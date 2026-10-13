@@ -220,9 +220,9 @@ class NotificationCoverageTest extends TestCase
 
         $comment = TrainerComment::where('trainer_id', $trainer->id)->firstOrFail();
         $admin = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
-        $adminHeaders = ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)];
-        $this->withHeaders($adminHeaders)->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
-        $this->withHeaders($adminHeaders)->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
+        // actingAs, not a bearer header: the JWT guard would keep the fan from the requests above
+        $this->actingAs($admin, 'api')->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
+        $this->actingAs($admin, 'api')->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
 
         foreach (['trainer_new_like', 'trainer_new_favorite', 'trainer_new_comment'] as $type) {
             $this->assertSame(1, Notification::where('user_id', $trainerUser->id)->where('type', $type)->count(), $type);

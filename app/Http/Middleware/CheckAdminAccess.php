@@ -29,7 +29,7 @@ class CheckAdminAccess
         }
 
         // Block regular users (role_id = 2) from admin panel
-        if ($user->role_id === 2) {
+        if ((int) $user->role_id === 2) {
             return response()->json([
                 'success' => false,
                 'message' => 'Access denied - Admin privileges required'

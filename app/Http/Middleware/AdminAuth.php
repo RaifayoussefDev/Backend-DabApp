@@ -41,14 +41,15 @@ class AdminAuth
                 return response()->json(['error' => 'User account is inactive'], 403);
             }
 
-            // ✅ OPTIONNEL : Vérifier si l'utilisateur est admin (décommente si nécessaire)
-            // if (!$user->is_admin) {
-            //     Log::warning('AdminAuth: Non-admin user attempted access', [
-            //         'user_id' => $user->id,
-            //         'email' => $user->email
-            //     ]);
-            //     return response()->json(['error' => 'Access denied. Admin privileges required.'], 403);
-            // }
+            // ✅ Regular app users (role 2) never get into the admin API.
+            // Panel roles: 1 admin, 3 Manager, 7 dashboard.
+            if ((int) $user->role_id === 2) {
+                Log::warning('AdminAuth: Non-admin user attempted access', [
+                    'user_id' => $user->id,
+                    'path' => $request->path(),
+                ]);
+                return response()->json(['error' => 'Access denied. Admin privileges required.'], 403);
+            }
 
             // ✅ Attacher l'utilisateur authentifié à la requête
             $request->setUserResolver(function () use ($user) {
