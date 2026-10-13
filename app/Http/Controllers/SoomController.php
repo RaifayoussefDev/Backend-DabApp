@@ -294,7 +294,7 @@ class SoomController extends Controller
             }
 
             // Tell the previous top bidder they've been outbid
-            if ($highestSubmission && $highestSubmission->user_id != $userId && $highestSubmission->user) {
+            if ($highestSubmission &&$highestSubmission->user_id != $userId && $highestSubmission->user) {
                 try {
                     $this->notificationService->notifySoomOutbid($highestSubmission->user, $listing, $request->amount);
                 } catch (\Exception $e) {
@@ -609,15 +609,20 @@ class SoomController extends Controller
                 $emails = [$submission->user->email, $seller->email];
                 Mail::to($emails)->send(new SoomAcceptedMail($submission, $submission->listing, $seller));
                 \Log::info('SOOM accepted email sent successfully to both parties: ' . implode(', ', $emails));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
+            }
 
-                // Send Notification to Buyer
+            // Separate from the email so an SMTP failure / missing email doesn't swallow the push
+            try {
                 $this->notificationService->sendToUser($submission->user, 'soom_accepted', [
+                    'listing_id' => $submission->listing_id,
                     'listing_title' => $submission->listing->title,
                     'amount' => $submission->amount,
                     'currency' => 'AED' // Should be dynamic
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send SOOM accepted email: ' . $e->getMessage());
+                \Log::error('Failed to send SOOM accepted notification: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -796,14 +801,18 @@ class SoomController extends Controller
             $seller = Auth::user();
             try {
                 Mail::to($submission->user->email)->send(new SoomRejectedMail($submission, $submission->listing, $seller, $request->reason));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM rejected email: ' . $e->getMessage());
+            }
 
-                // Send Notification to Buyer
+            try {
                 $this->notificationService->sendToUser($submission->user, 'soom_rejected', [
+                    'listing_id' => $submission->listing_id,
                     'listing_title' => $submission->listing->title,
                     'reason' => $request->reason ?? 'No reason provided'
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send SOOM rejected email/notification: ' . $e->getMessage());
+                \Log::error('Failed to send SOOM rejected notification: ' . $e->getMessage());
             }
 
             DB::commit();
@@ -1051,39 +1060,28 @@ class SoomController extends Controller
                 \Log::info('Email sent successfully to buyer: ' . $buyer->email);
 
                 \log::info('=== SALE VALIDATION EMAILS SENT SUCCESSFULLY ===');
-
-                // ==========================================
-                // SEND NOTIFICATIONS (PUSH + IN-APP)
-                // ==========================================
-
-                // 1. Notify Buyer (Soom Won)
-                try {
-                    $this->notificationService->notifySoomWon(
-                        $buyer,
-                        $submission->listing,
-                        $submission->amount
-                    );
-                    \Log::info('Notification sent to buyer');
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send notification to buyer: ' . $e->getMessage());
-                }
-
-                // 2. Notify Seller (Listing Sold)
-                try {
-                    $this->notificationService->notifyListingSold(
-                        $seller,
-                        $submission->listing
-                    );
-                    \Log::info('Notification sent to seller');
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send notification to seller: ' . $e->getMessage());
-                }
             } catch (\Exception $e) {
                 \Log::error('=== SALE VALIDATION EMAIL ERROR ===');
                 \Log::error('Error message: ' . $e->getMessage());
                 \Log::error('Error file: ' . $e->getFile());
                 \Log::error('Error line: ' . $e->getLine());
                 \Log::error('Stack trace: ' . $e->getTraceAsString());
+            }
+
+            // Push + in-app — outside the email block, which throws when an email is missing
+            if ($buyer) {
+                try {
+                    $this->notificationService->notifySoomWon($buyer, $submission->listing, $submission->amount);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send soom_won notification: ' . $e->getMessage());
+                }
+            }
+            if ($seller) {
+                try {
+                    $this->notificationService->notifyListingSold($seller, $submission->listing);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send listing_sold notification: ' . $e->getMessage());
+                }
             }
 
             DB::commit();
@@ -1787,6 +1785,28 @@ class SoomController extends Controller
                 ->first();
 
             DB::commit();
+
+            // Raised offer: tell the seller, and the previous top bidder if they're now outbid
+            $listing = $submission->listing;
+            $buyer = $submission->user;
+            try {
+                if ($listing->seller) {
+                    $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
+                        'listing_id' => $listing->id,
+                        'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
+                        'listing_title' => $listing->title,
+                        'amount' => $request->amount,
+                    ]);
+                }
+                if ($highestOtherSubmission
+                    && $highestOtherSubmission->user_id != $submission->user_id
+                    && $previousAmount <= $highestOtherSubmission->amount
+                    && $highestOtherSubmission->user) {
+                    $this->notificationService->notifySoomOutbid($highestOtherSubmission->user, $listing, $request->amount);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM edit notifications: ' . $e->getMessage());
+            }
 
             return response()->json([
                 'message' => 'SOOM updated successfully',

@@ -1082,13 +1082,16 @@ class ListingController extends Controller
 
             DB::commit();
 
-            // Notify User
-            try {
-                app(NotificationService::class)->sendToUser(Auth::user(), 'listing_created', [
-                    'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send listing_created notification: ' . $e->getMessage());
+            // Notify User — once, when the draft is first created (not on every step save)
+            if ($listing->wasRecentlyCreated) {
+                try {
+                    app(NotificationService::class)->sendToUser(Auth::user(), 'listing_created', [
+                        'listing_id' => $listing->id,
+                        'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send listing_created notification: ' . $e->getMessage());
+                }
             }
 
             return response()->json([
@@ -1457,16 +1460,8 @@ class ListingController extends Controller
             }
 
             // ✅ Simple mise à jour sans paiement (step 1 & 2)
+            // No notification while the seller is still filling in the draft
             DB::commit();
-
-            // Notify User
-            try {
-                $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
-                    'listing_title' => $listing->title ?? 'Updated Listing / إعلان محدث',
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
-            }
 
             return response()->json([
                 'success' => true,
