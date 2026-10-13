@@ -3,6 +3,7 @@
 namespace Tests\Feature\Notifications;
 
 use App\Models\Event;
+use App\Models\Guide;
 use App\Models\Listing;
 use App\Models\Notification;
 use App\Models\NotificationPreference;
@@ -14,6 +15,7 @@ use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
  * Guards the notifications audit (2026-10-13): types the code sends used to be
@@ -167,5 +169,28 @@ class NotificationCoverageTest extends TestCase
             'related_entity_type' => Event::class,
             'related_entity_id' => $event->id,
         ]);
+    }
+
+    /** The website uses the toggle endpoints, which used to skip the author notification. */
+    public function test_guide_toggle_bookmark_and_like_notify_the_author(): void
+    {
+        $author = $this->userWithoutPreferences();
+        $reader = User::factory()->create();
+        $guide = Guide::create([
+            'title' => 'Chain care',
+            'slug' => 'chain-care-' . uniqid(),
+            'content' => 'Clean, then lube.',
+            'author_id' => $author->id,
+            'status' => 'published',
+        ]);
+        $headers = ['Authorization' => 'Bearer ' . JWTAuth::fromUser($reader)];
+
+        $this->withHeaders($headers)->postJson("/api/guides/{$guide->id}/toggle-bookmark")->assertOk();
+        $this->withHeaders($headers)->postJson("/api/guides/{$guide->id}/toggle-like")->assertOk();
+        // Toggling off must not notify again
+        $this->withHeaders($headers)->postJson("/api/guides/{$guide->id}/toggle-bookmark")->assertOk();
+
+        $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_bookmark')->count());
+        $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_like')->count());
     }
 }
