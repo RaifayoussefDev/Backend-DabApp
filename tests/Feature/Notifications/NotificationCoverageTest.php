@@ -9,6 +9,8 @@ use App\Models\Notification;
 use App\Models\NotificationPreference;
 use App\Models\NotificationTemplate;
 use App\Models\Payment;
+use App\Models\Trainer;
+use App\Models\TrainerComment;
 use App\Models\User;
 use App\Services\EventNotificationService;
 use App\Services\NotificationService;
@@ -46,6 +48,7 @@ class NotificationCoverageTest extends TestCase
         'trainer_payout_approved', 'trainer_payout_paid', 'trainer_payout_rejected',
         'trainer_reactivated', 'trainer_rejected', 'trainer_review_approved',
         'trainer_session_completed', 'trainer_suspended',
+        'trainer_new_like', 'trainer_new_favorite', 'trainer_new_comment',
     ];
 
     protected function setUp(): void
@@ -192,5 +195,37 @@ class NotificationCoverageTest extends TestCase
 
         $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_bookmark')->count());
         $this->assertSame(1, Notification::where('user_id', $author->id)->where('type', 'guide_new_like')->count());
+    }
+
+    public function test_trainer_like_favorite_and_approved_comment_notify_the_trainer(): void
+    {
+        $trainerUser = $this->userWithoutPreferences();
+        $fan = User::factory()->create();
+        $trainer = Trainer::create([
+            'user_id' => $trainerUser->id, 'name' => 'Coach Test', 'specialty' => 'coaching',
+            'price_per_hour' => 150, 'status' => 'approved', 'is_available' => true,
+            'rating_average' => 0, 'total_sessions' => 0, 'likes_count' => 0, 'experience_years' => 5,
+        ]);
+        $headers = ['Authorization' => 'Bearer ' . JWTAuth::fromUser($fan)];
+
+        $this->withHeaders($headers)->postJson("/api/trainers/{$trainer->id}/like")->assertOk();
+        $this->withHeaders($headers)->postJson("/api/trainers/{$trainer->id}/favorite")->assertOk();
+        // Un-like / un-favorite must not notify
+        $this->withHeaders($headers)->postJson("/api/trainers/{$trainer->id}/like")->assertOk();
+        $this->withHeaders($headers)->postJson("/api/trainers/{$trainer->id}/favorite")->assertOk();
+
+        // Comments are moderated: nothing until an admin approves, and only once
+        $this->withHeaders($headers)->postJson("/api/trainers/{$trainer->id}/comments", ['content' => 'Great coach'])->assertCreated();
+        $this->assertSame(0, Notification::where('user_id', $trainerUser->id)->where('type', 'trainer_new_comment')->count());
+
+        $comment = TrainerComment::where('trainer_id', $trainer->id)->firstOrFail();
+        $admin = User::where('role_id', 1)->first() ?? User::factory()->create(['role_id' => 1]);
+        $adminHeaders = ['Authorization' => 'Bearer ' . JWTAuth::fromUser($admin)];
+        $this->withHeaders($adminHeaders)->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
+        $this->withHeaders($adminHeaders)->postJson("/api/admin/trainer-comments/{$comment->id}/approve")->assertOk();
+
+        foreach (['trainer_new_like', 'trainer_new_favorite', 'trainer_new_comment'] as $type) {
+            $this->assertSame(1, Notification::where('user_id', $trainerUser->id)->where('type', $type)->count(), $type);
+        }
     }
 }

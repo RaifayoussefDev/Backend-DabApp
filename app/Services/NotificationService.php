@@ -1330,4 +1330,33 @@ class NotificationService
             'reason'       => $reason,
         ], ['entity' => $course, 'priority' => 'high']);
     }
+
+    /** Someone liked the trainer's profile. */
+    public function notifyTrainerNewLike($trainer, User $liker): array
+    {
+        return $this->sendToUser($trainer->user, 'trainer_new_like', [
+            'trainer_id' => $trainer->id,
+            'user_name'  => trim($liker->first_name . ' ' . $liker->last_name),
+        ], ['entity' => $trainer, 'priority' => 'normal']);
+    }
+
+    /** Someone added the trainer to their favorites. */
+    public function notifyTrainerNewFavorite($trainer, User $user): array
+    {
+        return $this->sendToUser($trainer->user, 'trainer_new_favorite', [
+            'trainer_id' => $trainer->id,
+            'user_name'  => trim($user->first_name . ' ' . $user->last_name),
+        ], ['entity' => $trainer, 'priority' => 'normal']);
+    }
+
+    /** A comment on the trainer's profile went live (sent at admin approval, comments are moderated). */
+    public function notifyTrainerNewComment($trainer, User $author, $comment): array
+    {
+        return $this->sendToUser($trainer->user, 'trainer_new_comment', [
+            'trainer_id' => $trainer->id,
+            'comment_id' => $comment->id,
+            'user_name'  => trim($author->first_name . ' ' . $author->last_name),
+            'comment'    => \Illuminate\Support\Str::limit($comment->content, 80),
+        ], ['entity' => $trainer, 'priority' => 'normal']);
+    }
 }

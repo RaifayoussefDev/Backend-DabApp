@@ -275,6 +275,10 @@ class NotificationPreference extends Model
             'trainer_course_booking_created'     => 'system_updates',
             'trainer_course_booking_completed'   => 'system_updates',
             'trainer_course_set_to_draft'        => 'system_updates',
+            // Trainer profile engagement — same toggles as guide engagement
+            'trainer_new_like'                   => 'guide_like',
+            'trainer_new_favorite'               => 'guide_like',
+            'trainer_new_comment'                => 'guide_comment',
         ];
 
         $column = $map[$type] ?? (str_starts_with($type, 'order_') ? 'system_updates' : $type);

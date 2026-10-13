@@ -2362,37 +2362,6 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
     });
 });
 
-// ============================================================
-// DEV / TEST ONLY — REMOVE BEFORE PRODUCTION
-// ============================================================
-Route::delete('/dev/trainers/reset-all', function () {
-    DB::statement('SET FOREIGN_KEY_CHECKS=0');
-    // Clear all trainer data — keep trainer_levels and specialties (seed data)
-    DB::table('trainer_bookings')->truncate();
-    DB::table('trainer_payments')->truncate();
-    DB::table('trainer_payouts')->truncate();
-    DB::table('trainer_reviews')->truncate();
-    DB::table('trainer_comments')->truncate();
-    DB::table('trainer_favorites')->truncate();
-    DB::table('trainer_likes')->truncate();
-    DB::table('trainer_gallery')->truncate();
-    DB::table('trainer_schedules')->truncate();
-    DB::table('trainer_locations')->truncate();
-    DB::table('trainer_course_sessions')->truncate();
-    DB::table('trainer_courses')->truncate();
-    DB::table('trainer_training_bikes')->truncate();
-    DB::table('trainer_level_approvals')->truncate();
-    DB::table('trainer_specialty')->truncate();
-    DB::table('trainer_equipment')->truncate();
-    DB::table('trainers')->truncate();
-    DB::statement('SET FOREIGN_KEY_CHECKS=1');
-
-    return response()->json([
-        'success' => true,
-        'message' => 'All trainers and related data deleted. trainer_levels and specialties kept.',
-    ]);
-});
-
 // ============================================
 // MARKETPLACE (own file, own Swagger docs)
 // ============================================
