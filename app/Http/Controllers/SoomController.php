@@ -277,15 +277,29 @@ class SoomController extends Controller
             $buyer = Auth::user();
             try {
                 Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $buyer));
+            } catch (\Exception $e) {
+                \Log::error('Failed to send SOOM created email: ' . $e->getMessage());
+            }
 
-                // Send Notification to Seller
+            // Separate from the email so an SMTP failure doesn't swallow the push
+            try {
                 $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
+                    'listing_id' => $listing->id,
                     'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
                     'listing_title' => $listing->title,
                     'amount' => $request->amount, // ✅ Added amount
                 ]);
             } catch (\Exception $e) {
-                \Log::error('Failed to send SOOM created email/notification: ' . $e->getMessage());
+                \Log::error('Failed to send SOOM created notification: ' . $e->getMessage());
+            }
+
+            // Tell the previous top bidder they've been outbid
+            if ($highestSubmission && $highestSubmission->user_id != $userId && $highestSubmission->user) {
+                try {
+                    $this->notificationService->notifySoomOutbid($highestSubmission->user, $listing, $request->amount);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send SOOM outbid notification: ' . $e->getMessage());
+                }
             }
 
             DB::commit();
@@ -1046,7 +1060,7 @@ class SoomController extends Controller
                 try {
                     $this->notificationService->notifySoomWon(
                         $buyer,
-                        $submission,
+                        $submission->listing,
                         $submission->amount
                     );
                     \Log::info('Notification sent to buyer');

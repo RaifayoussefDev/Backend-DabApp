@@ -4,6 +4,7 @@ namespace App\Services\Assist;
 
 use App\Events\Assist\AssistRequestUpdated;
 use App\Mail\AssistanceMail;
+use App\Models\NotificationPreference;
 use App\Models\NotificationTemplate;
 use App\Models\User;
 use App\Models\Assist\AssistanceRequest;
@@ -111,8 +112,8 @@ class AssistNotificationService
             'is_read'    => false,
         ]);
 
-        $pref     = $user->notificationPreference;
-        $sendPush = $pref ? $pref->canSendPush() : true;
+        $pref     = NotificationPreference::forUser($user);
+        $sendPush = $pref->canSendPush();
 
         if ($sendPush) {
             $tokens = $user->notificationTokens()->active()->get();
@@ -198,9 +199,9 @@ class AssistNotificationService
     private function dispatch(User $user, string $type, string $title, string $body, string $lang, AssistanceRequest $request, int $notificationId): void
     {
         // Global user preferences (respects quiet hours, push_enabled, email_enabled)
-        $pref      = $user->notificationPreference;
-        $sendPush  = $pref ? $pref->canSendPush()  : true;
-        $sendEmail = $pref ? $pref->canSendEmail()  : true;
+        $pref      = NotificationPreference::forUser($user);
+        $sendPush  = $pref->canSendPush();
+        $sendEmail = $pref->canSendEmail();
 
         // For helper-targeted notifications, also respect HelperProfile channel preferences
         if (in_array($type, self::HELPER_TYPES)) {

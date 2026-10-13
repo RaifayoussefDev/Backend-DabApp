@@ -117,4 +117,16 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Form Receiver
+    |--------------------------------------------------------------------------
+    |
+    | The team inbox that gets an email for each "Contact us" message
+    | (ContactController). Empty = messages are only saved for the admin panel.
+    |
+    */
+
+    'contact_receiver' => env('CONTACT_RECEIVER'),
+
 ];

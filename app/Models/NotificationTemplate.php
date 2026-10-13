@@ -57,6 +57,10 @@ class NotificationTemplate extends Model
 
         // Remplacer les placeholders
         foreach ($data as $key => $value) {
+            if (is_array($value) || is_object($value)) {
+                continue;
+            }
+            $value = (string) ($value ?? '');
             $placeholderDouble = "{{{$key}}}";
             $placeholderSingle = "{{$key}}";
 

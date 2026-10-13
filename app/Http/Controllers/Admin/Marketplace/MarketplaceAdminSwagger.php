@@ -180,6 +180,7 @@ use App\Http\Controllers\Controller;
  *             @OA\Property(property="compatibility", type="array", @OA\Items(type="object",
  *                 @OA\Property(property="id", type="integer"), @OA\Property(property="is_universal", type="boolean"),
  *                 @OA\Property(property="moto_brand_id", type="integer", nullable=true), @OA\Property(property="brand", type="string", nullable=true),
+ *                 @OA\Property(property="bike_type_id", type="integer", nullable=true), @OA\Property(property="bike_type", type="string", nullable=true),
  *                 @OA\Property(property="moto_model_id", type="integer", nullable=true), @OA\Property(property="model", type="string", nullable=true),
  *                 @OA\Property(property="moto_year_id", type="integer", nullable=true), @OA\Property(property="year", type="integer", nullable=true))),
  *             @OA\Property(property="variants", type="array", @OA\Items(ref="#/components/schemas/AdminMarketplaceProductVariant"))

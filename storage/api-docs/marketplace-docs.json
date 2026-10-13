@@ -120,6 +120,400 @@
                 }
             }
         },
+        "/api/marketplace/cart": {
+            "get": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "View my cart",
+                "description": "Empty cart shape (items: []) when nothing was ever added - never a 404. Access: Public (guest via X-Cart-Session) or User.",
+                "operationId": "f5099c52df6e4bdcaa47b2548b71d1dd",
+                "parameters": [
+                    {
+                        "name": "X-Cart-Session",
+                        "in": "header",
+                        "description": "Guest only, ignored for a logged-in user",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cart",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "Clear the cart",
+                "description": "Removes every item, keeps the cart itself (empty cart shape afterwards, never 404).",
+                "operationId": "05a8d64282cfd49c00d9529276ec4482",
+                "parameters": [
+                    {
+                        "name": "X-Cart-Session",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cleared",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/cart/items": {
+            "post": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "Add an item to the cart",
+                "description": "variant_id is required when the product has variants (color/size...), refused otherwise (422) - check has_variants on the product first. Adding a product/variant already in the cart increases its quantity instead of creating a second line. Access: Public (guest via X-Cart-Session) or User.",
+                "operationId": "bf41e2b899883359cf6803d6fcbaf550",
+                "parameters": [
+                    {
+                        "name": "X-Cart-Session",
+                        "in": "header",
+                        "description": "Required for a guest (no Bearer token) - any client-generated string",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "a1b2c3d4-guest-session"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "product_id"
+                                ],
+                                "properties": {
+                                    "product_id": {
+                                        "type": "integer",
+                                        "example": 21
+                                    },
+                                    "variant_id": {
+                                        "description": "Required when the product has variants",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "quantity": {
+                                        "type": "integer",
+                                        "default": 1,
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Added",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Guest with no X-Cart-Session header",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Product or variant not found"
+                    },
+                    "409": {
+                        "description": "Not enough stock",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INSUFFICIENT_STOCK"
+                                        },
+                                        "available": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/marketplace/cart/items/{id}": {
+            "put": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "Change an item's quantity",
+                "operationId": "07a441edc54a5a996ebc956777190169",
+                "parameters": [
+                    {
+                        "name": "X-Cart-Session",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "quantity"
+                                ],
+                                "properties": {
+                                    "quantity": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No cart, or not this cart's item"
+                    },
+                    "409": {
+                        "description": "Not enough stock",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "code": {
+                                            "type": "string",
+                                            "example": "INSUFFICIENT_STOCK"
+                                        },
+                                        "available": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "Remove an item from the cart",
+                "operationId": "4cb47442f86929a623212c4627e112ab",
+                "parameters": [
+                    {
+                        "name": "X-Cart-Session",
+                        "in": "header",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Removed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No cart, or not this cart's item"
+                    }
+                }
+            }
+        },
+        "/api/marketplace/cart/merge": {
+            "post": {
+                "tags": [
+                    "Marketplace - Cart"
+                ],
+                "summary": "Merge a guest cart into my account on login",
+                "description": "Call this once right after login, passing the X-Cart-Session value the app was using as a guest. Matching product/variant lines are added together (capped to available stock); the rest are moved over. The guest cart is marked converted and emptied. Safe to call with no guest cart to merge - just returns your account cart. Access: User.",
+                "operationId": "1449f7153063ec211701baba7e5b3478",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "session_id"
+                                ],
+                                "properties": {
+                                    "session_id": {
+                                        "type": "string",
+                                        "example": "a1b2c3d4-guest-session"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Merged",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceCart"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/marketplace/categories": {
             "get": {
                 "tags": [
@@ -659,7 +1053,7 @@
                     "Marketplace - Products"
                 ],
                 "summary": "List products (catalog, search & filters)",
-                "description": "Active products of active vendors only. category_id also matches its sub-categories (Tyres also returns Front tyres / Rear tyres). moto_brand_id / moto_model_id / moto_year_id match a product's explicit bike-compatibility rows plus universal parts. attributes[Label][]=Value filters on the spec table (e.g. attributes[Grip Style][]=Open Ended) - see GET /marketplace/products/filters for which labels/values exist in a given view. Access: Public.",
+                "description": "Active products of active vendors only. category_id also matches its sub-categories (Tyres also returns Front tyres / Rear tyres). moto_brand_id / moto_model_id / moto_year_id / bike_type_id match a product's explicit bike-compatibility rows plus universal parts. attributes[Label][]=Value filters on the spec table (e.g. attributes[Grip Style][]=Open Ended) - see GET /marketplace/products/filters for which labels/values exist in a given view. Access: Public.",
                 "operationId": "157b058a5d4f661bdd89de1c3ce48470",
                 "parameters": [
                     {
@@ -726,6 +1120,16 @@
                         "required": false,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "bike_type_id",
+                        "in": "query",
+                        "description": "Bike type (Sport, Cruiser, Naked...) - same motorcycle_types table as the Home 'Bike Type' section. Independent of moto_model_id: a vendor can tag a part for a whole type without picking an exact model.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
                         }
                     },
                     {
@@ -974,7 +1378,7 @@
                     "Marketplace - Products"
                 ],
                 "summary": "Available filters for a catalog view (facets)",
-                "description": "Call it with the same scoping params as the list (category_id, search, vendor_id, brand_id, moto_brand_id/model_id/year_id) to get the options worth showing in the Filters sheet for that exact view, each with how many products it would leave. price reflects the real price (the variant range for products that have variants, not the fallback products.price column). Access: Public.",
+                "description": "Call it with the same scoping params as the list (category_id, search, vendor_id, brand_id, moto_brand_id/model_id/year_id, bike_type_id) to get the options worth showing in the Filters sheet for that exact view, each with how many products it would leave. price reflects the real price (the variant range for products that have variants, not the fallback products.price column). Access: Public.",
                 "operationId": "267cd605ab60a7b25bbe37690af7499d",
                 "parameters": [
                     {
@@ -1027,6 +1431,14 @@
                     },
                     {
                         "name": "moto_year_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "bike_type_id",
                         "in": "query",
                         "required": false,
                         "schema": {
@@ -1110,6 +1522,24 @@
                                                         "type": "object"
                                                     }
                                                 },
+                                                "bike_types": {
+                                                    "description": "Bike type (Sport, Cruiser, Naked...), same table as Home's 'Bike Type' section. Use with bike_type_id.",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer"
+                                                            },
+                                                            "name": {
+                                                                "type": "string"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
                                                 "attributes": {
                                                     "description": "Map of attribute label to a list of its values with how many products have that value, e.g. Grip Style: Open Ended (12), Close Ended (3)",
                                                     "type": "object"
@@ -1166,6 +1596,18 @@
                                                 "id": 140,
                                                 "year": 2024,
                                                 "count": 5
+                                            }
+                                        ],
+                                        "bike_types": [
+                                            {
+                                                "id": 3,
+                                                "name": "Sport",
+                                                "count": 6
+                                            },
+                                            {
+                                                "id": 5,
+                                                "name": "Cruiser",
+                                                "count": 2
                                             }
                                         ],
                                         "attributes": {
@@ -1317,6 +1759,11 @@
                                                                     },
                                                                     "year": {
                                                                         "type": "integer",
+                                                                        "nullable": true
+                                                                    },
+                                                                    "bike_type": {
+                                                                        "description": "Sport, Cruiser, Naked... independent of model, may be set even when model is null",
+                                                                        "type": "string",
                                                                         "nullable": true
                                                                     }
                                                                 },
@@ -2668,6 +3115,574 @@
                 }
             }
         },
+        "/api/marketplace/vendor/products": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor products"
+                ],
+                "summary": "List my products",
+                "description": "Every status, own shop only (the storefront's GET /marketplace/products only ever shows active ones). per_page empty = everything, no pagination.",
+                "operationId": "5a3a5788b60bd06c892f0bab2e3d8cf4",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "name / name_ar / reference contains",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "draft",
+                                "pending_review",
+                                "active",
+                                "inactive",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "newest",
+                            "enum": [
+                                "newest",
+                                "name",
+                                "price_low",
+                                "price_high"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "My products",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VendorMarketplaceProduct"
+                                            }
+                                        },
+                                        "meta": {
+                                            "description": "Only when paginated",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Marketplace - Vendor products"
+                ],
+                "summary": "Create a product",
+                "description": "reference is the SKU (one product = no variants) - generated from your product name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug. status defaults to draft; send pending_review to submit it for review right away - active/inactive/rejected are refused (422), only an admin sets those. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+                "operationId": "ae1bfca230fa38a101c9e0e33b66e28c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "category_id",
+                                    "name",
+                                    "price"
+                                ],
+                                "properties": {
+                                    "category_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "brand_id": {
+                                        "description": "Parts brand (Michelin), not the bike's manufacturer",
+                                        "type": "integer",
+                                        "example": 4,
+                                        "nullable": true
+                                    },
+                                    "reference": {
+                                        "description": "SKU, unique. Generated from name when omitted.",
+                                        "type": "string",
+                                        "example": "MP-00021"
+                                    },
+                                    "slug": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Michelin Pilot Road 5 120/70-17"
+                                    },
+                                    "name_ar": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "description_ar": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 420
+                                    },
+                                    "compare_at_price": {
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "stock_quantity": {
+                                        "type": "integer",
+                                        "example": 14
+                                    },
+                                    "condition": {
+                                        "type": "string",
+                                        "enum": [
+                                            "new",
+                                            "used"
+                                        ],
+                                        "example": "new"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "draft",
+                                            "pending_review"
+                                        ],
+                                        "example": "draft"
+                                    },
+                                    "images": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "image_path": {
+                                                    "type": "string"
+                                                },
+                                                "is_cover": {
+                                                    "type": "boolean"
+                                                },
+                                                "order_position": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "attributes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "label": {
+                                                    "type": "string"
+                                                },
+                                                "label_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "value": {
+                                                    "type": "string"
+                                                },
+                                                "value_ar": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "compatibility": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "moto_brand_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "bike_type_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "moto_model_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "moto_year_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "is_universal": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "variants": {
+                                        "type": "array",
+                                        "items": {
+                                            "required": [
+                                                "sku",
+                                                "price"
+                                            ],
+                                            "properties": {
+                                                "sku": {
+                                                    "type": "string"
+                                                },
+                                                "option1_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option1_value": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "color_hex": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option2_name": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "option2_value": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "price": {
+                                                    "type": "number"
+                                                },
+                                                "compare_at_price": {
+                                                    "type": "number",
+                                                    "nullable": true
+                                                },
+                                                "stock_quantity": {
+                                                    "type": "integer"
+                                                },
+                                                "image_path": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product created, waiting for review"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error (also used for status=active/inactive/rejected)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/products/{id}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor products"
+                ],
+                "summary": "My product detail",
+                "operationId": "1b9307601b31058901b0c6e6fbdbd295",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Product",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your product"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Marketplace - Vendor products"
+                ],
+                "summary": "Update my product",
+                "description": "Send only the fields to change. images / attributes / compatibility / variants: send the array to REPLACE the full current set, or omit the key to leave it untouched. status (if sent) is limited to draft/pending_review - e.g. resubmit a rejected product by sending status=pending_review, it also clears status_reason. Editing an already-active product's other fields (price, stock...) does not unpublish it: only touch status when you mean to change it.",
+                "operationId": "4aa41e3c4ddcf09c5c29e9260076a950",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceProductDetail"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your product"
+                    },
+                    "422": {
+                        "description": "Validation error (also used for status=active/inactive/rejected)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Vendor products"
+                ],
+                "summary": "Delete my product",
+                "description": "Soft delete. Refused with 409 HAS_ORDERS once the product has sold something.",
+                "operationId": "59df25684eedf9ffd65408e3e30e8322",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Product deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your product"
+                    },
+                    "409": {
+                        "description": "Has orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/marketplace/wishlist": {
             "get": {
                 "tags": [
@@ -3310,6 +4325,487 @@
                 },
                 "type": "object"
             },
+            "VendorMarketplaceProduct": {
+                "description": "List row: a cover thumbnail, no images/attributes/compatibility arrays (see the detail schema). Same shape the admin sees for this same product - nothing here is hidden from its own owner.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 21
+                    },
+                    "vendor": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "shop_name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "category": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "slug": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "brand": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "MP-00021"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "michelin-pilot-road-5-120-70-17"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Michelin Pilot Road 5 120/70-17"
+                    },
+                    "name_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "description_ar": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "price": {
+                        "description": "Cheapest variant when has_variants is true, otherwise the product's own price",
+                        "type": "number",
+                        "example": 420
+                    },
+                    "price_max": {
+                        "type": "number",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "compare_at_price": {
+                        "type": "number",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "has_variants": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "stock_quantity": {
+                        "description": "Ignored once has_variants is true",
+                        "type": "integer",
+                        "example": 14
+                    },
+                    "condition": {
+                        "type": "string",
+                        "enum": [
+                            "new",
+                            "used"
+                        ],
+                        "example": "new"
+                    },
+                    "status": {
+                        "description": "Only draft/pending_review are settable from this controller - active/inactive/rejected are admin-only",
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "pending_review",
+                            "active",
+                            "inactive",
+                            "rejected"
+                        ],
+                        "example": "active"
+                    },
+                    "status_reason": {
+                        "description": "Set by the admin when rejecting - clears automatically on your next resubmission",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_featured": {
+                        "description": "Admin-curated, read-only here",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "rating_avg": {
+                        "type": "number",
+                        "example": 4.5
+                    },
+                    "reviews_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "likes_count": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "sales_count": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "cover_image_url": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "VendorMarketplaceProductVariant": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "sku": {
+                        "type": "string",
+                        "example": "MP-00022-BLK-XS"
+                    },
+                    "option1_name": {
+                        "type": "string",
+                        "example": "Color",
+                        "nullable": true
+                    },
+                    "option1_value": {
+                        "type": "string",
+                        "example": "Black",
+                        "nullable": true
+                    },
+                    "color_hex": {
+                        "type": "string",
+                        "example": "#000000",
+                        "nullable": true
+                    },
+                    "option2_name": {
+                        "type": "string",
+                        "example": "Size",
+                        "nullable": true
+                    },
+                    "option2_value": {
+                        "type": "string",
+                        "example": "XS",
+                        "nullable": true
+                    },
+                    "price": {
+                        "type": "number",
+                        "example": 34.99
+                    },
+                    "compare_at_price": {
+                        "type": "number",
+                        "example": 49.99,
+                        "nullable": true
+                    },
+                    "in_stock": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "image_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "VendorMarketplaceProductDetail": {
+                "description": "Same fields as VendorMarketplaceProduct, with the cover thumbnail replaced by the full images/attributes/compatibility/variants arrays.",
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/VendorMarketplaceProduct"
+                    },
+                    {
+                        "properties": {
+                            "images": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "image_url": {
+                                            "type": "string"
+                                        },
+                                        "is_cover": {
+                                            "type": "boolean"
+                                        },
+                                        "order_position": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "attributes": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "label": {
+                                            "type": "string"
+                                        },
+                                        "label_ar": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "value": {
+                                            "type": "string"
+                                        },
+                                        "value_ar": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "compatibility": {
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "is_universal": {
+                                            "type": "boolean"
+                                        },
+                                        "moto_brand_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "brand": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "bike_type_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "bike_type": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "moto_model_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "model": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "moto_year_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "year": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "variants": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/VendorMarketplaceProductVariant"
+                                }
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "MarketplaceCart": {
+                "properties": {
+                    "id": {
+                        "description": "null on the never-touched empty cart shape",
+                        "type": "integer",
+                        "example": 12,
+                        "nullable": true
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 40
+                                },
+                                "product": {
+                                    "description": "null if the product was removed since this was added",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "slug": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "name_ar": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "cover_image_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "vendor": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "slug": {
+                                                    "type": "string"
+                                                },
+                                                "shop_name": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object",
+                                    "nullable": true
+                                },
+                                "variant": {
+                                    "description": "null when the product has no variants",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "sku": {
+                                            "type": "string"
+                                        },
+                                        "option1_name": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "option1_value": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "color_hex": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "option2_name": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "option2_value": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "image_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object",
+                                    "nullable": true
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
+                                "unit_price": {
+                                    "description": "Price when it was added - frozen, compare to current_price",
+                                    "type": "number",
+                                    "example": 420
+                                },
+                                "current_price": {
+                                    "type": "number",
+                                    "example": 450,
+                                    "nullable": true
+                                },
+                                "price_changed": {
+                                    "description": "unit_price != current_price - show a 'price has changed' hint",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "line_total": {
+                                    "description": "quantity * unit_price (the frozen price, not current_price)",
+                                    "type": "number",
+                                    "example": 840
+                                },
+                                "available": {
+                                    "description": "false if the product or its shop is no longer active",
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "in_stock": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "max_quantity": {
+                                    "description": "Current available stock for this product/variant",
+                                    "type": "integer",
+                                    "example": 14
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "items_count": {
+                        "description": "Sum of quantities, not line count",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "example": 840
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "MarketplaceProductReview": {
                 "properties": {
                     "id": {
@@ -3449,6 +4945,10 @@
             "description": "Product brands (All Brands screen). Public, no token needed."
         },
         {
+            "name": "Marketplace - Cart",
+            "description": "Works for both guests and logged-in users (mode invité): send a Bearer token to use the account's cart, or an X-Cart-Session header (any client-generated string, e.g. a UUID you keep in local storage) to use a guest cart - never both resolved at once, the token wins if both are sent. A guest who then logs in should call POST /cart/merge once with their old session id to fold it into the account's cart. No stock is reserved by the cart itself - that happens when the order is created (see Checkout); adding to cart only checks that enough stock exists right now."
+        },
+        {
             "name": "Marketplace - Categories",
             "description": "Category tree of the marketplace (unlimited depth). Public, no token needed."
         },
@@ -3475,6 +4975,10 @@
         {
             "name": "Marketplace - Vendors",
             "description": "Shops (All Shops screen and shop page). Public, no token needed. Only approved (active) vendors are ever visible."
+        },
+        {
+            "name": "Marketplace - Vendor products",
+            "description": "A vendor manages their own catalog from the app. Only an active shop can sell: a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account endpoints). Unlike the admin side, a vendor cannot publish directly: status is limited to draft or pending_review here - an admin reviews and sets active/rejected from the Admin Panel (mirrors how vendor applications themselves are approved). vendor_id and is_featured are never settable here. images / attributes / compatibility / variants follow the same full-replace convention as the admin endpoint: each array sent REPLACES the product's current set. Access: User (Bearer JWT)."
         },
         {
             "name": "Marketplace - Wishlist",

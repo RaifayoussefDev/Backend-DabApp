@@ -26,7 +26,7 @@ class ProductController extends Controller
      * @OA\Get(
      *     path="/api/marketplace/products",
      *     summary="List products (catalog, search & filters)",
-     *     description="Active products of active vendors only. category_id also matches its sub-categories (Tyres also returns Front tyres / Rear tyres). moto_brand_id / moto_model_id / moto_year_id match a product's explicit bike-compatibility rows plus universal parts. attributes[Label][]=Value filters on the spec table (e.g. attributes[Grip Style][]=Open Ended) - see GET /marketplace/products/filters for which labels/values exist in a given view. Access: Public.",
+     *     description="Active products of active vendors only. category_id also matches its sub-categories (Tyres also returns Front tyres / Rear tyres). moto_brand_id / moto_model_id / moto_year_id / bike_type_id match a product's explicit bike-compatibility rows plus universal parts. attributes[Label][]=Value filters on the spec table (e.g. attributes[Grip Style][]=Open Ended) - see GET /marketplace/products/filters for which labels/values exist in a given view. Access: Public.",
      *     tags={"Marketplace - Products"},
      *     @OA\Parameter(name="search", in="query", required=false, description="name / name_ar / reference contains", @OA\Schema(type="string", example="tyre")),
      *     @OA\Parameter(name="category_id", in="query", required=false, description="Includes its sub-categories", @OA\Schema(type="integer", example=2)),
@@ -35,6 +35,7 @@ class ProductController extends Controller
      *     @OA\Parameter(name="moto_brand_id", in="query", required=false, description="Bike manufacturer (Honda, KTM)", @OA\Schema(type="integer", example=2)),
      *     @OA\Parameter(name="moto_model_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="moto_year_id", in="query", required=false, description="The 'Shop By [year]' filter", @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="bike_type_id", in="query", required=false, description="Bike type (Sport, Cruiser, Naked...) - same motorcycle_types table as the Home 'Bike Type' section. Independent of moto_model_id: a vendor can tag a part for a whole type without picking an exact model.", @OA\Schema(type="integer", example=3)),
      *     @OA\Parameter(name="condition", in="query", required=false, @OA\Schema(type="string", enum={"new","used"})),
      *     @OA\Parameter(name="price_min", in="query", required=false, @OA\Schema(type="number", example=100)),
      *     @OA\Parameter(name="price_max", in="query", required=false, @OA\Schema(type="number", example=500)),
@@ -92,11 +93,12 @@ class ProductController extends Controller
                 }
             })
             ->when(
-                $request->filled('moto_brand_id') || $request->filled('moto_model_id') || $request->filled('moto_year_id'),
+                $request->filled('moto_brand_id') || $request->filled('moto_model_id') || $request->filled('moto_year_id') || $request->filled('bike_type_id'),
                 fn ($q) => $q->compatibleWith(
                     $request->filled('moto_brand_id') ? (int) $request->input('moto_brand_id') : null,
                     $request->filled('moto_model_id') ? (int) $request->input('moto_model_id') : null,
                     $request->filled('moto_year_id') ? (int) $request->input('moto_year_id') : null,
+                    $request->filled('bike_type_id') ? (int) $request->input('bike_type_id') : null,
                 )
             );
 
@@ -125,7 +127,7 @@ class ProductController extends Controller
      * @OA\Get(
      *     path="/api/marketplace/products/filters",
      *     summary="Available filters for a catalog view (facets)",
-     *     description="Call it with the same scoping params as the list (category_id, search, vendor_id, brand_id, moto_brand_id/model_id/year_id) to get the options worth showing in the Filters sheet for that exact view, each with how many products it would leave. price reflects the real price (the variant range for products that have variants, not the fallback products.price column). Access: Public.",
+     *     description="Call it with the same scoping params as the list (category_id, search, vendor_id, brand_id, moto_brand_id/model_id/year_id, bike_type_id) to get the options worth showing in the Filters sheet for that exact view, each with how many products it would leave. price reflects the real price (the variant range for products that have variants, not the fallback products.price column). Access: Public.",
      *     tags={"Marketplace - Products"},
      *     @OA\Parameter(name="category_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="search", in="query", required=false, @OA\Schema(type="string")),
@@ -134,12 +136,14 @@ class ProductController extends Controller
      *     @OA\Parameter(name="moto_brand_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="moto_model_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Parameter(name="moto_year_id", in="query", required=false, @OA\Schema(type="integer")),
+     *     @OA\Parameter(name="bike_type_id", in="query", required=false, @OA\Schema(type="integer")),
      *     @OA\Response(response=200, description="Facets", @OA\JsonContent(
      *         @OA\Property(property="data", type="object",
      *             @OA\Property(property="price", type="object", @OA\Property(property="min", type="number", nullable=true), @OA\Property(property="max", type="number", nullable=true)),
      *             @OA\Property(property="brands", type="array", description="Parts brand (Michelin) - use with brand_id", @OA\Items(type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string"), @OA\Property(property="count", type="integer"))),
      *             @OA\Property(property="moto_brands", type="array", description="The bike's manufacturer (Honda, BMW, KTM) - the Filters sheet's 'Brand' chip. Use with moto_brand_id, not brand_id.", @OA\Items(type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string"), @OA\Property(property="count", type="integer"))),
      *             @OA\Property(property="years", type="array", description="Bike compatibility years ('Shop By'). Use with moto_year_id.", @OA\Items(type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="year", type="integer"), @OA\Property(property="count", type="integer"))),
+     *             @OA\Property(property="bike_types", type="array", description="Bike type (Sport, Cruiser, Naked...), same table as Home's 'Bike Type' section. Use with bike_type_id.", @OA\Items(type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string"), @OA\Property(property="count", type="integer"))),
      *             @OA\Property(property="attributes", type="object", description="Map of attribute label to a list of its values with how many products have that value, e.g. Grip Style: Open Ended (12), Close Ended (3)"),
      *             @OA\Property(property="ratings", type="array", description="min-rating buckets with at least one match", @OA\Items(type="object", @OA\Property(property="min", type="integer", example=4), @OA\Property(property="count", type="integer")))
      *         ),
@@ -148,6 +152,7 @@ class ProductController extends Controller
      *             "brands": {{"id": 4, "name": "Michelin", "count": 12}},
      *             "moto_brands": {{"id": 2, "name": "Honda", "count": 9}, {"id": 7, "name": "BMW", "count": 3}},
      *             "years": {{"id": 140, "year": 2024, "count": 5}},
+     *             "bike_types": {{"id": 3, "name": "Sport", "count": 6}, {"id": 5, "name": "Cruiser", "count": 2}},
      *             "attributes": {"Grip Style": {{"value": "Open Ended", "count": 8}, {"value": "Close Ended", "count": 3}}, "Finish": {{"value": "Matte", "count": 6}}},
      *             "ratings": {{"min": 5, "count": 2}, {"min": 4, "count": 9}}
      *         }}
@@ -175,11 +180,12 @@ class ProductController extends Controller
                 $q->where(fn ($w) => $w->where('name', 'like', $term)->orWhere('name_ar', 'like', $term)->orWhere('reference', 'like', $term));
             })
             ->when(
-                $request->filled('moto_brand_id') || $request->filled('moto_model_id') || $request->filled('moto_year_id'),
+                $request->filled('moto_brand_id') || $request->filled('moto_model_id') || $request->filled('moto_year_id') || $request->filled('bike_type_id'),
                 fn ($q) => $q->compatibleWith(
                     $request->filled('moto_brand_id') ? (int) $request->input('moto_brand_id') : null,
                     $request->filled('moto_model_id') ? (int) $request->input('moto_model_id') : null,
                     $request->filled('moto_year_id') ? (int) $request->input('moto_year_id') : null,
+                    $request->filled('bike_type_id') ? (int) $request->input('bike_type_id') : null,
                 )
             );
 
@@ -211,6 +217,13 @@ class ProductController extends Controller
             ->map(fn ($row) => ['id' => $row->moto_brand_id, 'name' => $row->brand->name, 'count' => $row->count])
             ->sortBy('name')->values();
 
+        $bikeTypes = ProductMotorcycle::whereIn('product_id', $ids)->whereNotNull('bike_type_id')
+            ->selectRaw('bike_type_id, COUNT(DISTINCT product_id) as count')->groupBy('bike_type_id')
+            ->with('bikeType:id,name')->get()
+            ->filter(fn ($row) => $row->bikeType)
+            ->map(fn ($row) => ['id' => $row->bike_type_id, 'name' => $row->bikeType->name, 'count' => $row->count])
+            ->sortBy('name')->values();
+
         $attributes = ProductAttribute::whereIn('product_id', $ids)->get(['label', 'value', 'product_id'])
             ->groupBy('label')
             ->map(fn ($rows) => $rows->groupBy('value')
@@ -226,6 +239,7 @@ class ProductController extends Controller
             'brands'      => $brands,
             'moto_brands' => $motoBrands,
             'years'       => $years,
+            'bike_types'  => $bikeTypes,
             'attributes'  => $attributes,
             'ratings'     => $ratings,
         ]]);
@@ -269,7 +283,8 @@ class ProductController extends Controller
      *                     @OA\Property(property="value", type="string"), @OA\Property(property="value_ar", type="string", nullable=true))),
      *                 @OA\Property(property="compatibility", type="array", @OA\Items(type="object",
      *                     @OA\Property(property="is_universal", type="boolean"),
-     *                     @OA\Property(property="brand", type="string", nullable=true), @OA\Property(property="model", type="string", nullable=true), @OA\Property(property="year", type="integer", nullable=true))),
+     *                     @OA\Property(property="brand", type="string", nullable=true), @OA\Property(property="model", type="string", nullable=true), @OA\Property(property="year", type="integer", nullable=true),
+     *                     @OA\Property(property="bike_type", type="string", nullable=true, description="Sport, Cruiser, Naked... independent of model, may be set even when model is null"))),
      *                 @OA\Property(property="variants", type="array", @OA\Items(ref="#/components/schemas/MarketplaceProductVariant")),
      *                 @OA\Property(property="vendor", ref="#/components/schemas/MarketplaceVendorCard")
      *             )
@@ -285,7 +300,7 @@ class ProductController extends Controller
                 'vendor', 'vendor.city:id,name',
                 'category:id,slug,name,name_ar', 'brand:id,name,logo_path',
                 'images', 'attributes', 'variants',
-                'compatibility.brand:id,name', 'compatibility.model:id,name', 'compatibility.year:id,year',
+                'compatibility.brand:id,name', 'compatibility.model:id,name', 'compatibility.year:id,year', 'compatibility.bikeType:id,name',
             ])
             ->where(ctype_digit($idOrSlug) ? 'id' : 'slug', $idOrSlug)
             ->first();
@@ -307,6 +322,7 @@ class ProductController extends Controller
                 'brand'        => $c->brand->name ?? null,
                 'model'        => $c->model->name ?? null,
                 'year'         => $c->year->year ?? null,
+                'bike_type'    => $c->bikeType->name ?? null,
             ])->values(),
             'variants' => $product->variants->map(fn (ProductVariant $v) => self::variantRow($v))->values(),
             'vendor'   => $vendorCard,

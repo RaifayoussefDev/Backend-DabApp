@@ -1013,7 +1013,7 @@
                     "Admin Marketplace - Products"
                 ],
                 "summary": "Create a product",
-                "description": "reference is the SKU (one product = no variants). slug is generated from name when omitted. status defaults to draft; setting it to active stamps published_at. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+                "description": "reference is the SKU (one product = no variants) - generated from name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug which is generated from name too. status defaults to draft; setting it to active stamps published_at. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
                 "operationId": "52b2f90562f0152f82efbdd386db4ad1",
                 "requestBody": {
                     "required": true,
@@ -1023,7 +1023,6 @@
                                 "required": [
                                     "vendor_id",
                                     "category_id",
-                                    "reference",
                                     "name",
                                     "price"
                                 ],
@@ -1043,7 +1042,7 @@
                                         "nullable": true
                                     },
                                     "reference": {
-                                        "description": "SKU, unique",
+                                        "description": "SKU, unique. Generated from name when omitted.",
                                         "type": "string",
                                         "example": "MP-00021"
                                     },
@@ -1160,6 +1159,12 @@
                                                 "moto_brand_id": {
                                                     "type": "integer",
                                                     "example": 2,
+                                                    "nullable": true
+                                                },
+                                                "bike_type_id": {
+                                                    "description": "Independent of moto_model_id - can be set alone to mean 'fits all Sport bikes'",
+                                                    "type": "integer",
+                                                    "example": 3,
                                                     "nullable": true
                                                 },
                                                 "moto_model_id": {
@@ -1520,6 +1525,10 @@
                                         "items": {
                                             "properties": {
                                                 "moto_brand_id": {
+                                                    "type": "integer",
+                                                    "nullable": true
+                                                },
+                                                "bike_type_id": {
                                                     "type": "integer",
                                                     "nullable": true
                                                 },
@@ -3772,6 +3781,14 @@
                                             "nullable": true
                                         },
                                         "brand": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "bike_type_id": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "bike_type": {
                                             "type": "string",
                                             "nullable": true
                                         },

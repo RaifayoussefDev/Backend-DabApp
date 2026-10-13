@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Notification;
 use App\Models\NotificationLog;
+use App\Models\NotificationPreference;
 use App\Models\NotificationToken;
 use App\Models\NotificationTemplate;
 use App\Models\User;
@@ -27,10 +28,10 @@ class NotificationService
      */
     public function sendToUser(User $user, string $type, array $data = [], array $options = []): array
     {
-        // Vérifier les préférences
-        $preferences = $user->notificationPreference;
+        // Vérifier les préférences (créées avec les valeurs par défaut si absentes)
+        $preferences = NotificationPreference::forUser($user);
 
-        if (!$preferences || !$preferences->isNotificationEnabled($type)) {
+        if (!$preferences->isNotificationEnabled($type)) {
             Log::warning("NotificationService: Notification disabled or no preferences for user {$user->id}. Type: {$type}");
             return [
                 'success' => false,
@@ -894,6 +895,7 @@ class NotificationService
     {
         return $this->sendToUser($user, 'payment_failed', [
             'payment_id' => $payment->id,
+            'listing_id' => $payment->listing_id ?? null,
             'amount' => $payment->amount,
             'failure_reason' => $reason,
         ], [

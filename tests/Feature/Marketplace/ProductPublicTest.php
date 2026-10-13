@@ -154,6 +154,29 @@ class ProductPublicTest extends TestCase
         $this->assertFalse($slugs->contains($unrelated->slug));
     }
 
+    public function test_bike_type_filter_matches_explicit_type_and_universal_parts(): void
+    {
+        $vendor = $this->vendor();
+        $category = $this->category();
+        $type = MotorcycleType::create(['name' => '0 Compat Sport Type ' . Str::random(5)]);
+        $otherType = MotorcycleType::create(['name' => '0 Compat Cruiser Type ' . Str::random(5)]);
+
+        $sport = $this->product($vendor, $category);
+        ProductMotorcycle::create(['product_id' => $sport->id, 'bike_type_id' => $type->id]);
+
+        $universal = $this->product($vendor, $category);
+        ProductMotorcycle::create(['product_id' => $universal->id, 'is_universal' => true]);
+
+        $cruiser = $this->product($vendor, $category);
+        ProductMotorcycle::create(['product_id' => $cruiser->id, 'bike_type_id' => $otherType->id]);
+
+        $slugs = collect($this->getJson("/api/marketplace/products?vendor_id={$vendor->id}&bike_type_id={$type->id}")->json('data'))->pluck('slug');
+
+        $this->assertTrue($slugs->contains($sport->slug), 'explicit bike_type_id match');
+        $this->assertTrue($slugs->contains($universal->slug), 'a universal part must match any bike type');
+        $this->assertFalse($slugs->contains($cruiser->slug));
+    }
+
     public function test_sorting(): void
     {
         $vendor = $this->vendor();

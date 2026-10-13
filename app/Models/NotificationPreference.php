@@ -121,7 +121,8 @@ class NotificationPreference extends Model
         'promotional',
         'newsletter',
         'admin_custom',
-        // Trainer city-wide broadcasts
+        // City-wide broadcasts
+        'new_listing_in_city',
         'new_trainer_in_city',
         'new_course_in_city',
         // Canaux
@@ -180,6 +181,7 @@ class NotificationPreference extends Model
         'promotional' => 'boolean',
         'newsletter' => 'boolean',
         'admin_custom' => 'boolean',
+        'new_listing_in_city' => 'boolean',
         'new_trainer_in_city' => 'boolean',
         'new_course_in_city' => 'boolean',
         'push_enabled' => 'boolean',
@@ -198,6 +200,24 @@ class NotificationPreference extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * The user's preferences, created with the column defaults (everything on)
+     * when the account never got a row — Google/Firebase sign-ups, prospects and
+     * admin-created users skip the register flow that used to create it.
+     */
+    public static function forUser(User $user): self
+    {
+        $preference = $user->notificationPreference;
+
+        if (!$preference) {
+            // fresh() so the DB column defaults are loaded, not just user_id
+            $preference = static::firstOrCreate(['user_id' => $user->id])->fresh();
+            $user->setRelation('notificationPreference', $preference);
+        }
+
+        return $preference;
+    }
+
     // Methods
     public function isNotificationEnabled(string $type): bool
     {
@@ -208,6 +228,38 @@ class NotificationPreference extends Model
             'report_status_updated'              => 'system_updates',
             'new_report'                         => 'system_updates',
             'dealer_removed'                     => 'dealer_approved',
+            // Listings
+            'listing_created'                    => 'listing_approved',
+            'listing_created_by_admin'           => 'listing_approved',
+            'listing_message'                    => 'new_message',
+            // Listing lifecycle check-in — reuse the listing_sold preference toggle
+            'listing_follow_up'                  => 'listing_sold',
+            // Soom
+            'soom_bid'                           => 'bid_placed',
+            'soom_outbid'                        => 'bid_outbid',
+            'soom_won'                           => 'soom_accepted',
+            'soom_lost'                          => 'bid_rejected',
+            'soom_ending_soon'                   => 'auction_ending_soon',
+            'soom_created_by_admin'              => 'soom_new_negotiation',
+            // Guides
+            'guide_new_comment'                  => 'guide_comment',
+            'guide_new_like'                     => 'guide_like',
+            'guide_new_bookmark'                 => 'guide_like',
+            'guide_updated'                      => 'guide_published',
+            'guide_submitted'                    => 'guide_published',
+            // Events
+            'event_starting_soon'                => 'event_reminder',
+            'event_update'                       => 'event_updated',
+            'event_new_participant'              => 'event_registration',
+            'event_registration_confirmed'       => 'event_registration',
+            // POI / routes
+            'poi_nearby'                         => 'new_poi_nearby',
+            'poi_approved'                       => 'system_updates',
+            'poi_rejected'                       => 'system_updates',
+            'route_approved'                     => 'system_updates',
+            'route_rejected'                     => 'system_updates',
+            // Payments
+            'refund_processed'                   => 'payment_success',
             // Trainer module — map all trainer types to system_updates
             'trainer_approved'                   => 'system_updates',
             'trainer_rejected'                   => 'system_updates',
@@ -223,13 +275,17 @@ class NotificationPreference extends Model
             'trainer_course_booking_created'     => 'system_updates',
             'trainer_course_booking_completed'   => 'system_updates',
             'trainer_course_set_to_draft'        => 'system_updates',
-            // Listing lifecycle check-in — reuse the listing_sold preference toggle
-            'listing_follow_up'                  => 'listing_sold',
         ];
 
-        $column = $map[$type] ?? $type;
+        $column = $map[$type] ?? (str_starts_with($type, 'order_') ? 'system_updates' : $type);
 
-        return $this->{$column} ?? false;
+        // A type with no column of its own must not be silently dropped —
+        // fall back to the generic system toggle instead.
+        if (!array_key_exists($column, $this->getAttributes())) {
+            $column = 'system_updates';
+        }
+
+        return (bool) ($this->{$column} ?? false);
     }
 
     public function isQuietHours(): bool

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\ContactSubmissionMail;
 use App\Models\ContactSubmission;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * @OA\Tag(
@@ -41,7 +44,21 @@ class ContactController extends Controller
             'message' => 'required|string|max:3000',
         ]);
 
-        ContactSubmission::create($validated);
+        $submission = ContactSubmission::create($validated);
+
+        // Tell the team (CONTACT_RECEIVER in .env). The message is already saved and listed in
+        // the admin panel, so a mail failure is logged and never fails the customer's request.
+        $receiver = config('mail.contact_receiver');
+        if ($receiver) {
+            try {
+                Mail::to($receiver)->send(new ContactSubmissionMail($submission));
+            } catch (\Throwable $e) {
+                Log::error('Contact form: notification email failed', [
+                    'submission_id' => $submission->id,
+                    'error'         => $e->getMessage(),
+                ]);
+            }
+        }
 
         return response()->json([
             'success' => true,

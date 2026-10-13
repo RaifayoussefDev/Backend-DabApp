@@ -8,7 +8,7 @@ class CartItem extends MarketplaceModel
 {
     protected $table = 'marketplace_cart_items';
 
-    protected $fillable = ['cart_id', 'product_id', 'vendor_id', 'quantity', 'unit_price_snapshot'];
+    protected $fillable = ['cart_id', 'product_id', 'variant_id', 'vendor_id', 'quantity', 'unit_price_snapshot'];
 
     protected $casts = [
         'quantity'            => 'integer',
@@ -23,6 +23,11 @@ class CartItem extends MarketplaceModel
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id');
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     public function vendor(): BelongsTo

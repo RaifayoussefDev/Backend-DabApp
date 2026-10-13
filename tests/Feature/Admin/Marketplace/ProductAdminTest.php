@@ -10,6 +10,7 @@ use App\Models\Marketplace\Product;
 use App\Models\Marketplace\ProductAttribute;
 use App\Models\Marketplace\Vendor;
 use App\Models\MotorcycleBrand;
+use App\Models\MotorcycleType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
@@ -70,6 +71,7 @@ class ProductAdminTest extends TestCase
         $category = $this->category();
         $brand = Brand::create(['name' => 'Michelin', 'slug' => 'michelin-' . Str::random(6)]);
         $motoBrand = MotorcycleBrand::create(['name' => '0 Admin Moto Brand ' . Str::random(5)]);
+        $bikeType = MotorcycleType::create(['name' => '0 Admin Bike Type ' . Str::random(5)]);
         $cover = $this->fakeImageUrl();
         $second = $this->fakeImageUrl();
 
@@ -82,7 +84,7 @@ class ProductAdminTest extends TestCase
                 ['image_path' => $second, 'is_cover' => false, 'order_position' => 1],
             ],
             'attributes' => [['label' => 'Width', 'value' => '120 mm']],
-            'compatibility' => [['moto_brand_id' => $motoBrand->id, 'is_universal' => false]],
+            'compatibility' => [['moto_brand_id' => $motoBrand->id, 'bike_type_id' => $bikeType->id, 'is_universal' => false]],
         ])->assertCreated();
 
         $data = $response->json('data');
@@ -93,6 +95,7 @@ class ProductAdminTest extends TestCase
         $this->assertSame('Width', $data['attributes'][0]['label']);
         $this->assertCount(1, $data['compatibility']);
         $this->assertSame($motoBrand->name, $data['compatibility'][0]['brand']);
+        $this->assertSame($bikeType->name, $data['compatibility'][0]['bike_type']);
 
         // and it is visible on the storefront
         $this->getJson('/api/marketplace/products/' . $data['slug'])->assertOk();
@@ -102,7 +105,26 @@ class ProductAdminTest extends TestCase
     {
         $this->withHeaders($this->headers())->postJson('/api/admin/marketplace/products', [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['vendor_id', 'category_id', 'reference', 'name', 'price']);
+            ->assertJsonValidationErrors(['vendor_id', 'category_id', 'name', 'price']);
+    }
+
+    public function test_create_without_a_reference_generates_one_from_the_name(): void
+    {
+        $vendor = $this->vendor();
+        $category = $this->category();
+
+        $data = $this->withHeaders($this->headers())->postJson('/api/admin/marketplace/products', [
+            'vendor_id' => $vendor->id, 'category_id' => $category->id, 'name' => 'Michelin Pilot Road 5', 'price' => 420,
+        ])->assertCreated()->json('data');
+
+        $this->assertSame('MICHELIN-PILOT-ROAD-5', $data['reference']);
+
+        // a second product with the same name gets a disambiguated reference, not a collision
+        $again = $this->withHeaders($this->headers())->postJson('/api/admin/marketplace/products', [
+            'vendor_id' => $vendor->id, 'category_id' => $category->id, 'name' => 'Michelin Pilot Road 5', 'price' => 420,
+        ])->assertCreated()->json('data');
+
+        $this->assertSame('MICHELIN-PILOT-ROAD-5-2', $again['reference']);
     }
 
     public function test_reference_must_be_unique(): void

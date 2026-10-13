@@ -118,6 +118,20 @@ class ProductFiltersTest extends TestCase
         );
     }
 
+    public function test_filters_includes_bike_types(): void
+    {
+        $vendor = $this->vendor();
+        $category = $this->category();
+        $type = MotorcycleType::create(['name' => '0 Facet Type ' . Str::random(5)]);
+
+        $product = $this->product($vendor, $category);
+        ProductMotorcycle::create(['product_id' => $product->id, 'bike_type_id' => $type->id]);
+
+        $data = $this->getJson("/api/marketplace/products/filters?category_id={$category->id}")->assertOk()->json('data');
+
+        $this->assertTrue(collect($data['bike_types'])->contains(fn ($t) => $t['id'] === $type->id && $t['name'] === $type->name && $t['count'] === 1));
+    }
+
     public function test_list_attribute_filter_matches_only_that_value(): void
     {
         $vendor = $this->vendor();

@@ -36,7 +36,8 @@ class SendEventReminders extends Command
         $startWindow = Carbon::now()->addHours(24)->subMinutes(30);
         $endWindow = Carbon::now()->addHours(24)->addMinutes(30);
 
-        $events = Event::where('status', 'upcoming')
+        // Live events are 'published' today; 'upcoming' is the legacy default status
+        $events = Event::whereIn('status', ['published', 'upcoming'])
             ->whereBetween('event_date', [$startWindow->toDateString(), $endWindow->toDateString()]) // Simple date check first
             // Advanced time check if needed, but 'event_date' is often just a Date. 
             // If start_time exists, we could combine them.

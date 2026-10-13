@@ -99,7 +99,8 @@ class GuideLikeController extends Controller
         try {
             if ($guide->author_id !== $user->id) {
                 $this->notificationService->sendToUser($guide->author, 'guide_new_like', [
-                    'user_name' => $user->first_name . ' ' . $user->last_name,
+                    'guide_id' => $guide->id,
+                    'liker_name' => $user->first_name . ' ' . $user->last_name,
                     'guide_title' => $guide->title
                 ]);
             }

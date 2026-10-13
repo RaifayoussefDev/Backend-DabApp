@@ -1078,14 +1078,7 @@ class ListingController extends Controller
             }
 
             // ✅ Step 1 & 2 : pas de paiement
-            if ($listing->status != 'draft') {
-                try {
-                    // Send notification to users in the same city
-                    app(NotificationService::class)->notifyUsersInCityNewListing($listing);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send city-wide listing notification: ' . $e->getMessage());
-                }
-            }
+            // (city-wide "new listing" broadcast is sent by ListingObserver once the listing goes live)
 
             DB::commit();
 
