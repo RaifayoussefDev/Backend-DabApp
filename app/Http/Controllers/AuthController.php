@@ -139,6 +139,7 @@ class AuthController extends Controller
                 }
             ],
             'password' => 'required|string|min:6|confirmed',
+            'city_id' => 'nullable|integer|exists:cities,id',
         ]);
 
         if ($validator->fails()) {
@@ -192,6 +193,7 @@ class AuthController extends Controller
                     'phone' => $formattedPhone,
                     'password' => Hash::make($request->password),
                     'country_id' => $countryData['country_id'],
+                    'city_id' => $request->input('city_id', $existingUserByEmail->city_id),
                     'updated_at' => now(),
                 ]);
 
@@ -262,6 +264,7 @@ class AuthController extends Controller
                 'timezone' => 'Africa/Casablanca',
                 'two_factor_enabled' => false,
                 'country_id' => $countryData['country_id'],
+                'city_id' => $request->input('city_id'),
             ]);
 
             // ✅ Create default Notification Preferences
@@ -1742,6 +1745,7 @@ class AuthController extends Controller
             'address' => 'nullable|string|max:255',
             'postal_code' => 'nullable|string|max:20',
             'country_id' => 'nullable|integer|exists:countries,id',
+            'city_id' => 'nullable|integer|exists:cities,id',
             'language' => 'nullable|string|max:10',
             'timezone' => 'nullable|string|max:100',
         ]);
@@ -1761,6 +1765,7 @@ class AuthController extends Controller
             'address',
             'postal_code',
             'country_id',
+            'city_id',
             'language',
             'timezone'
         );

@@ -79,6 +79,44 @@ class NotificationTriggersTest extends TestCase
         $this->assertSame(1, $this->sent($dealer, 'dealer_removed'));
     }
 
+    public function test_new_listing_in_city_only_reaches_users_living_in_that_city(): void
+    {
+        [$jeddah, $riyadh] = DB::table('cities')->orderBy('id')->limit(2)->pluck('id')->all();
+
+        $seller = User::factory()->create(['email' => null, 'city_id' => $jeddah]);
+        $inJeddah = User::factory()->create(['email' => null, 'city_id' => $jeddah, 'is_active' => true]);
+        $inRiyadh = User::factory()->create(['email' => null, 'city_id' => $riyadh, 'is_active' => true]);
+        // Lives in Riyadh but once posted a listing in Jeddah: used to be notified, must not be any more
+        $riyadhWithJeddahAd = User::factory()->create(['email' => null, 'city_id' => $riyadh, 'is_active' => true]);
+        Listing::create([
+            'seller_id' => $riyadhWithJeddahAd->id, 'status' => 'draft', 'step' => 1, 'title' => 'Old ad',
+            'category_id' => 1, 'city_id' => $jeddah,
+        ]);
+
+        $listing = Listing::create([
+            'seller_id' => $seller->id, 'status' => 'draft', 'step' => 3, 'title' => 'Kawasaki Z900',
+            'description' => 'A description long enough for validation.', 'price' => 30000,
+            'category_id' => 1, 'city_id' => $jeddah,
+        ]);
+        $listing->update(['status' => 'published']);
+
+        $this->assertSame(1, $this->sent($inJeddah, 'new_listing_in_city'));
+        $this->assertSame(0, $this->sent($inRiyadh, 'new_listing_in_city'));
+        $this->assertSame(0, $this->sent($riyadhWithJeddahAd, 'new_listing_in_city'));
+        $this->assertSame(0, $this->sent($seller, 'new_listing_in_city'));
+    }
+
+    public function test_user_sets_their_city_in_the_profile(): void
+    {
+        $city = DB::table('cities')->value('id');
+        $user = User::factory()->create(['email' => 'city_' . uniqid() . '@test.local']);
+
+        $this->actingAs($user, 'api')->putJson('/api/user/update', ['city_id' => $city])->assertOk();
+        $this->assertSame((int) $city, (int) $user->fresh()->city_id);
+
+        $this->actingAs($user, 'api')->putJson('/api/user/update', ['city_id' => 999999999])->assertStatus(422);
+    }
+
     public function test_event_starting_soon_is_sent_about_an_hour_before(): void
     {
         Carbon::setTestNow(Carbon::parse('2026-11-01 09:00:00'));

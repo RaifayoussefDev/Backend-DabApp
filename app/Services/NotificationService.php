@@ -1174,10 +1174,8 @@ class NotificationService
             return;
         }
 
-        // Find users active in the same city (via their listings), excluding the seller
-        User::whereHas('listings', function ($q) use ($listing) {
-            $q->where('city_id', $listing->city_id);
-        })
+        // Users whose own city (profile) is the listing's city, excluding the seller
+        User::where('city_id', $listing->city_id)
             ->where('id', '!=', $listing->seller_id)
             ->where('is_active', true)
             ->chunk(100, function ($users) use ($listing) {
@@ -1236,9 +1234,7 @@ class NotificationService
             return;
         }
 
-        User::whereHas('listings', function ($q) use ($location) {
-            $q->where('city_id', $location->city_id);
-        })
+        User::where('city_id', $location->city_id)
             ->where('id', '!=', $trainer->user_id)
             ->where('is_active', true)
             ->chunk(100, function ($users) use ($trainer, $location) {
@@ -1272,9 +1268,8 @@ class NotificationService
 
         $price = $course->promo_price ?? $course->original_price;
 
-        User::whereHas('listings', function ($q) use ($location) {
-            $q->where('city_id', $location->city_id);
-        })
+        User::where('city_id', $location->city_id)
+            ->where('id', '!=', $course->trainer?->user_id)
             ->where('is_active', true)
             ->chunk(100, function ($users) use ($course, $location, $price) {
                 foreach ($users as $user) {
