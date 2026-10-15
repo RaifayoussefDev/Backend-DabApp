@@ -31,7 +31,8 @@ class NotificationService
         // Vérifier les préférences (créées avec les valeurs par défaut si absentes)
         $preferences = NotificationPreference::forUser($user);
 
-        if (!$preferences->isNotificationEnabled($type)) {
+        // 'force' (test command only) skips the per-type toggle, not quiet hours / push_enabled
+        if (empty($options['force']) && !$preferences->isNotificationEnabled($type)) {
             Log::warning("NotificationService: Notification disabled or no preferences for user {$user->id}. Type: {$type}");
             return [
                 'success' => false,
