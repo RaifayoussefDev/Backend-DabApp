@@ -8,12 +8,14 @@ use App\Http\Controllers\Admin\Marketplace\VendorAdminController;
 use App\Http\Controllers\Admin\Marketplace\VendorShippingMethodAdminController;
 use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\Marketplace\BrandController;
+use App\Http\Controllers\Marketplace\CartController;
 use App\Http\Controllers\Marketplace\CategoryController;
 use App\Http\Controllers\Marketplace\HomeController;
 use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Marketplace\ProductReviewController;
 use App\Http\Controllers\Marketplace\VendorAccountController;
 use App\Http\Controllers\Marketplace\VendorController;
+use App\Http\Controllers\Marketplace\VendorProductController;
 use App\Http\Controllers\Marketplace\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,15 @@ Route::prefix('marketplace')->group(function () {
         Route::post('/apply', [VendorAccountController::class, 'apply']);
         Route::get('/me', [VendorAccountController::class, 'me']);
         Route::put('/me', [VendorAccountController::class, 'update']);
+
+        // ---- Vendor self-service: my own products (own shop only, status active required) ----
+        Route::prefix('products')->group(function () {
+            Route::get('/', [VendorProductController::class, 'index']);
+            Route::post('/', [VendorProductController::class, 'store']);
+            Route::get('/{id}', [VendorProductController::class, 'show'])->whereNumber('id');
+            Route::put('/{id}', [VendorProductController::class, 'update'])->whereNumber('id');
+            Route::delete('/{id}', [VendorProductController::class, 'destroy'])->whereNumber('id');
+        });
     });
 
     // ---- Step 3: catalog (public) ----
@@ -65,6 +76,16 @@ Route::prefix('marketplace')->group(function () {
         Route::post('/{productId}', [WishlistController::class, 'store'])->whereNumber('productId');
         Route::delete('/{productId}', [WishlistController::class, 'destroy'])->whereNumber('productId');
     });
+
+    // ---- Step 5: cart (guest via X-Cart-Session, or user = auth.optional) ----
+    Route::middleware('auth.optional')->prefix('cart')->group(function () {
+        Route::get('/', [CartController::class, 'show']);
+        Route::delete('/', [CartController::class, 'clear']);
+        Route::post('/items', [CartController::class, 'addItem']);
+        Route::put('/items/{id}', [CartController::class, 'updateItem'])->whereNumber('id');
+        Route::delete('/items/{id}', [CartController::class, 'removeItem'])->whereNumber('id');
+    });
+    Route::middleware('auth:api')->post('/cart/merge', [CartController::class, 'merge']);
 
     // ---- Images (user = auth:api). Standalone, decoupled upload: see ImageUploadController::uploadMarketplaceImage.
     // Used by every step above: upload here first, then pass the returned URL as logo_path / cover_image_path / image_path.

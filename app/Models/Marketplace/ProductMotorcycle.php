@@ -4,6 +4,7 @@ namespace App\Models\Marketplace;
 
 use App\Models\MotorcycleBrand;
 use App\Models\MotorcycleModel;
+use App\Models\MotorcycleType;
 use App\Models\MotorcycleYear;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -11,7 +12,7 @@ class ProductMotorcycle extends MarketplaceModel
 {
     protected $table = 'marketplace_product_motorcycles';
 
-    protected $fillable = ['product_id', 'moto_brand_id', 'moto_model_id', 'moto_year_id', 'is_universal'];
+    protected $fillable = ['product_id', 'moto_brand_id', 'bike_type_id', 'moto_model_id', 'moto_year_id', 'is_universal'];
 
     protected $casts = ['is_universal' => 'boolean'];
 
@@ -23,6 +24,11 @@ class ProductMotorcycle extends MarketplaceModel
     public function brand(): BelongsTo
     {
         return $this->belongsTo(MotorcycleBrand::class, 'moto_brand_id');
+    }
+
+    public function bikeType(): BelongsTo
+    {
+        return $this->belongsTo(MotorcycleType::class, 'bike_type_id');
     }
 
     public function model(): BelongsTo

@@ -920,6 +920,17 @@ class ListingController extends Controller
                     ->first();
 
                 if ($existingPayment) {
+                    // Already paid: make sure the listing is really live, and keep this step's
+                    // save. (This branch used to return "published" without publishing and
+                    // without committing — the listing stayed a draft and the save was lost.)
+                    if ($listing->status !== 'published') {
+                        $listing->update([
+                            'status' => 'published',
+                            'published_at' => $listing->published_at ?? now(),
+                        ]);
+                    }
+                    DB::commit();
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Listing is already paid and published.',
@@ -1078,24 +1089,20 @@ class ListingController extends Controller
             }
 
             // ✅ Step 1 & 2 : pas de paiement
-            if ($listing->status != 'draft') {
-                try {
-                    // Send notification to users in the same city
-                    app(NotificationService::class)->notifyUsersInCityNewListing($listing);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to send city-wide listing notification: ' . $e->getMessage());
-                }
-            }
+            // (city-wide "new listing" broadcast is sent by ListingObserver once the listing goes live)
 
             DB::commit();
 
-            // Notify User
-            try {
-                app(NotificationService::class)->sendToUser(Auth::user(), 'listing_created', [
-                    'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send listing_created notification: ' . $e->getMessage());
+            // Notify User — once, when the draft is first created (not on every step save)
+            if ($listing->wasRecentlyCreated) {
+                try {
+                    app(NotificationService::class)->sendToUser(Auth::user(), 'listing_created', [
+                        'listing_id' => $listing->id,
+                        'listing_title' => $listing->title ?? 'New Listing / إعلان جديد',
+                    ]);
+                } catch (\Exception $e) {
+                    \Log::error('Failed to send listing_created notification: ' . $e->getMessage());
+                }
             }
 
             return response()->json([
@@ -1307,6 +1314,17 @@ class ListingController extends Controller
                     ->first();
 
                 if ($existingPayment) {
+                    // Already paid: make sure the listing is really live, and keep this step's
+                    // save. (This branch used to return "published" without publishing and
+                    // without committing — the listing stayed a draft and the save was lost.)
+                    if ($listing->status !== 'published') {
+                        $listing->update([
+                            'status' => 'published',
+                            'published_at' => $listing->published_at ?? now(),
+                        ]);
+                    }
+                    DB::commit();
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Listing is already paid and published.',
@@ -1464,16 +1482,8 @@ class ListingController extends Controller
             }
 
             // ✅ Simple mise à jour sans paiement (step 1 & 2)
+            // No notification while the seller is still filling in the draft
             DB::commit();
-
-            // Notify User
-            try {
-                $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
-                    'listing_title' => $listing->title ?? 'Updated Listing / إعلان محدث',
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send listing_updated notification: ' . $e->getMessage());
-            }
 
             return response()->json([
                 'success' => true,
@@ -2128,6 +2138,7 @@ class ListingController extends Controller
 
             try {
                 $this->notificationService->sendToUser(Auth::user(), 'listing_updated', [
+                    'listing_id' => $listing->id,
                     'listing_title' => $listing->title,
                 ]);
             } catch (\Exception $e) {
@@ -4838,6 +4849,145 @@ class ListingController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * "Similar listings" for a listing page: published listings of the same category, ranked by
+     * closeness — motorcycles: same model, then same brand, then same type, then the nearest year;
+     * spare parts: same part category, then same brand; plates: same city, then same format.
+     * Ties: same country first, then newest. Read-only, additive (the detail page used to show
+     * the latest listings of the category).
+     * GET /api/listings/{id}/similar?limit=4
+     */
+    public function getSimilar($id, Request $request)
+    {
+        $limit = max(1, min((int) $request->get('limit', 4), 12));
+
+        $source = Listing::with(['motorcycle.year', 'sparePart', 'licensePlate'])->find($id);
+        if (!$source) {
+            return response()->json(['message' => 'Listing not found', 'listings' => []], 404);
+        }
+
+        $query = Listing::query()
+            ->select('listings.*')
+            ->where('listings.category_id', $source->category_id)
+            ->where('listings.status', 'published')
+            ->where('listings.id', '!=', $source->id);
+
+        // Lexical priority (not a weighted score): a closer year never beats a matching brand.
+        $eq = fn (string $col, $value) => $value !== null
+            ? ['CASE WHEN ' . $col . ' = ? THEN 1 ELSE 0 END DESC', [$value]]
+            : null;
+        $orders = [];
+
+        if ($source->category_id == 1) {
+            $query->leftJoin('motorcycles as m', 'm.listing_id', '=', 'listings.id')
+                ->leftJoin('motorcycle_years as y', 'y.id', '=', 'm.year_id');
+            $moto = $source->motorcycle;
+            $orders[] = $eq('m.model_id', $moto?->model_id);
+            $orders[] = $eq('m.brand_id', $moto?->brand_id);
+            $orders[] = $eq('m.type_id', $moto?->type_id);
+            $year = $moto?->year?->year;
+            if ($year) {
+                // Listings without a year go after every dated one.
+                $orders[] = ['COALESCE(ABS(y.year - ?), 9999) ASC', [(int) $year]];
+            }
+        } elseif ($source->category_id == 2) {
+            // Spare parts: same part category, then parts that fit the same motorcycle model,
+            // then the same motorcycle brand, then the same part brand.
+            $query->leftJoin('spare_parts as sp', 'sp.listing_id', '=', 'listings.id');
+            $part = $source->sparePart;
+            $fits = $part ? $part->motorcycles()->get(['brand_id', 'model_id']) : collect();
+            $fitsAny = function (string $col, $ids) {
+                $ids = collect($ids)->filter()->unique()->values()->all();
+                if (!$ids) {
+                    return null;
+                }
+                $in = implode(',', array_fill(0, count($ids), '?'));
+                return [
+                    "EXISTS (SELECT 1 FROM spare_part_motorcycles spm WHERE spm.spare_part_id = sp.id AND spm.$col IN ($in)) DESC",
+                    $ids,
+                ];
+            };
+            $orders[] = $eq('sp.bike_part_category_id', $part?->bike_part_category_id);
+            $orders[] = $fitsAny('model_id', $fits->pluck('model_id'));
+            $orders[] = $fitsAny('brand_id', $fits->pluck('brand_id'));
+            $orders[] = $eq('sp.bike_part_brand_id', $part?->bike_part_brand_id);
+        } elseif ($source->category_id == 3) {
+            // Plates: same city, then the same plate format.
+            $query->leftJoin('license_plates as lp', 'lp.listing_id', '=', 'listings.id');
+            $orders[] = $eq('lp.city_id', $source->licensePlate?->city_id);
+            $orders[] = $eq('lp.plate_format_id', $source->licensePlate?->plate_format_id);
+        }
+        $orders[] = $eq('listings.country_id', $source->country_id);
+
+        foreach (array_filter($orders) as [$sql, $bindings]) {
+            $query->orderByRaw($sql, $bindings);
+        }
+        $query->orderByDesc('listings.created_at');
+
+        $listings = $query->limit($limit)->get();
+        $listings->load([
+            'images' => fn ($q) => $q->select('listing_id', 'image_url')->orderBy('id', 'asc'),
+            'city:id,name',
+            'country:id,name',
+            'country.currencyExchangeRate:id,country_id,currency_symbol',
+            'motorcycle.brand:id,name',
+            'motorcycle.model:id,name',
+            'motorcycle.year:id,year',
+            'licensePlate.format',
+            'licensePlate.city',
+            'licensePlate.country',
+            'licensePlate.fieldValues.formatField',
+        ]);
+
+        $formatted = $listings->map(function ($listing) {
+            $displayPrice = ($listing->allow_submission || $listing->auction_enabled) ? $listing->minimum_bid : $listing->price;
+            $row = [
+                'id' => $listing->id,
+                'title' => $listing->title,
+                'price' => $listing->price ?? $listing->minimum_bid,
+                'display_price' => (string) ($displayPrice ?? 0),
+                'currency' => $listing->country?->currencyExchangeRate?->currency_symbol ?? 'MAD',
+                'city' => $listing->city?->name,
+                'country' => $listing->country?->name,
+                'images' => $listing->images->pluck('image_url'),
+            ];
+            if ($listing->category_id == 1 && $listing->motorcycle) {
+                $row['motorcycle'] = [
+                    'brand' => $listing->motorcycle->brand?->name,
+                    'model' => $listing->motorcycle->model?->name,
+                    'year' => $listing->motorcycle->year?->year,
+                ];
+            } elseif ($listing->category_id == 3 && $listing->licensePlate) {
+                $lp = $listing->licensePlate;
+                $row['license_plate'] = [
+                    'plate_format' => [
+                        'id' => $lp->format?->id,
+                        'name' => $lp->format?->name,
+                        'pattern' => $lp->format?->pattern,
+                        'country' => $lp->format?->country,
+                    ],
+                    'city' => $lp->city?->name,
+                    'country' => $lp->country?->name,
+                    'country_id' => $lp->country_id,
+                    'fields' => $lp->fieldValues->map(fn ($fv) => [
+                        'field_id' => $fv->formatField?->id,
+                        'field_name' => $fv->formatField?->field_name,
+                        'field_position' => $fv->formatField?->position,
+                        'field_type' => $fv->formatField?->field_type,
+                        'field_label' => $fv->formatField?->field_label,
+                        'is_required' => $fv->formatField?->is_required,
+                        'max_length' => $fv->formatField?->max_length,
+                        'validation_pattern' => $fv->formatField?->validation_pattern,
+                        'value' => $fv->field_value,
+                    ])->toArray(),
+                ];
+            }
+            return $row;
+        });
+
+        return response()->json(['listings' => $formatted->values()]);
     }
 
     /**

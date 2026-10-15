@@ -43,15 +43,16 @@ class Product extends MarketplaceModel
     }
 
     /** Parts that fit a bike: explicit compatibility rows plus universal parts. */
-    public function scopeCompatibleWith(Builder $query, ?int $brandId, ?int $modelId = null, ?int $yearId = null): Builder
+    public function scopeCompatibleWith(Builder $query, ?int $brandId, ?int $modelId = null, ?int $yearId = null, ?int $typeId = null): Builder
     {
-        return $query->whereHas('compatibility', function (Builder $c) use ($brandId, $modelId, $yearId) {
-            $c->where(function (Builder $w) use ($brandId, $modelId, $yearId) {
+        return $query->whereHas('compatibility', function (Builder $c) use ($brandId, $modelId, $yearId, $typeId) {
+            $c->where(function (Builder $w) use ($brandId, $modelId, $yearId, $typeId) {
                 $w->where('is_universal', true)
-                    ->orWhere(function (Builder $m) use ($brandId, $modelId, $yearId) {
+                    ->orWhere(function (Builder $m) use ($brandId, $modelId, $yearId, $typeId) {
                         $m->when($brandId, fn ($q) => $q->where('moto_brand_id', $brandId))
                             ->when($modelId, fn ($q) => $q->where('moto_model_id', $modelId))
-                            ->when($yearId, fn ($q) => $q->where('moto_year_id', $yearId));
+                            ->when($yearId, fn ($q) => $q->where('moto_year_id', $yearId))
+                            ->when($typeId, fn ($q) => $q->where('bike_type_id', $typeId));
                     });
             });
         });

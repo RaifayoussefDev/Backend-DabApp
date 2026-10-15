@@ -404,6 +404,13 @@ Route::prefix('admin')->group(function () {
         Route::get('/motorcycle-models/stats/overview', [AdminMotorcycleModelController::class, 'stats']);
         Route::apiResource('motorcycle-models', AdminMotorcycleModelController::class)->names('admin.motorcycle-models');
 
+        // Motorcycle catalog bulk import (background, chunked)
+        Route::get('/motorcycle-imports', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'index']);
+        Route::post('/motorcycle-imports', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'store']);
+        Route::get('/motorcycle-imports/{id}', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'show'])->whereNumber('id');
+        Route::post('/motorcycle-imports/{id}/cancel', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'cancel'])->whereNumber('id');
+        Route::post('/motorcycle-imports/{id}/resume', [\App\Http\Controllers\Admin\MotorcycleImportAdminController::class, 'resume'])->whereNumber('id');
+
         // Bike Part Brands
         Route::get('/bike-part-brands/stats/overview', [AdminBikePartBrandController::class, 'stats']);
         Route::apiResource('bike-part-brands', AdminBikePartBrandController::class)->names('admin.bike-part-brands');
@@ -646,6 +653,7 @@ Route::prefix('comparison/motorcycles')->group(function () {
 // LISTINGS (PUBLIC)
 // ============================================
 Route::get('/listings/by-category/{category_id}', [ListingController::class, 'getByCategory']);
+Route::get('/listings/{id}/similar', [ListingController::class, 'getSimilar'])->whereNumber('id');
 Route::get('/listings/{id}/pdf', [ListingController::class, 'generatePdf']); // PDF Route
 Route::get('/listings/search-by-model', [ListingController::class, 'searchByCategoryAndModel']);
 Route::get('/recent', [ListingController::class, 'getRecentListings']);
@@ -940,8 +948,8 @@ Route::get('/banners', [BannerController::class, 'index']);
 Route::get('/banners/{id}/click', [BannerController::class, 'click']);
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('admin/dashboard', [DashboardController::class, 'index']);
-    Route::get('admin/dashboard/prospect-stats', [DashboardController::class, 'prospectStats']);
+    Route::get('admin/dashboard', [DashboardController::class, 'index'])->middleware('admin.access');
+    Route::get('admin/dashboard/prospect-stats', [DashboardController::class, 'prospectStats'])->middleware('admin.access');
 
     // ============================================
     // AUTH MANAGEMENT
@@ -1053,7 +1061,7 @@ Route::middleware('auth:api')->group(function () {
     Route::patch('admin/promo-codes/{id}/toggle-display', [PromoCodeController::class, 'toggleDisplay'])->middleware('permission:promo-codes.manage');
     Route::apiResource('admin/promo-codes', PromoCodeController::class)->middleware('permission:promo-codes.manage');
 
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('admin.access')->group(function () {
         Route::get('/banners', [BannerController::class, 'adminIndex']);
         Route::get('/banners/{id}', [BannerController::class, 'show']);
         Route::post('/banners', [BannerController::class, 'store']);
@@ -1063,7 +1071,7 @@ Route::middleware('auth:api')->group(function () {
     });
 
     // Admin Locations
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('admin.access')->group(function () {
         Route::get('/countries', [LocationController::class, 'adminCountries']);
         Route::post('/countries', [LocationController::class, 'adminStoreCountry']);
         Route::get('/countries/{id}', [LocationController::class, 'adminShowCountry']);
@@ -1080,7 +1088,7 @@ Route::middleware('auth:api')->group(function () {
     // ============================================
     // POI TAGS (ADMIN)
     // ============================================
-    Route::prefix('admin/poi-tags')->group(function () {
+    Route::prefix('admin/poi-tags')->middleware('admin.access')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'index']);
         Route::post('/', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'store']);
         Route::get('/stats', [\App\Http\Controllers\Admin\PoiTagAdminController::class, 'stats']);
@@ -1540,7 +1548,7 @@ Route::middleware('auth:api')->group(function () {
     // PERMISSIONS & ROLES (ADMIN)
     // ============================================
 
-    Route::prefix('admin')->group(function () {
+    Route::prefix('admin')->middleware('admin.access')->group(function () {
 
         Route::prefix('permissions')->group(function () {
             Route::get('/', [PermissionController::class, 'index'])->middleware('permission:permissions.view');
@@ -1584,7 +1592,7 @@ Route::middleware('auth:api')->group(function () {
 // ============================================
 // ADMIN ROUTES WITH SPECIFIC MIDDLEWARE
 // ============================================
-Route::middleware(['auth:api', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'admin.access'])->prefix('admin')->group(function () {
     Route::post('/listings/republish-paid', [ListingController::class, 'checkAndRepublishPaidListings']);
     Route::get('/listings/payment-stats', [ListingController::class, 'getListingPaymentStats']);
     Route::post('/payments/{paymentId}/force-verify', [ListingController::class, 'forcePaymentVerification']);
@@ -1991,7 +1999,7 @@ Route::middleware('auth:api')->group(function () {
 });
 
 // Admin — Trainer management (full panel)
-Route::middleware('auth:api')->prefix('admin')->group(function () {
+Route::middleware(['auth:api', 'admin.access'])->prefix('admin')->group(function () {
 
     // ── Specialties Management ───────────────────────────────────────
     Route::get('/specialties',                       [\App\Http\Controllers\Trainer\SpecialtyController::class, 'adminIndex']);
@@ -2352,37 +2360,6 @@ Route::prefix('assist')->middleware('auth:api')->group(function () {
         Route::get('price-config',                 [\App\Http\Controllers\Assist\Admin\AdminPriceConfigController::class, 'show']);
         Route::patch('price-config',               [\App\Http\Controllers\Assist\Admin\AdminPriceConfigController::class, 'update']);
     });
-});
-
-// ============================================================
-// DEV / TEST ONLY — REMOVE BEFORE PRODUCTION
-// ============================================================
-Route::delete('/dev/trainers/reset-all', function () {
-    DB::statement('SET FOREIGN_KEY_CHECKS=0');
-    // Clear all trainer data — keep trainer_levels and specialties (seed data)
-    DB::table('trainer_bookings')->truncate();
-    DB::table('trainer_payments')->truncate();
-    DB::table('trainer_payouts')->truncate();
-    DB::table('trainer_reviews')->truncate();
-    DB::table('trainer_comments')->truncate();
-    DB::table('trainer_favorites')->truncate();
-    DB::table('trainer_likes')->truncate();
-    DB::table('trainer_gallery')->truncate();
-    DB::table('trainer_schedules')->truncate();
-    DB::table('trainer_locations')->truncate();
-    DB::table('trainer_course_sessions')->truncate();
-    DB::table('trainer_courses')->truncate();
-    DB::table('trainer_training_bikes')->truncate();
-    DB::table('trainer_level_approvals')->truncate();
-    DB::table('trainer_specialty')->truncate();
-    DB::table('trainer_equipment')->truncate();
-    DB::table('trainers')->truncate();
-    DB::statement('SET FOREIGN_KEY_CHECKS=1');
-
-    return response()->json([
-        'success' => true,
-        'message' => 'All trainers and related data deleted. trainer_levels and specialties kept.',
-    ]);
 });
 
 // ============================================

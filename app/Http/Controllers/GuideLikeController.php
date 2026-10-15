@@ -95,17 +95,7 @@ class GuideLikeController extends Controller
             'created_at' => now()
         ]);
 
-        // Notify Author
-        try {
-            if ($guide->author_id !== $user->id) {
-                $this->notificationService->sendToUser($guide->author, 'guide_new_like', [
-                    'user_name' => $user->first_name . ' ' . $user->last_name,
-                    'guide_title' => $guide->title
-                ]);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to send guide like notification: ' . $e->getMessage());
-        }
+        $this->notifyAuthorOfLike($guide, $user);
 
         return response()->json([
             'message' => 'Guide liked successfully',
@@ -261,6 +251,8 @@ class GuideLikeController extends Controller
                 'created_at' => now()
             ]);
 
+            $this->notifyAuthorOfLike($guide, $user);
+
             return response()->json([
                 'message' => 'Guide liked successfully',
                 'data' => [
@@ -402,5 +394,23 @@ class GuideLikeController extends Controller
             'likes_count' => $likes->count(),
             'likes' => $likes
         ]);
+    }
+
+    /**
+     * Notify the guide's author of a new like (both like() and toggleLike() land here).
+     */
+    private function notifyAuthorOfLike(Guide $guide, $user): void
+    {
+        try {
+            if ($guide->author && $guide->author_id != $user->id) {
+                $this->notificationService->sendToUser($guide->author, 'guide_new_like', [
+                    'guide_id' => $guide->id,
+                    'liker_name' => $user->first_name . ' ' . $user->last_name,
+                    'guide_title' => $guide->title
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide like notification: ' . $e->getMessage());
+        }
     }
 }

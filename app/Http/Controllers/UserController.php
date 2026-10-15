@@ -3201,8 +3201,21 @@ class UserController extends Controller
             ]);
 
             $poi = PointOfInterest::find($request->poi_id);
+            $wasDealer = PointOfInterest::where('owner_id', $user->id)->exists();
             $poi->owner_id = $user->id;
             $poi->save();
+
+            // First POI → the user just became a dealer
+            if (!$wasDealer) {
+                try {
+                    app(\App\Services\NotificationService::class)->sendToUser($user, 'dealer_approved', [
+                        'poi_id' => $poi->id,
+                        'poi_name' => $poi->name,
+                    ], ['entity' => $poi, 'priority' => 'high']);
+                } catch (\Exception $e) {
+                    \Log::error('dealer_approved notification failed: ' . $e->getMessage());
+                }
+            }
 
             return response()->json([
                 'success' => true,
@@ -3277,6 +3290,17 @@ class UserController extends Controller
 
             // Check if user has other POIs to determine dealer status
             $hasOtherPois = PointOfInterest::where('owner_id', $user->id)->exists();
+
+            // Last POI removed → no longer a dealer
+            if (!$hasOtherPois) {
+                try {
+                    app(\App\Services\NotificationService::class)->sendToUser($user, 'dealer_removed', [
+                        'poi_name' => $poi->name,
+                    ], ['priority' => 'normal']);
+                } catch (\Exception $e) {
+                    \Log::error('dealer_removed notification failed: ' . $e->getMessage());
+                }
+            }
 
             return response()->json([
                 'success' => true,

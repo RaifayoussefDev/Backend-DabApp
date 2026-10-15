@@ -30570,6 +30570,28 @@
                 ]
             }
         },
+        "/api/profile/summary": {
+            "get": {
+                "tags": [
+                    "Profile"
+                ],
+                "summary": "Counts for the signed-in user's profile sections",
+                "operationId": "958e943e0c7403092cdf394dc7a1e6b3",
+                "responses": {
+                    "200": {
+                        "description": "Profile counts"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/promo-codes": {
             "get": {
                 "tags": [
@@ -51778,6 +51800,10 @@
         {
             "name": "Plate Formats",
             "description": "Plate Formats"
+        },
+        {
+            "name": "Profile",
+            "description": "Profile"
         },
         {
             "name": "Promo Codes",

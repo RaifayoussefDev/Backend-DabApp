@@ -124,7 +124,7 @@ class MassNotificationJob implements ShouldQueue, ShouldBeUnique
                             $user, $title, $message, $data, $this->adminId, $batch->id
                         );
 
-                        $pref = $user->notificationPreference;
+                        $pref = \App\Models\NotificationPreference::forUser($user);
 
                         if ($wantsPush && $pref && $pref->canSendPush()) {
                             foreach ($notifications->broadcastPushItemsFor($notification, $user) as $item) {

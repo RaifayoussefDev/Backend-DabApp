@@ -22,60 +22,54 @@ class SendEventReminders extends Command
      *
      * @var string
      */
-    protected $description = 'Send reminders for events starting in the next 24 hours';
+    protected $description = 'Send event reminders: 24h before (event_reminder) and ~1h before (event_starting_soon)';
 
     /**
-     * Execute the console command.
+     * Execute the console command. Runs hourly; each window is one hour wide,
+     * so every event falls in exactly one run per reminder.
      */
     public function handle(EventNotificationService $notificationService)
     {
         $this->info('Starting event reminders check...');
 
-        // Find events starting between 23.5 and 24.5 hours from now
-        // This allows the command to run hourly without missing or duplicating events too easily
-        $startWindow = Carbon::now()->addHours(24)->subMinutes(30);
-        $endWindow = Carbon::now()->addHours(24)->addMinutes(30);
-
-        $events = Event::where('status', 'upcoming')
-            ->whereBetween('event_date', [$startWindow->toDateString(), $endWindow->toDateString()]) // Simple date check first
-            // Advanced time check if needed, but 'event_date' is often just a Date. 
-            // If start_time exists, we could combine them.
-            // For now, let's assume we remind based on date or loosely on time.
-            ->get();
-
-        $this->info("Found " . $events->count() . " events potentially needing reminders.");
-
-        foreach ($events as $event) {
-            // Check if we actually want to send it now (e.g. if start_time is set)
-            // If start_time is null, we assume all day, so sending 24h before date is fine.
-            // If start_time is set, we check if it falls in the window.
-           
-            $eventDateTime = Carbon::parse($event->event_date->format('Y-m-d') . ' ' . $event->start_time);
-            
-            // Check if event is approx 24h away (+/- 30 mins)
-            if ($eventDateTime->between($startWindow, $endWindow)) {
-                 $this->info("Sending reminder for event: {$event->title}");
-                 
-                 try {
-                     // Notify interested users
-                     $notificationService->sendToInterestedUsers($event, 'event_reminder', [
-                         'hours' => 24
-                     ]);
-
-                     // Notify participants
-                     $notificationService->sendToParticipants($event, 'event_reminder', [
-                         'hours' => 24
-                     ]);
-                     
-                 } catch (\Exception $e) {
-                     Log::error("Failed to send reminder for event {$event->id}: " . $e->getMessage());
-                     $this->error("Error sending reminder for {$event->title}");
-                 }
-            } else {
-                 $this->info("Skipping event: {$event->title} (Starts at {$eventDateTime}, not within ~24h window)");
-            }
-        }
+        $now = Carbon::now();
+        $this->remind($notificationService, 'event_reminder', 24, $now->copy()->addHours(24)->subMinutes(30), $now->copy()->addHours(24)->addMinutes(30));
+        $this->remind($notificationService, 'event_starting_soon', 1, $now->copy()->addMinutes(30), $now->copy()->addMinutes(90));
 
         $this->info('Event reminders check completed.');
+    }
+
+    private function remind(EventNotificationService $notificationService, string $type, int $hours, Carbon $from, Carbon $to): void
+    {
+        // Live events are 'published' today; 'upcoming' is the legacy default status
+        $events = Event::whereIn('status', ['published', 'upcoming'])
+            ->whereBetween('event_date', [$from->toDateString(), $to->toDateString()]) // Simple date check first
+            ->get();
+
+        foreach ($events as $event) {
+            // start_time null = all-day event (midnight)
+            $eventDateTime = Carbon::parse($event->event_date->format('Y-m-d') . ' ' . $event->start_time);
+
+            if (!$eventDateTime->between($from, $to)) {
+                continue;
+            }
+
+            $this->info("Sending {$type} for event: {$event->title}");
+
+            try {
+                // Participants + interested users, each person once
+                $users = $event->participants()->with('user')->get()->pluck('user')
+                    ->merge($event->interestedUsers)
+                    ->filter()
+                    ->unique('id');
+
+                foreach ($users as $user) {
+                    $notificationService->sendToUser($user, $event, $type, ['hours' => $hours]);
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to send {$type} for event {$event->id}: " . $e->getMessage());
+                $this->error("Error sending {$type} for {$event->title}");
+            }
+        }
     }
 }

@@ -95,15 +95,7 @@ class EventParticipantController extends Controller
 
             DB::commit();
 
-            // Notify Organizer
-            try {
-                $this->notificationService->sendToUser($event->organizer, 'event_new_participant', [
-                    'participant_name' => $user->first_name . ' ' . $user->last_name,
-                    'event_name' => $event->title
-                ]);
-            } catch (\Exception $e) {
-                \Log::error('Failed to send new participant notification: ' . $e->getMessage());
-            }
+            // Organizer + participant notifications are sent by EventParticipantObserver::created
 
             return response()->json([
                 'message' => 'Registration successful',

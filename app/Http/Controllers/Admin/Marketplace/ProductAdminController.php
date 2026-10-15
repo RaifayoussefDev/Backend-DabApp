@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers\Admin\Marketplace;
 
-use App\Http\Controllers\Marketplace\ProductController;
+use App\Http\Controllers\Marketplace\Concerns\ManagesProductChildren;
 use App\Models\Marketplace\OrderItem;
 use App\Models\Marketplace\Product;
-use App\Models\Marketplace\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +19,8 @@ use Illuminate\Validation\Rule;
  */
 class ProductAdminController extends MarketplaceAdminController
 {
+    use ManagesProductChildren;
+
     private const STATUSES = ['draft', 'pending_review', 'active', 'inactive', 'rejected'];
     private const CONDITIONS = ['new', 'used'];
 
@@ -79,12 +80,12 @@ class ProductAdminController extends MarketplaceAdminController
 
         if ($perPage) {
             $page = $query->paginate($perPage);
-            $page->getCollection()->transform(fn (Product $p) => $this->present($p));
+            $page->getCollection()->transform(fn (Product $p) => $this->presentProduct($p));
 
             return response()->json($this->paginated($page));
         }
 
-        return response()->json(['data' => $query->get()->map(fn (Product $p) => $this->present($p))->values()]);
+        return response()->json(['data' => $query->get()->map(fn (Product $p) => $this->presentProduct($p))->values()]);
     }
 
     /**
@@ -138,11 +139,11 @@ class ProductAdminController extends MarketplaceAdminController
 
         $product = Product::with([
             'vendor:id,slug,shop_name', 'category:id,slug,name', 'brand:id,name',
-            'images', 'attributes', 'variants', 'compatibility.brand:id,name', 'compatibility.model:id,name', 'compatibility.year:id,year',
+            'images', 'attributes', 'variants', 'compatibility.brand:id,name', 'compatibility.model:id,name', 'compatibility.year:id,year', 'compatibility.bikeType:id,name',
         ])->find($id);
 
         return $product
-            ? response()->json(['data' => $this->present($product, true)])
+            ? response()->json(['data' => $this->presentProduct($product, true)])
             : response()->json(['message' => 'Product not found'], 404);
     }
 
@@ -150,15 +151,15 @@ class ProductAdminController extends MarketplaceAdminController
      * @OA\Post(
      *     path="/api/admin/marketplace/products",
      *     summary="Create a product",
-     *     description="reference is the SKU (one product = no variants). slug is generated from name when omitted. status defaults to draft; setting it to active stamps published_at. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+     *     description="reference is the SKU (one product = no variants) - generated from name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug which is generated from name too. status defaults to draft; setting it to active stamps published_at. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
      *     tags={"Admin Marketplace - Products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(
-     *         required={"vendor_id","category_id","reference","name","price"},
+     *         required={"vendor_id","category_id","name","price"},
      *         @OA\Property(property="vendor_id", type="integer", example=4),
      *         @OA\Property(property="category_id", type="integer", example=3),
      *         @OA\Property(property="brand_id", type="integer", nullable=true, example=4, description="Parts brand (Michelin), not the bike's manufacturer"),
-     *         @OA\Property(property="reference", type="string", example="MP-00021", description="SKU, unique"),
+     *         @OA\Property(property="reference", type="string", example="MP-00021", description="SKU, unique. Generated from name when omitted."),
      *         @OA\Property(property="slug", type="string", example="michelin-pilot-road-5-120-70-17"),
      *         @OA\Property(property="name", type="string", example="Michelin Pilot Road 5 120/70-17"),
      *         @OA\Property(property="name_ar", type="string"),
@@ -181,6 +182,7 @@ class ProductAdminController extends MarketplaceAdminController
      *         @OA\Property(property="compatibility", type="array", description="One row per bike it fits, or one row with is_universal=true for a part that fits everything",
      *             @OA\Items(type="object",
      *                 @OA\Property(property="moto_brand_id", type="integer", nullable=true, example=2),
+     *                 @OA\Property(property="bike_type_id", type="integer", nullable=true, example=3, description="Independent of moto_model_id - can be set alone to mean 'fits all Sport bikes'"),
      *                 @OA\Property(property="moto_model_id", type="integer", nullable=true, example=15),
      *                 @OA\Property(property="moto_year_id", type="integer", nullable=true, example=140),
      *                 @OA\Property(property="is_universal", type="boolean", example=false))),
@@ -211,10 +213,10 @@ class ProductAdminController extends MarketplaceAdminController
             return $denied;
         }
 
-        $validator = Validator::make($request->all(), $this->rules($request) + [
+        $validator = Validator::make($request->all(), $this->rules() + [
             'vendor_id'   => ['required', 'integer', Rule::exists('marketplace_vendors', 'id')->whereNull('deleted_at')],
             'category_id' => ['required', 'integer', Rule::exists('marketplace_categories', 'id')->whereNull('deleted_at')],
-            'reference'   => ['required', 'string', 'max:255', Rule::unique('marketplace_products', 'reference')],
+            'reference'   => ['nullable', 'string', 'max:255', Rule::unique('marketplace_products', 'reference')],
             'name'        => 'required|string|max:255',
             'price'       => 'required|numeric|min:0',
         ]);
@@ -230,7 +232,7 @@ class ProductAdminController extends MarketplaceAdminController
                 'vendor_id'       => (int) $request->input('vendor_id'),
                 'category_id'     => (int) $request->input('category_id'),
                 'brand_id'        => $request->input('brand_id') ?: null,
-                'reference'       => $request->input('reference'),
+                'reference'       => $request->filled('reference') ? $request->input('reference') : $this->uniqueReference($request->input('name')),
                 'slug'            => $request->filled('slug') ? $request->input('slug') : $this->uniqueSlug(Product::class, $request->input('name')),
                 'name'            => $request->input('name'),
                 'name_ar'         => $request->input('name_ar'),
@@ -246,14 +248,14 @@ class ProductAdminController extends MarketplaceAdminController
                 'published_at'    => $status === 'active' ? now() : null,
             ]);
 
-            $this->syncChildren($product, $request);
+            $this->syncProductChildren($product, $request);
 
             return $product;
         });
 
         return response()->json([
             'message' => 'Product created successfully',
-            'data'    => $this->present($this->loadFull($product), true),
+            'data'    => $this->presentProduct($this->loadProductFull($product), true),
         ], 201);
     }
 
@@ -288,7 +290,8 @@ class ProductAdminController extends MarketplaceAdminController
      *             @OA\Property(property="label", type="string"), @OA\Property(property="label_ar", type="string", nullable=true),
      *             @OA\Property(property="value", type="string"), @OA\Property(property="value_ar", type="string", nullable=true))),
      *         @OA\Property(property="compatibility", type="array", @OA\Items(type="object",
-     *             @OA\Property(property="moto_brand_id", type="integer", nullable=true), @OA\Property(property="moto_model_id", type="integer", nullable=true),
+     *             @OA\Property(property="moto_brand_id", type="integer", nullable=true), @OA\Property(property="bike_type_id", type="integer", nullable=true),
+     *             @OA\Property(property="moto_model_id", type="integer", nullable=true),
      *             @OA\Property(property="moto_year_id", type="integer", nullable=true), @OA\Property(property="is_universal", type="boolean"))),
      *         @OA\Property(property="variants", type="array", description="Full replace, same shape as create. An empty array removes all variants and reverts the product to its own price/stock_quantity.",
      *             @OA\Items(type="object", required={"sku","price"},
@@ -316,7 +319,7 @@ class ProductAdminController extends MarketplaceAdminController
             return response()->json(['message' => 'Product not found'], 404);
         }
 
-        $validator = Validator::make($request->all(), $this->rules($request, $id) + [
+        $validator = Validator::make($request->all(), $this->rules($id) + [
             'vendor_id'   => ['sometimes', 'required', 'integer', Rule::exists('marketplace_vendors', 'id')->whereNull('deleted_at')],
             'category_id' => ['sometimes', 'required', 'integer', Rule::exists('marketplace_categories', 'id')->whereNull('deleted_at')],
             'reference'   => ['sometimes', 'required', 'string', 'max:255', Rule::unique('marketplace_products', 'reference')->ignore($id)],
@@ -355,12 +358,12 @@ class ProductAdminController extends MarketplaceAdminController
 
             $product->update($data);
 
-            $this->syncChildren($product, $request);
+            $this->syncProductChildren($product, $request);
         });
 
         return response()->json([
             'message' => 'Product updated successfully',
-            'data'    => $this->present($this->loadFull($product->fresh()), true),
+            'data'    => $this->presentProduct($this->loadProductFull($product->fresh()), true),
         ]);
     }
 
@@ -399,16 +402,9 @@ class ProductAdminController extends MarketplaceAdminController
 
     // ------------------------------------------------------------------ internals
 
-    private function rules(Request $request, ?int $ignoreId = null): array
+    private function rules(?int $ignoreId = null): array
     {
-        // Variants are deleted and recreated on every sync (syncChildren), so re-sending an unchanged SKU for the
-        // SAME product must not look like a collision: only another product's variant counts as a conflict.
-        $variantSkuRule = Rule::unique('marketplace_product_variants', 'sku');
-        if ($ignoreId) {
-            $variantSkuRule = $variantSkuRule->where(fn ($q) => $q->where('product_id', '!=', $ignoreId));
-        }
-
-        return [
+        return $this->childRules($ignoreId) + [
             'brand_id'         => ['nullable', 'integer', Rule::exists('marketplace_brands', 'id')->whereNull('deleted_at')],
             'slug'             => ['nullable', 'string', 'max:255', 'alpha_dash', Rule::unique('marketplace_products', 'slug')->ignore($ignoreId)],
             'name_ar'          => 'nullable|string|max:255',
@@ -420,182 +416,6 @@ class ProductAdminController extends MarketplaceAdminController
             'status'           => ['nullable', Rule::in(self::STATUSES)],
             'status_reason'    => 'nullable|string|max:1000',
             'is_featured'      => 'nullable|boolean',
-
-            'images'                   => 'nullable|array',
-            'images.*.image_path'      => $this->imagePathRule(),
-            'images.*.is_cover'        => 'nullable|boolean',
-            'images.*.order_position'  => 'nullable|integer|min:0',
-
-            'attributes'                  => 'nullable|array',
-            'attributes.*.label'          => 'required_with:attributes|string|max:255',
-            'attributes.*.label_ar'       => 'nullable|string|max:255',
-            'attributes.*.value'          => 'required_with:attributes|string|max:255',
-            'attributes.*.value_ar'       => 'nullable|string|max:255',
-            'attributes.*.order_position' => 'nullable|integer|min:0',
-
-            'compatibility'                     => 'nullable|array',
-            'compatibility.*.moto_brand_id'      => ['nullable', 'integer', Rule::exists('motorcycle_brands', 'id')],
-            'compatibility.*.moto_model_id'      => ['nullable', 'integer', Rule::exists('motorcycle_models', 'id')],
-            'compatibility.*.moto_year_id'       => ['nullable', 'integer', Rule::exists('motorcycle_years', 'id')],
-            'compatibility.*.is_universal'       => 'nullable|boolean',
-
-            'variants'                        => 'nullable|array',
-            'variants.*.sku'                  => ['required_with:variants', 'string', 'max:255', 'distinct', $variantSkuRule],
-            'variants.*.option1_name'         => 'nullable|string|max:100',
-            'variants.*.option1_value'        => 'nullable|string|max:100',
-            'variants.*.color_hex'            => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'variants.*.option2_name'         => 'nullable|string|max:100',
-            'variants.*.option2_value'        => 'nullable|string|max:100',
-            'variants.*.price'                => 'required_with:variants|numeric|min:0',
-            'variants.*.compare_at_price'      => 'nullable|numeric|min:0',
-            'variants.*.stock_quantity'        => 'nullable|integer|min:0',
-            'variants.*.image_path'            => $this->imagePathRule(),
-            'variants.*.is_default'            => 'nullable|boolean',
         ];
-    }
-
-    /** images / attributes / compatibility are full-replace: present in the request = delete the old set, insert the new one. */
-    private function syncChildren(Product $product, Request $request): void
-    {
-        if ($request->has('images')) {
-            $product->images()->delete();
-
-            $hasCover = false;
-            foreach ($request->input('images', []) as $i => $img) {
-                $isCover = (bool) ($img['is_cover'] ?? false);
-                $hasCover = $hasCover || $isCover;
-
-                $product->images()->create([
-                    'image_path'     => $img['image_path'],
-                    'is_cover'       => $isCover,
-                    'order_position' => $img['order_position'] ?? $i,
-                ]);
-            }
-
-            if (! $hasCover) {
-                $product->images()->orderBy('order_position')->first()?->update(['is_cover' => true]);
-            }
-        }
-
-        if ($request->has('attributes')) {
-            $product->attributes()->delete();
-
-            foreach ($request->input('attributes', []) as $i => $attr) {
-                $product->attributes()->create([
-                    'label'          => $attr['label'],
-                    'label_ar'       => $attr['label_ar'] ?? null,
-                    'value'          => $attr['value'],
-                    'value_ar'       => $attr['value_ar'] ?? null,
-                    'order_position' => $attr['order_position'] ?? $i,
-                ]);
-            }
-        }
-
-        if ($request->has('compatibility')) {
-            $product->compatibility()->delete();
-
-            foreach ($request->input('compatibility', []) as $c) {
-                $product->compatibility()->create([
-                    'moto_brand_id' => $c['moto_brand_id'] ?? null,
-                    'moto_model_id' => $c['moto_model_id'] ?? null,
-                    'moto_year_id'  => $c['moto_year_id'] ?? null,
-                    'is_universal'  => (bool) ($c['is_universal'] ?? false),
-                ]);
-            }
-        }
-
-        if ($request->has('variants')) {
-            // Hard delete, not soft: `sku` is DB-unique, and a full-replace means these rows are genuinely gone -
-            // a soft-deleted row would still collide if the same sku is sent again on the very next update.
-            $product->variants()->forceDelete();
-
-            $hasDefault = false;
-            foreach ($request->input('variants', []) as $i => $v) {
-                $isDefault = (bool) ($v['is_default'] ?? false);
-                $hasDefault = $hasDefault || $isDefault;
-
-                $product->variants()->create([
-                    'sku'              => $v['sku'],
-                    'option1_name'     => $v['option1_name'] ?? null,
-                    'option1_value'    => $v['option1_value'] ?? null,
-                    'color_hex'        => $v['color_hex'] ?? null,
-                    'option2_name'     => $v['option2_name'] ?? null,
-                    'option2_value'    => $v['option2_value'] ?? null,
-                    'price'            => $v['price'],
-                    'compare_at_price' => $v['compare_at_price'] ?? null,
-                    'stock_quantity'   => (int) ($v['stock_quantity'] ?? 0),
-                    'image_path'       => $v['image_path'] ?? null,
-                    'is_default'       => $isDefault,
-                    'order_position'   => $i,
-                ]);
-            }
-
-            if (! $hasDefault) {
-                $product->variants()->orderBy('order_position')->first()?->update(['is_default' => true]);
-            }
-        }
-    }
-
-    private function loadFull(Product $product): Product
-    {
-        return $product->load([
-            'vendor:id,slug,shop_name', 'category:id,slug,name', 'brand:id,name',
-            'images', 'attributes', 'variants', 'compatibility.brand:id,name', 'compatibility.model:id,name', 'compatibility.year:id,year',
-        ]);
-    }
-
-    /** Admin view of a product. $full adds images/attributes/compatibility (detail); the list only gets a cover thumbnail. */
-    private function present(Product $product, bool $full = false): array
-    {
-        $pricing = $product->effectivePricing();
-
-        $data = [
-            'id'               => $product->id,
-            'vendor'           => $product->vendor ? ['id' => $product->vendor->id, 'slug' => $product->vendor->slug, 'shop_name' => $product->vendor->shop_name] : null,
-            'category'         => $product->category ? ['id' => $product->category->id, 'slug' => $product->category->slug, 'name' => $product->category->name] : null,
-            'brand'            => $product->brand ? ['id' => $product->brand->id, 'name' => $product->brand->name] : null,
-            'reference'        => $product->reference,
-            'slug'             => $product->slug,
-            'name'             => $product->name,
-            'name_ar'          => $product->name_ar,
-            'description'      => $product->description,
-            'description_ar'   => $product->description_ar,
-            'price'            => $pricing['price'],
-            'price_max'        => $pricing['price_max'],
-            'compare_at_price' => $pricing['compare_at_price'],
-            'in_stock'         => $pricing['in_stock'],
-            'stock_quantity'   => $product->stock_quantity,
-            'has_variants'     => $product->relationLoaded('variants') ? $product->variants->isNotEmpty() : false,
-            'condition'        => $product->condition,
-            'status'           => $product->status,
-            'status_reason'    => $product->status_reason,
-            'is_featured'      => (bool) $product->is_featured,
-            'published_at'     => $product->published_at,
-            'rating_avg'       => (float) $product->rating_avg,
-            'reviews_count'    => $product->reviews_count,
-            'likes_count'      => $product->likes_count,
-            'sales_count'      => $product->sales_count,
-            'created_at'       => $product->created_at,
-        ];
-
-        if ($full) {
-            $data['images'] = $product->images->map(fn ($i) => [
-                'id' => $i->id, 'image_url' => $i->image_url, 'is_cover' => (bool) $i->is_cover, 'order_position' => $i->order_position,
-            ])->values();
-            $data['attributes'] = $product->attributes->map(fn ($a) => [
-                'id' => $a->id, 'label' => $a->label, 'label_ar' => $a->label_ar, 'value' => $a->value, 'value_ar' => $a->value_ar,
-            ])->values();
-            $data['compatibility'] = $product->compatibility->map(fn ($c) => [
-                'id' => $c->id, 'is_universal' => (bool) $c->is_universal,
-                'moto_brand_id' => $c->moto_brand_id, 'brand' => $c->brand->name ?? null,
-                'moto_model_id' => $c->moto_model_id, 'model' => $c->model->name ?? null,
-                'moto_year_id'  => $c->moto_year_id, 'year' => $c->year->year ?? null,
-            ])->values();
-            $data['variants'] = $product->variants->map(fn (ProductVariant $v) => array_merge(['id' => $v->id], ProductController::variantRow($v)))->values();
-        } else {
-            $data['cover_image_url'] = $product->coverImage?->image_url;
-        }
-
-        return $data;
     }
 }

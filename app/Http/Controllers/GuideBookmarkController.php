@@ -96,18 +96,7 @@ class GuideBookmarkController extends Controller
             'created_at' => $createdAt
         ]);
 
-        // Notify Author (Optional for bookmark, but requested in plan)
-        try {
-            if ($guide->author_id !== $user->id) {
-                // Assuming we want a notification for bookmarks too based on previous context
-                $this->notificationService->sendToUser($guide->author, 'guide_new_bookmark', [
-                    'user_name' => $user->first_name . ' ' . $user->last_name,
-                    'guide_title' => $guide->title
-                ]);
-            }
-        } catch (\Exception $e) {
-            \Log::error('Failed to send guide bookmark notification: ' . $e->getMessage());
-        }
+        $this->notifyAuthorOfBookmark($guide, $user);
 
         return response()->json([
             'message' => 'Guide added to bookmarks successfully',
@@ -258,6 +247,8 @@ class GuideBookmarkController extends Controller
                 'user_id' => $user->id,
                 'created_at' => $createdAt
             ]);
+
+            $this->notifyAuthorOfBookmark($guide, $user);
 
             return response()->json([
                 'message' => 'Guide added to bookmarks successfully',
@@ -544,5 +535,23 @@ class GuideBookmarkController extends Controller
         }, $guideIds);
 
         return response()->json($result);
+    }
+
+    /**
+     * Notify the guide's author of a new bookmark (both bookmark() and toggleBookmark() land here).
+     */
+    private function notifyAuthorOfBookmark(Guide $guide, $user): void
+    {
+        try {
+            if ($guide->author && $guide->author_id != $user->id) {
+                $this->notificationService->sendToUser($guide->author, 'guide_new_bookmark', [
+                    'guide_id' => $guide->id,
+                    'user_name' => $user->first_name . ' ' . $user->last_name,
+                    'guide_title' => $guide->title
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to send guide bookmark notification: ' . $e->getMessage());
+        }
     }
 }

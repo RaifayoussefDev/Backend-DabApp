@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Trainer;
 use App\Models\TrainerLike;
+use App\Services\NotificationService;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -62,6 +64,14 @@ class TrainerLikeController extends Controller
             $trainer->increment('likes_count');
             $liked   = true;
             $message = 'Trainer liked';
+
+            if ($trainer->user && $trainer->user_id != $user->id) {
+                try {
+                    app(NotificationService::class)->notifyTrainerNewLike($trainer, $user);
+                } catch (\Exception $e) {
+                    Log::error('Failed to send trainer like notification: ' . $e->getMessage());
+                }
+            }
         }
 
         return response()->json([

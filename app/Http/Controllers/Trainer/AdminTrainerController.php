@@ -427,7 +427,18 @@ class AdminTrainerController extends Controller
             return response()->json(['success' => false, 'message' => 'Comment not found'], 404);
         }
 
+        $wasApproved = (bool) $comment->is_approved;
         $comment->update(['is_approved' => true]);
+
+        // Tell the trainer once the comment is visible on their profile (not on re-approval)
+        $trainer = $comment->trainer;
+        if (!$wasApproved && $trainer?->user && $comment->user && $trainer->user_id != $comment->user_id) {
+            try {
+                $this->notifications->notifyTrainerNewComment($trainer, $comment->user, $comment);
+            } catch (\Exception $e) {
+                Log::error('trainer_new_comment notification failed: ' . $e->getMessage());
+            }
+        }
 
         return response()->json(['success' => true, 'message' => 'Comment approved']);
     }

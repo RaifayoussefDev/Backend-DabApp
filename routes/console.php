@@ -15,7 +15,7 @@ Artisan::command('inspire', function () {
 | NOTE: app/Console/Kernel.php::schedule() is dead code on Laravel 11+ — the
 | framework never loads it. Scheduling must live here (or in bootstrap/app.php).
 | Only the notification tasks are wired up for now; the other Kernel entries
-| (soom:auto-mark-sold, events:send-reminders, SubscriptionExpirationJob, …)
+| (SubscriptionExpirationJob, payments:check-pending, trainer-bookings:expire-unpaid, …)
 | are still dormant and need a separate audit before being turned on.
 */
 
@@ -27,6 +27,21 @@ Schedule::command('listings:send-follow-up')
 // Fire admin broadcasts (user + guest) whose scheduled_at has arrived.
 Schedule::command('notifications:dispatch-scheduled')
     ->everyMinute()
+    ->withoutOverlapping();
+
+// 24h event reminders to participants + interested users (±30 min window, so hourly catches each event once).
+Schedule::command('events:send-reminders')
+    ->hourly()
+    ->withoutOverlapping();
+
+// Auto-approve trainer reviews an admin hasn't moderated within 24h (notifies the trainer).
+Schedule::command('trainer-reviews:auto-approve')
+    ->hourly()
+    ->withoutOverlapping();
+
+// Mark listings sold 5 days after a validated soom sale, notifying the losing bidders.
+Schedule::command('soom:auto-mark-sold')
+    ->daily()
     ->withoutOverlapping();
 
 Artisan::command('debug:rules', function () {

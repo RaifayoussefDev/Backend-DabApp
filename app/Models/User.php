@@ -214,6 +214,7 @@ class User extends Authenticatable implements JWTSubject
         'two_factor_enabled',
         'allow_multi_device',
         'country_id',
+        'city_id',
     ];
 
     /**
@@ -301,6 +302,14 @@ class User extends Authenticatable implements JWTSubject
     public function country()
     {
         return $this->belongsTo(Country::class);
+    }
+
+    /**
+     * The user's own city — drives the "new listing / trainer / course in your city" notifications.
+     */
+    public function city()
+    {
+        return $this->belongsTo(City::class);
     }
 
     /**

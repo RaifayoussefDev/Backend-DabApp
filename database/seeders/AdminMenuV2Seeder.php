@@ -229,7 +229,8 @@ class AdminMenuV2Seeder extends Seeder
                     ["key" => "motorcycle-brands", "path" => "/motorcycle/brands", "label_en" => "Brands", "label_ar" => "العلامات التجارية", "permission" => "catalog.motorcycle", "order" => 1],
                     ["key" => "motorcycle-models", "path" => "/motorcycle/models", "label_en" => "Models", "label_ar" => "الموديلات", "permission" => "catalog.motorcycle", "order" => 2],
                     ["key" => "motorcycle-types", "path" => "/motorcycle/types", "label_en" => "Types", "label_ar" => "الأنواع", "permission" => "catalog.motorcycle", "order" => 3],
-                    ["key" => "motorcycle-years", "path" => "/motorcycle/years", "label_en" => "Years", "label_ar" => "السنوات", "permission" => "catalog.motorcycle", "order" => 4]
+                    ["key" => "motorcycle-years", "path" => "/motorcycle/years", "label_en" => "Years", "label_ar" => "السنوات", "permission" => "catalog.motorcycle", "order" => 4],
+                    ["key" => "motorcycle-import", "path" => "/motorcycle/import", "label_en" => "Import Data", "label_ar" => "استيراد البيانات", "permission" => "catalog.motorcycle", "order" => 5]
                 ]
             ],
             [

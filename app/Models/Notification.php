@@ -201,6 +201,8 @@ class Notification extends Model
                 'App\Models\User' => '/profile/',
                 'App\Models\Event' => '/events/',
                 'App\Models\Poi' => '/pois/',
+                'App\Models\PointOfInterest' => '/pois/',
+                'App\Models\Trainer' => '/trainers/',
             ];
 
             if (isset($routes[$this->related_entity_type])) {

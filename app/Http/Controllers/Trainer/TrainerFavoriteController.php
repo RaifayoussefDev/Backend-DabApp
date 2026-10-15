@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Trainer;
 use App\Http\Controllers\Controller;
 use App\Models\Trainer;
 use App\Models\TrainerFavorite;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -58,6 +60,14 @@ class TrainerFavoriteController extends Controller
         }
 
         TrainerFavorite::create(['trainer_id' => $trainer->id, 'user_id' => $user->id]);
+
+        if ($trainer->user && $trainer->user_id != $user->id) {
+            try {
+                app(NotificationService::class)->notifyTrainerNewFavorite($trainer, $user);
+            } catch (\Exception $e) {
+                Log::error('Failed to send trainer favorite notification: ' . $e->getMessage());
+            }
+        }
 
         return response()->json(['success' => true, 'favorited' => true, 'message' => 'Trainer added to favorites']);
     }

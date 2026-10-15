@@ -137,11 +137,17 @@ class AdminSoomController extends Controller
             // Notify Seller
             try {
                 Mail::to($listing->seller->email)->send(new SoomCreatedMail($submission, $listing, $user));
+            } catch (\Exception $e) {
+                \Log::error('AdminSoom: Failed to email seller: ' . $e->getMessage());
+            }
+            try {
+                // push + in-app only: the dedicated mail above already emails this (SoomCreatedMail)
                 app(NotificationService::class)->sendToUser($listing->seller, 'soom_new_negotiation', [
+                    'listing_id' => $listing->id,
                     'buyer_name' => $user->first_name . ' ' . $user->last_name,
                     'listing_title' => $listing->title,
                     'amount' => $request->amount, // ✅ Added amount
-                ]);
+                ], ['channels' => ['push']]);
             } catch (\Exception $e) {
                 \Log::error('AdminSoom: Failed to notify seller: ' . $e->getMessage());
             }
@@ -162,10 +168,11 @@ class AdminSoomController extends Controller
                 $previousUser = $highestSubmission->user;
                 if ($previousUser) {
                     // Send generic "Outbid" notification
-                    app(NotificationService::class)->sendToUser($previousUser, 'soom_outbid', [
-                        'listing_title' => $listing->title,
-                        'new_amount' => $request->amount
-                    ]);
+                    try {
+                        app(NotificationService::class)->notifySoomOutbid($previousUser, $listing, $request->amount);
+                    } catch (\Exception $e) {
+                        \Log::error('AdminSoom: Failed to notify outbid user: ' . $e->getMessage());
+                    }
 
                     // Email?
                     // Mail::to($previousUser->email)->send(new SoomOutbidMail(...)); 
@@ -174,7 +181,15 @@ class AdminSoomController extends Controller
             }
 
             // Also notify the USER (Buyer) that a SOOM was placed on their behalf?
-            // app(NotificationService::class)->sendToUser($user, 'soom_created_by_admin', ...);
+            try {
+                app(NotificationService::class)->sendToUser($user, 'soom_created_by_admin', [
+                    'listing_id' => $listing->id,
+                    'listing_title' => $listing->title,
+                    'amount' => $request->amount,
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('AdminSoom: Failed to notify buyer: ' . $e->getMessage());
+            }
 
             DB::commit();
 

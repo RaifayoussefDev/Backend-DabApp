@@ -62,8 +62,24 @@ class CardController extends Controller
      */
     public function index()
     {
-        // Admin should see who owns the card
-        return response()->json(BankCard::with(['BankCardType', 'user:id,name,email'])->get());
+        // These routes sit in the plain auth:api group: an admin sees every card (and its owner),
+        // anyone else only their own — never other users' cards or emails.
+        $user = Auth::user();
+        if ($user?->isAdmin()) {
+            return response()->json(BankCard::with(['BankCardType', 'user:id,first_name,last_name,email'])->get());
+        }
+        return response()->json(BankCard::with('BankCardType')->where('user_id', $user?->id)->get());
+    }
+
+    /** The card if the caller may touch it: any card for an admin, only their own otherwise (404). */
+    private function cardFor($id): BankCard
+    {
+        $user = Auth::user();
+        $query = BankCard::query();
+        if (!$user?->isAdmin()) {
+            $query->where('user_id', $user?->id);
+        }
+        return $query->findOrFail($id);
     }
 
     // ... (lines 48-297 remain unchanged, they are user methods) ...
@@ -87,7 +103,7 @@ class CardController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $bankCard = BankCard::findOrFail($id);
+        $bankCard = $this->cardFor($id);
 
         $validated = $request->validate([
             'card_holder_name' => 'sometimes|string|max:255',
@@ -121,7 +137,7 @@ class CardController extends Controller
      */
     public function destroy($id)
     {
-        BankCard::findOrFail($id)->delete();
+        $this->cardFor($id)->delete();
         return response()->json(['message' => 'BankCard deleted']);
     }
 

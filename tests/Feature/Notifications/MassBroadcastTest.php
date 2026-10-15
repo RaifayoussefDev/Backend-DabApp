@@ -87,12 +87,12 @@ class MassBroadcastTest extends TestCase
         $a = User::factory()->create(['language' => 'en']); // 2 valid tokens -> reached
         $b = User::factory()->create();                     // 1 invalid token -> not reached
         $c = User::factory()->create();                     // push disabled    -> not reached
-        $d = User::factory()->create();                     // no preference    -> not reached
+        $d = User::factory()->create();                     // no preference    -> defaults created, reached
 
         $this->pref($a, push: true, email: false);
         $this->pref($b, push: true, email: false);
         $this->pref($c, push: false, email: false);
-        // $d: intentionally no preference row
+        // $d: intentionally no preference row — gets the defaults (push on)
 
         $this->token($a, 'tok-a1', 'android');
         $this->token($a, 'tok-a2', 'ios');
@@ -106,15 +106,15 @@ class MassBroadcastTest extends TestCase
 
         // One batched FCM call for the single chunk — not one per user/token.
         $this->assertCount(1, $this->firebase->calls);
-        $this->assertCount(3, $this->firebase->calls[0], 'push items = A(2) + B(1); C and D excluded');
+        $this->assertCount(4, $this->firebase->calls[0], 'push items = A(2) + B(1) + D(1); C excluded');
 
         // In-app Notification row for every targeted user, regardless of push eligibility.
         $this->assertSame(4, Notification::where('batch_id', $batch->id)->count());
 
         // Push logs only for the users a push was attempted for.
         $notifIds = Notification::where('batch_id', $batch->id)->pluck('id');
-        $this->assertSame(3, NotificationLog::whereIn('notification_id', $notifIds)->where('channel', 'push')->count());
-        $this->assertSame(2, NotificationLog::whereIn('notification_id', $notifIds)->where('status', 'sent')->count());
+        $this->assertSame(4, NotificationLog::whereIn('notification_id', $notifIds)->where('channel', 'push')->count());
+        $this->assertSame(3, NotificationLog::whereIn('notification_id', $notifIds)->where('status', 'sent')->count());
 
         // Invalid token deactivated.
         $this->assertFalse($bToken->fresh()->is_active);
@@ -126,8 +126,8 @@ class MassBroadcastTest extends TestCase
         $batch->refresh();
         $this->assertSame('completed', $batch->status);
         $this->assertSame(4, $batch->total_targeted);
-        $this->assertSame(1, $batch->sent_count);   // only A reached
-        $this->assertSame(3, $batch->failed_count); // B, C, D
+        $this->assertSame(2, $batch->sent_count);   // A and D reached
+        $this->assertSame(2, $batch->failed_count); // B, C
         $this->assertNotNull($batch->completed_at);
     }
 
