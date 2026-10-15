@@ -826,12 +826,18 @@ class PayTabsController extends Controller
 
     private function buildRedirectUrl($params)
     {
-        // URL de base selon l'environnement
-        $baseUrl = app()->environment('local')
-            ? 'http://localhost:3000/submission-success'  // Frontend local
-            : 'https://dabapp.co/submission-success';     // Frontend production
+        return $this->resultPageUrl() . '?' . http_build_query($params);
+    }
 
-        return $baseUrl . '?' . http_build_query($params);
+    /**
+     * The website's payment result page. FRONTEND_URL (same setting as the trainer payments),
+     * defaulting to production — never a hard-coded localhost.
+     */
+    private function resultPageUrl(): string
+    {
+        $frontend = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'https://dabapp.co')), '/');
+
+        return $frontend . '/submission-success';
     }
 
     /**
@@ -839,9 +845,7 @@ class PayTabsController extends Controller
      */
     private function redirectToHome($queryString = '')
     {
-        $baseUrl = app()->environment('local')
-            ? 'http://localhost:3000/submission-success'
-            : 'https://dabapp.co/submission-success';
+        $baseUrl = $this->resultPageUrl();
 
         $redirectUrl = $queryString ? $baseUrl . '?' . $queryString : $baseUrl;
 
