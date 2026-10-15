@@ -727,11 +727,9 @@ class PayTabsController extends Controller
             $redirectParams['message'] = 'Payment failed';
         }
 
-        // URL de redirection selon l'environnement
-        $baseUrl = app()->environment('local')
-            ? 'https://dabapp.co/submission-success'
-            : 'http://localhost:3000/submission-success';
-        $redirectUrl = $baseUrl . '?' . http_build_query($redirectParams);
+        // URL de redirection selon l'environnement (was inverted: production sent paying
+        // customers to localhost:3000) — same helper as the other redirects.
+        $redirectUrl = $this->buildRedirectUrl($redirectParams);
 
         Log::info("Redirection vers: {$redirectUrl}");
 
