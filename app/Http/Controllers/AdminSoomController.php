@@ -141,12 +141,13 @@ class AdminSoomController extends Controller
                 \Log::error('AdminSoom: Failed to email seller: ' . $e->getMessage());
             }
             try {
+                // push + in-app only: the dedicated mail above already emails this (SoomCreatedMail)
                 app(NotificationService::class)->sendToUser($listing->seller, 'soom_new_negotiation', [
                     'listing_id' => $listing->id,
                     'buyer_name' => $user->first_name . ' ' . $user->last_name,
                     'listing_title' => $listing->title,
                     'amount' => $request->amount, // ✅ Added amount
-                ]);
+                ], ['channels' => ['push']]);
             } catch (\Exception $e) {
                 \Log::error('AdminSoom: Failed to notify seller: ' . $e->getMessage());
             }

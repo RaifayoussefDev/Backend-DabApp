@@ -790,15 +790,15 @@ class NotificationService
     /**
      * Notification: Listing vendu
      */
-    public function notifyListingSold(User $user, $listing): array
+    public function notifyListingSold(User $user, $listing, array $options = []): array
     {
         return $this->sendToUser($user, 'listing_sold', [
             'listing_id' => $listing->id,
             'listing_title' => $listing->title,
-        ], [
+        ], array_merge([
             'entity' => $listing,
             'priority' => 'high',
-        ]);
+        ], $options));
     }
 
     /**
@@ -839,16 +839,16 @@ class NotificationService
     /**
      * Notification: Enchère gagnée
      */
-    public function notifySoomWon(User $user, $soom, $winningBid): array
+    public function notifySoomWon(User $user, $soom, $winningBid, array $options = []): array
     {
         return $this->sendToUser($user, 'soom_won', [
             'soom_id' => $soom->id,
             'soom_title' => $soom->title,
             'winning_bid' => $winningBid,
-        ], [
+        ], array_merge([
             'entity' => $soom,
             'priority' => 'urgent',
-        ]);
+        ], $options));
     }
 
     /**

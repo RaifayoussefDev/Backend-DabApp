@@ -284,12 +284,13 @@ class SoomController extends Controller
 
             // Separate from the email so an SMTP failure doesn't swallow the push
             try {
+                // push + in-app only: the dedicated mail above already emails this (SoomCreatedMail)
                 $this->notificationService->sendToUser($listing->seller, 'soom_new_negotiation', [
                     'listing_id' => $listing->id,
                     'buyer_name' => $buyer->first_name . ' ' . $buyer->last_name,
                     'listing_title' => $listing->title,
                     'amount' => $request->amount, // ✅ Added amount
-                ]);
+                ], ['channels' => ['push']]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM created notification: ' . $e->getMessage());
             }
@@ -616,12 +617,13 @@ class SoomController extends Controller
 
             // Separate from the email so an SMTP failure / missing email doesn't swallow the push
             try {
+                // push + in-app only: the dedicated mail above already emails this (SoomAcceptedMail)
                 $this->notificationService->sendToUser($submission->user, 'soom_accepted', [
                     'listing_id' => $submission->listing_id,
                     'listing_title' => $submission->listing->title,
                     'amount' => $submission->amount,
                     'currency' => 'AED' // Should be dynamic
-                ]);
+                ], ['channels' => ['push']]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM accepted notification: ' . $e->getMessage());
             }
@@ -807,11 +809,12 @@ class SoomController extends Controller
             }
 
             try {
+                // push + in-app only: the dedicated mail above already emails this (SoomRejectedMail)
                 $this->notificationService->sendToUser($submission->user, 'soom_rejected', [
                     'listing_id' => $submission->listing_id,
                     'listing_title' => $submission->listing->title,
                     'reason' => $request->reason ?? 'No reason provided'
-                ]);
+                ], ['channels' => ['push']]);
             } catch (\Exception $e) {
                 \Log::error('Failed to send SOOM rejected notification: ' . $e->getMessage());
             }
@@ -1079,14 +1082,14 @@ class SoomController extends Controller
             // Push + in-app — outside the email block, which throws when an email is missing
             if ($buyer) {
                 try {
-                    $this->notificationService->notifySoomWon($buyer, $submission->listing, $submission->amount);
+                    $this->notificationService->notifySoomWon($buyer, $submission->listing, $submission->amount, ['channels' => ['push']]);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send soom_won notification: ' . $e->getMessage());
                 }
             }
             if ($seller) {
                 try {
-                    $this->notificationService->notifyListingSold($seller, $submission->listing);
+                    $this->notificationService->notifyListingSold($seller, $submission->listing, ['channels' => ['push']]);
                 } catch (\Exception $e) {
                     \Log::error('Failed to send listing_sold notification: ' . $e->getMessage());
                 }

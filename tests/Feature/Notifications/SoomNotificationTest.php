@@ -104,4 +104,24 @@ class SoomNotificationTest extends TestCase
         Listing::find($listingId)->update(['status' => 'published']);
         $this->assertSame(1, $this->sent($seller, 'listing_approved'));
     }
+
+    public function test_new_soom_emails_the_seller_once(): void
+    {
+        Mail::fake();
+        $seller = User::factory()->create(['email' => 'seller_' . uniqid() . '@test.local']);
+        $buyer = User::factory()->create(['email' => null]);
+        // Without events: going live emails "listing approved", which isn't what this test is about
+        $listing = Listing::withoutEvents(fn () => Listing::create([
+            'seller_id' => $seller->id, 'status' => 'published', 'step' => 3, 'title' => 'Shark helmet',
+            'description' => 'A description long enough for validation.', 'price' => 900, 'category_id' => 1,
+            'auction_enabled' => true, 'allow_submission' => true, 'minimum_bid' => 100,
+        ]));
+
+        $this->as($buyer)->postJson("/api/listings/{$listing->id}/soom", ['amount' => 100])->assertCreated();
+
+        // The dedicated SoomCreatedMail only — not a second generic NotificationMail
+        Mail::assertSent(\App\Mail\SoomCreatedMail::class, 1);
+        Mail::assertNotSent(\App\Mail\NotificationMail::class);
+        $this->assertSame(1, $this->sent($seller, 'soom_new_negotiation'));
+    }
 }
