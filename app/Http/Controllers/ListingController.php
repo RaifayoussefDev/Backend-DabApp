@@ -920,6 +920,17 @@ class ListingController extends Controller
                     ->first();
 
                 if ($existingPayment) {
+                    // Already paid: make sure the listing is really live, and keep this step's
+                    // save. (This branch used to return "published" without publishing and
+                    // without committing — the listing stayed a draft and the save was lost.)
+                    if ($listing->status !== 'published') {
+                        $listing->update([
+                            'status' => 'published',
+                            'published_at' => $listing->published_at ?? now(),
+                        ]);
+                    }
+                    DB::commit();
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Listing is already paid and published.',
@@ -1303,6 +1314,17 @@ class ListingController extends Controller
                     ->first();
 
                 if ($existingPayment) {
+                    // Already paid: make sure the listing is really live, and keep this step's
+                    // save. (This branch used to return "published" without publishing and
+                    // without committing — the listing stayed a draft and the save was lost.)
+                    if ($listing->status !== 'published') {
+                        $listing->update([
+                            'status' => 'published',
+                            'published_at' => $listing->published_at ?? now(),
+                        ]);
+                    }
+                    DB::commit();
+
                     return response()->json([
                         'success' => true,
                         'message' => 'Listing is already paid and published.',
