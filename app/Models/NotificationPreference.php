@@ -110,6 +110,7 @@ class NotificationPreference extends Model
         'event_reminder',
         'event_updated',
         'event_cancelled',
+        'event_registration',
         // POI
         'poi_review',
         'new_poi_nearby',
@@ -173,6 +174,7 @@ class NotificationPreference extends Model
         'event_reminder' => 'boolean',
         'event_updated' => 'boolean',
         'event_cancelled' => 'boolean',
+        'event_registration' => 'boolean',
         'poi_review' => 'boolean',
         'new_poi_nearby' => 'boolean',
         'route_comment' => 'boolean',
@@ -330,7 +332,7 @@ class NotificationPreference extends Model
     }
 
     /** Every togglable preference field except config-only ones (user_id, quiet hours, push_priority). */
-    protected static function togglableFields(): array
+    public static function togglableFields(): array
     {
         return array_diff(
             (new static())->getFillable(),

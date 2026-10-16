@@ -142,4 +142,25 @@ class NotificationTriggersTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    /** The app's settings screen could not turn soom back on after "disable all" (field was silently dropped). */
+    public function test_user_can_turn_soom_notifications_back_on_after_disable_all(): void
+    {
+        $user = User::factory()->create(['email' => 'pref_' . uniqid() . '@test.local']);
+        $this->actingAs($user, 'api')->postJson('/api/notification-preferences/disable-all')->assertOk();
+        $this->assertFalse((bool) $user->fresh()->notificationPreference->soom_new_negotiation);
+
+        $this->actingAs($user, 'api')->putJson('/api/notification-preferences', [
+            'soom_new_negotiation' => true,
+            'soom_accepted' => true,
+            'new_trainer_in_city' => true,
+            'push_enabled' => true,
+        ])->assertOk();
+
+        $prefs = $user->fresh()->notificationPreference;
+        $this->assertTrue((bool) $prefs->soom_new_negotiation);
+        $this->assertTrue((bool) $prefs->soom_accepted);
+        $this->assertTrue((bool) $prefs->new_trainer_in_city);
+        $this->assertTrue($prefs->isNotificationEnabled('soom_new_negotiation'));
+    }
 }

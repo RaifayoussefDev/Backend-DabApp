@@ -42,14 +42,8 @@ class NotificationPreferenceController extends Controller
      */
     public function show(): JsonResponse
     {
-        $preferences = auth()->user()->notificationPreference;
-
-        if (!$preferences) {
-            // Créer les préférences par défaut
-            $preferences = NotificationPreference::create([
-                'user_id' => auth()->id(),
-            ]);
-        }
+        // Créées avec les valeurs par défaut si absentes
+        $preferences = NotificationPreference::forUser(auth()->user());
 
         return response()->json([
             'success' => true,
@@ -90,7 +84,12 @@ class NotificationPreferenceController extends Controller
      */
     public function update(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        // Every on/off toggle the model knows (soom_*, dealer_approved, new_*_in_city, …).
+        // A hand-written list here used to silently drop the soom toggles, so a user who
+        // once hit "disable all" could never turn soom notifications back on.
+        $toggleRules = array_fill_keys(NotificationPreference::togglableFields(), 'sometimes|boolean');
+
+        $validated = $request->validate($toggleRules + [
             // Listings
             'listing_approved' => 'sometimes|boolean',
             'listing_rejected' => 'sometimes|boolean',
@@ -146,13 +145,7 @@ class NotificationPreferenceController extends Controller
             'push_priority' => 'sometimes|in:default,high',
         ]);
 
-        $preferences = auth()->user()->notificationPreference;
-
-        if (!$preferences) {
-            $preferences = NotificationPreference::create([
-                'user_id' => auth()->id(),
-            ]);
-        }
+        $preferences = NotificationPreference::forUser(auth()->user());
 
         $preferences->update($validated);
 
@@ -182,13 +175,7 @@ class NotificationPreferenceController extends Controller
      */
     public function enableAll(): JsonResponse
     {
-        $preferences = auth()->user()->notificationPreference;
-
-        if (!$preferences) {
-            $preferences = NotificationPreference::create([
-                'user_id' => auth()->id(),
-            ]);
-        }
+        $preferences = NotificationPreference::forUser(auth()->user());
 
         $preferences->enableAll();
 
@@ -218,13 +205,7 @@ class NotificationPreferenceController extends Controller
      */
     public function disableAll(): JsonResponse
     {
-        $preferences = auth()->user()->notificationPreference;
-
-        if (!$preferences) {
-            $preferences = NotificationPreference::create([
-                'user_id' => auth()->id(),
-            ]);
-        }
+        $preferences = NotificationPreference::forUser(auth()->user());
 
         $preferences->disableAll();
 
