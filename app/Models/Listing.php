@@ -143,6 +143,23 @@ class Listing extends Model
         return $this->belongsTo(Country::class);
     }
 
+    /** Arabic names for the currencies listings are priced in (code → word used in sentences). */
+    public const CURRENCY_NAMES_AR = ['SAR' => 'ريال', 'AED' => 'درهم', 'KWD' => 'دينار'];
+
+    /**
+     * The currency the listing is priced in — its country's currency (SAR, AED, KWD…).
+     * Notifications and soom emails use this instead of a hard-coded currency.
+     */
+    public function currencyCode(): string
+    {
+        return $this->country?->currencyExchangeRate?->currency_code ?: 'SAR';
+    }
+
+    public function currencyNameAr(): string
+    {
+        return self::CURRENCY_NAMES_AR[$this->currencyCode()] ?? $this->currencyCode();
+    }
+
     public function listingType()
     {
         return $this->belongsTo(ListingType::class);

@@ -100,7 +100,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>Accepted Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} SAR</span></p>
+                <p><strong>Accepted Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyCode() }}</span></p>
                 <p><strong>Seller:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
                 @if($submission->acceptance_date)
                     <p><strong>Acceptance Date:</strong> {{ $submission->acceptance_date->format('M d, Y H:i') }}</p>
@@ -150,7 +150,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>المبلغ المقبول:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} ريال</span></p>
+                <p><strong>المبلغ المقبول:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyNameAr() }}</span></p>
                 <p><strong>البائع:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
                 @if($submission->acceptance_date)
                     <p><strong>تاريخ القبول:</strong> {{ $submission->acceptance_date->format('M d, Y H:i') }}</p>

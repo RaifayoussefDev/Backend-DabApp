@@ -77,7 +77,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>SOOM Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} SAR</span></p>
+                <p><strong>SOOM Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyCode() }}</span></p>
                 <p><strong>From:</strong> {{ $buyer->first_name }} {{ $buyer->last_name }}</p>
                 <p><strong>Submission Date:</strong> {{ $submission->submission_date->format('M d, Y H:i') }}</p>
             </div>
@@ -91,7 +91,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>مبلغ السوم:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} ريال</span></p>
+                <p><strong>مبلغ السوم:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyNameAr() }}</span></p>
                 <p><strong>من:</strong> {{ $buyer->first_name }} {{ $buyer->last_name }}</p>
                 <p><strong>تاريخ التقديم:</strong> {{ $submission->submission_date->format('M d, Y H:i') }}</p>
             </div>

@@ -85,7 +85,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>Rejected Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} SAR</span></p>
+                <p><strong>Rejected Amount:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyCode() }}</span></p>
                 <p><strong>Seller:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
             </div>
 
@@ -105,7 +105,7 @@
 
             <div class="section">
                 <h3>{{ $listing->title }}</h3>
-                <p><strong>المبلغ المرفوض:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} ريال</span></p>
+                <p><strong>المبلغ المرفوض:</strong> <span class="amount">{{ number_format($submission->amount, 2) }} {{ $listing->currencyNameAr() }}</span></p>
                 <p><strong>البائع:</strong> {{ $seller->first_name }} {{ $seller->last_name }}</p>
             </div>
 

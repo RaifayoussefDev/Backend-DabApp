@@ -51,6 +51,8 @@ class NotificationService
             ];
         }
 
+        $data = $this->withCurrency($type, $data, $options);
+
         // ✅ Déterminer la langue de l'utilisateur (défaut: 'ar')
         $language = ($user->language === 'en') ? 'en' : 'ar';
 
@@ -174,6 +176,33 @@ class NotificationService
             ?? ($type ? $this->deepLinkFor($type, $data, $options['entity'] ?? null) : null);
 
         return $entityInfo;
+    }
+
+    /**
+     * {{currency}} / {{currency_ar}} for the templates. Listing & soom amounts are in the
+     * listing's own currency (its country: SAR, AED, KWD…), never a hard-coded one.
+     * Other types (payments, payouts) keep the currency their caller passed.
+     */
+    protected function withCurrency(string $type, array $data, array $options): array
+    {
+        $isListingType = str_starts_with($type, 'soom_') || str_starts_with($type, 'listing_') || $type === 'new_listing_in_city';
+
+        if ($isListingType) {
+            $listing = ($options['entity'] ?? null) instanceof \App\Models\Listing
+                ? $options['entity']
+                : (!empty($data['listing_id']) ? \App\Models\Listing::find($data['listing_id']) : null);
+
+            if ($listing) {
+                $data['currency'] = $listing->currencyCode();
+                $data['currency_ar'] = $listing->currencyNameAr();
+            }
+        }
+
+        if (!empty($data['currency']) && empty($data['currency_ar'])) {
+            $data['currency_ar'] = \App\Models\Listing::CURRENCY_NAMES_AR[$data['currency']] ?? $data['currency'];
+        }
+
+        return $data;
     }
 
     /**
@@ -992,6 +1021,8 @@ class NotificationService
             'payment_id' => $payment->id,
             'listing_id' => $payment->listing_id ?? null,
             'amount' => $payment->amount,
+            // The charged currency (PayTabs, usually AED) — not the listing's display currency
+            'currency' => $payment->currency ?: 'AED',
             'failure_reason' => $reason,
         ], [
             'priority' => 'urgent',

@@ -132,7 +132,7 @@
             <div class="section">
                 <h3>{{ $submission->listing->title }}</h3>
                 <p><strong>Final Sale Amount:</strong> <span
-                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} SAR</span></p>
+                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} {{ $submission->listing->currencyCode() }}</span></p>
                 <p><strong>Validation Date:</strong>
                     {{ optional($auctionHistory->validated_at)->format('M d, Y H:i') ?? now()->format('M d, Y H:i') }}
                 </p>
@@ -193,7 +193,7 @@
             <div class="section">
                 <h3>{{ $submission->listing->title }}</h3>
                 <p><strong>مبلغ البيع النهائي:</strong> <span
-                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} ريال</span></p>
+                        class="amount">{{ number_format($auctionHistory->bid_amount, 2) }} {{ $submission->listing->currencyNameAr() }}</span></p>
                 <p><strong>تاريخ التأكيد:</strong> {{ optional($auctionHistory->validated_at)->format('M d, Y H:i') ?? now()->format('M d, Y H:i') }}</p>
                 <p><strong>تاريخ العرض الأصلي:</strong> {{ optional($auctionHistory->bid_date)->format('M d, Y H:i') ?? 'N/A' }}</p>
             </div>

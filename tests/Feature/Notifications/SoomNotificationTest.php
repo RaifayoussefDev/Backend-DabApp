@@ -124,4 +124,37 @@ class SoomNotificationTest extends TestCase
         Mail::assertNotSent(\App\Mail\NotificationMail::class);
         $this->assertSame(1, $this->sent($seller, 'soom_new_negotiation'));
     }
+
+    /** Amounts use the listing's own currency (its country), not a hard-coded one. */
+    public function test_soom_amounts_use_the_listing_currency(): void
+    {
+        $countries = \DB::table('currency_exchange_rates')->whereIn('currency_code', ['SAR', 'AED'])->pluck('country_id', 'currency_code');
+        $this->assertCount(2, $countries, 'needs SAR and AED rows in currency_exchange_rates');
+
+        foreach (['SAR' => 'ريال', 'AED' => 'درهم'] as $code => $arabic) {
+            $this->app['auth']->forgetGuards();
+            $sellerEn = User::factory()->create(['email' => null, 'language' => 'en']);
+            $sellerAr = User::factory()->create(['email' => null, 'language' => 'ar']);
+            $buyer = User::factory()->create(['email' => null]);
+
+            foreach ([$sellerEn, $sellerAr] as $seller) {
+                $listing = Listing::withoutEvents(fn () => Listing::create([
+                    'seller_id' => $seller->id, 'status' => 'published', 'step' => 3, 'title' => "Bike {$code}",
+                    'description' => 'A description long enough for validation.', 'price' => 900, 'category_id' => 1,
+                    'auction_enabled' => true, 'allow_submission' => true, 'minimum_bid' => 100,
+                    'country_id' => $countries[$code],
+                ]));
+                $this->as($buyer)->postJson("/api/listings/{$listing->id}/soom", ['amount' => 100])->assertCreated();
+
+                $message = Notification::where('user_id', $seller->id)->where('type', 'soom_new_negotiation')->value('message');
+                $expected = $seller->language === 'ar' ? $arabic : $code;
+                $this->assertStringContainsString("100 {$expected}", $message, "{$code} / {$seller->language}");
+
+                // The soom email shows the same currency
+                $html = (new \App\Mail\SoomCreatedMail(Submission::where('listing_id', $listing->id)->first(), $listing, $buyer))->render();
+                $this->assertStringContainsString("100.00 {$code}", $html);
+                $this->assertStringContainsString("100.00 {$arabic}", $html);
+            }
+        }
+    }
 }
