@@ -167,6 +167,25 @@ class AdminNotificationPreferenceController extends Controller
     }
 
     /**
+     * The admin panel addresses preferences by USER id (users/:id screen), while the
+     * resource routes take the preference row id — these resolve the row first.
+     */
+    public function updateByUserId(Request $request, $userId): JsonResponse
+    {
+        return $this->update($request, NotificationPreference::forUser(User::findOrFail($userId))->id);
+    }
+
+    public function enableAllByUserId($userId): JsonResponse
+    {
+        return $this->enableAll(NotificationPreference::forUser(User::findOrFail($userId))->id);
+    }
+
+    public function disableAllByUserId($userId): JsonResponse
+    {
+        return $this->disableAll(NotificationPreference::forUser(User::findOrFail($userId))->id);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/admin/notification-preferences",
      *     tags={"Admin Notification Preferences"},
@@ -275,7 +294,10 @@ class AdminNotificationPreferenceController extends Controller
     {
         $preference = NotificationPreference::findOrFail($id);
 
-        $validated = $request->validate([
+        // Every on/off toggle the model knows, so no field is silently dropped
+        $toggleRules = array_fill_keys(NotificationPreference::togglableFields(), 'sometimes|boolean');
+
+        $validated = $request->validate($toggleRules + [
             'listing_approved' => 'sometimes|boolean',
             'listing_rejected' => 'sometimes|boolean',
             'listing_expired' => 'sometimes|boolean',

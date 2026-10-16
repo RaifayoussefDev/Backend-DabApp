@@ -267,6 +267,9 @@ Route::prefix('admin')->group(function () {
         Route::patch('notification-preferences/{id}/enable-all', [AdminNotificationPreferenceController::class, 'enableAll']);
         Route::patch('notification-preferences/{id}/disable-all', [AdminNotificationPreferenceController::class, 'disableAll']);
         Route::get('notification-preferences/user/{userId}', [AdminNotificationPreferenceController::class, 'getByUserId']);
+        Route::match(['put', 'patch'], 'notification-preferences/user/{userId}', [AdminNotificationPreferenceController::class, 'updateByUserId']);
+        Route::patch('notification-preferences/user/{userId}/enable-all', [AdminNotificationPreferenceController::class, 'enableAllByUserId']);
+        Route::patch('notification-preferences/user/{userId}/disable-all', [AdminNotificationPreferenceController::class, 'disableAllByUserId']);
         Route::apiResource('notification-preferences', AdminNotificationPreferenceController::class);
 
         // Authentication logs (register / login / logout / OTP delivery)

@@ -163,4 +163,26 @@ class NotificationTriggersTest extends TestCase
         $this->assertTrue((bool) $prefs->new_trainer_in_city);
         $this->assertTrue($prefs->isNotificationEnabled('soom_new_negotiation'));
     }
+
+    /** The admin panel's user screen saves preferences by USER id (PUT …/user/{userId}). */
+    public function test_admin_updates_a_users_preferences_by_user_id(): void
+    {
+        $admin = User::factory()->create(['role_id' => 1, 'is_active' => true, 'email' => 'adm_' . uniqid() . '@test.local']);
+        $user = User::factory()->create(['email' => 'u_' . uniqid() . '@test.local']);
+        \App\Models\NotificationPreference::forUser($user)->disableAll();
+        $headers = ['Authorization' => 'Bearer ' . \Tymon\JWTAuth\Facades\JWTAuth::fromUser($admin)];
+
+        $this->withHeaders($headers)->putJson("/api/admin/notification-preferences/user/{$user->id}", [
+            'soom_new_negotiation' => true,
+            'new_trainer_in_city' => true,
+        ])->assertOk();
+        $prefs = $user->notificationPreference()->first();
+        $this->assertTrue((bool) $prefs->soom_new_negotiation);
+        $this->assertTrue((bool) $prefs->new_trainer_in_city);
+
+        $this->withHeaders($headers)->patchJson("/api/admin/notification-preferences/user/{$user->id}/disable-all")->assertOk();
+        $this->assertFalse((bool) $user->notificationPreference()->first()->soom_accepted);
+        $this->withHeaders($headers)->patchJson("/api/admin/notification-preferences/user/{$user->id}/enable-all")->assertOk();
+        $this->assertTrue((bool) $user->notificationPreference()->first()->soom_accepted);
+    }
 }
