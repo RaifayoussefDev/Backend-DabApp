@@ -202,6 +202,41 @@ class NotificationService
             $data['currency_ar'] = \App\Models\Listing::CURRENCY_NAMES_AR[$data['currency']] ?? $data['currency'];
         }
 
+        return $this->withReportLabels($data);
+    }
+
+    /** Readable words for report notifications: 'item' is a class name, 'status' a code. */
+    private const REPORT_ITEMS = [
+        'Listing' => ['your report on a listing', 'إعلان'],
+        'Guide' => ['your report on a guide', 'دليل'],
+        'GuideComment' => ['your report on a comment', 'تعليق'],
+        'User' => ['your report on a user', 'مستخدم'],
+        'Event' => ['your report on an event', 'فعالية'],
+        'PointOfInterest' => ['your report on a place', 'مكان'],
+        'Route' => ['your report on a route', 'مسار'],
+        'Trainer' => ['your report on a trainer', 'مدرب'],
+    ];
+    private const REPORT_STATUSES = [
+        'pending' => ['pending review', 'قيد المراجعة'],
+        'reviewed' => ['reviewed', 'تمت المراجعة'],
+        'resolved' => ['resolved', 'تم الحل'],
+        'dismissed' => ['closed', 'تم إغلاقه'],
+        'rejected' => ['closed', 'تم إغلاقه'],
+    ];
+
+    protected function withReportLabels(array $data): array
+    {
+        if (isset($data['item']) && !isset($data['item_en'])) {
+            [$en, $ar] = self::REPORT_ITEMS[ucfirst((string) $data['item'])] ?? ['your report', 'محتوى'];
+            $data['item_en'] = $en;
+            $data['item_ar'] = $ar;
+        }
+        if (isset($data['status']) && !isset($data['status_en'])) {
+            [$en, $ar] = self::REPORT_STATUSES[$data['status']] ?? [$data['status'], $data['status']];
+            $data['status_en'] = $en;
+            $data['status_ar'] = $ar;
+        }
+
         return $data;
     }
 
