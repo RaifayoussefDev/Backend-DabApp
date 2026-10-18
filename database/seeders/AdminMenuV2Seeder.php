@@ -247,13 +247,25 @@ class AdminMenuV2Seeder extends Seeder
                 ]
             ],
             [
+                "key" => "marketplace",
+                "path" => "/marketplace/vendors",
+                "label_en" => "Marketplace",
+                "label_ar" => "السوق",
+                "icon" => "Store",
+                "permission" => "marketplace.vendors.view",
+                "order" => 18,
+                "sub_items" => [
+                    ["key" => "marketplace-vendors", "path" => "/marketplace/vendors", "label_en" => "Vendors", "label_ar" => "المتاجر", "permission" => "marketplace.vendors.view", "order" => 1]
+                ]
+            ],
+            [
                 "key" => "trainer",
                 "path" => "/trainer",
                 "label_en" => "Trainers",
                 "label_ar" => "المدربون",
                 "icon" => "GraduationCap",
                 "permission" => "trainers.view",
-                "order" => 18,
+                "order" => 19,
                 "sub_items" => [
                     ["key" => "trainer-dashboard",  "path" => "/trainer",             "label_en" => "Dashboard",    "label_ar" => "لوحة المدربين", "permission" => "trainers.view",   "order" => 1],
                     ["key" => "trainer-list",       "path" => "/trainer/trainers",    "label_en" => "All Trainers", "label_ar" => "كل المدربين",   "permission" => "trainers.view",   "order" => 2],
@@ -273,7 +285,7 @@ class AdminMenuV2Seeder extends Seeder
                 "label_ar" => "الإعدادات",
                 "icon" => "Settings",
                 "permission" => "settings.view",
-                "order" => 19,
+                "order" => 20,
                 "sub_items" => [
                     ["key" => "settings-general", "path" => "/settings", "label_en" => "General", "label_ar" => "عام", "permission" => "settings.view", "order" => 1],
                     ["key" => "settings-app-version", "path" => "/settings/app-version", "label_en" => "App Version", "label_ar" => "إصدار التطبيق", "permission" => "settings.view", "order" => 2],
