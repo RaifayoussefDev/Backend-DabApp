@@ -18,7 +18,7 @@ use Illuminate\Validation\Rule;
 /**
  * @OA\Tag(
  *     name="Marketplace - Vendor products",
- *     description="A vendor manages their own catalog from the app. Only an active shop can sell: a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account endpoints). Unlike the admin side, a vendor cannot publish directly: status is limited to draft or pending_review here - an admin reviews and sets active/rejected from the Admin Panel (mirrors how vendor applications themselves are approved). vendor_id and is_featured are never settable here. images / attributes / compatibility / variants follow the same full-replace convention as the admin endpoint: each array sent REPLACES the product's current set. Access: User (Bearer JWT)."
+ *     description="A vendor manages their own catalog from the app. Only an active shop can sell: a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account endpoints). An already-approved shop is trusted to publish directly: a new product defaults to status=active unless the vendor explicitly asks for draft or pending_review instead (e.g. to prepare it before going live, or to request an extra admin look). An admin can still set inactive/rejected at any time from the Admin Panel (pre- or post-publish moderation). vendor_id and is_featured are never settable here. images / attributes / compatibility / variants follow the same full-replace convention as the admin endpoint: each array sent REPLACES the product's current set. Access: User (Bearer JWT)."
  * )
  */
 class VendorProductController extends Controller
@@ -26,7 +26,7 @@ class VendorProductController extends Controller
     use ManagesProductChildren;
 
     private const CONDITIONS = ['new', 'used'];
-    private const VENDOR_STATUSES = ['draft', 'pending_review'];
+    private const VENDOR_STATUSES = ['draft', 'pending_review', 'active'];
 
     /**
      * @OA\Get(
@@ -123,7 +123,7 @@ class VendorProductController extends Controller
      * @OA\Post(
      *     path="/api/marketplace/vendor/products",
      *     summary="Create a product",
-     *     description="reference is the SKU (one product = no variants) - generated from your product name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug. status defaults to draft; send pending_review to submit it for review right away - active/inactive/rejected are refused (422), only an admin sets those. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+     *     description="reference is the SKU (one product = no variants) - generated from your product name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug. status defaults to active (an approved shop publishes directly) - send draft to hold it back, or pending_review to request an admin look first; inactive/rejected are refused here (422), only an admin sets those. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
      *     tags={"Marketplace - Vendor products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(
@@ -140,7 +140,7 @@ class VendorProductController extends Controller
      *         @OA\Property(property="compare_at_price", type="number", nullable=true),
      *         @OA\Property(property="stock_quantity", type="integer", example=14),
      *         @OA\Property(property="condition", type="string", enum={"new","used"}, example="new"),
-     *         @OA\Property(property="status", type="string", enum={"draft","pending_review"}, example="draft"),
+     *         @OA\Property(property="status", type="string", enum={"draft","pending_review","active"}, example="active", description="Defaults to active when omitted"),
      *         @OA\Property(property="images", type="array", @OA\Items(type="object",
      *             @OA\Property(property="image_path", type="string"), @OA\Property(property="is_cover", type="boolean"), @OA\Property(property="order_position", type="integer"))),
      *         @OA\Property(property="attributes", type="array", @OA\Items(type="object",
@@ -157,12 +157,12 @@ class VendorProductController extends Controller
      *             @OA\Property(property="stock_quantity", type="integer"), @OA\Property(property="image_path", type="string", nullable=true), @OA\Property(property="is_default", type="boolean")))
      *     )),
      *     @OA\Response(response=201, description="Created", @OA\JsonContent(
-     *         @OA\Property(property="message", type="string", example="Product created, waiting for review"),
+     *         @OA\Property(property="message", type="string", example="Product created and published"),
      *         @OA\Property(property="data", ref="#/components/schemas/VendorMarketplaceProductDetail")
      *     )),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthenticated"),
      *     @OA\Response(response=403, description="Shop not active", @OA\JsonContent(ref="#/components/schemas/MarketplaceConflict")),
-     *     @OA\Response(response=422, description="Validation error (also used for status=active/inactive/rejected)", @OA\JsonContent(ref="#/components/schemas/MarketplaceValidationError"))
+     *     @OA\Response(response=422, description="Validation error (also used for status=inactive/rejected)", @OA\JsonContent(ref="#/components/schemas/MarketplaceValidationError"))
      * )
      */
     public function store(Request $request): JsonResponse
@@ -183,7 +183,9 @@ class VendorProductController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $status = $request->input('status', 'draft');
+        // An already-approved shop is trusted to publish directly — new products go live right
+        // away unless the vendor deliberately asks for draft/pending_review instead.
+        $status = $request->input('status', 'active');
 
         $product = DB::transaction(function () use ($request, $status, $vendor) {
             $product = Product::create([
@@ -208,8 +210,14 @@ class VendorProductController extends Controller
             return $product;
         });
 
+        $message = match ($status) {
+            'pending_review' => 'Product created, waiting for review',
+            'draft'           => 'Product created as draft',
+            default           => 'Product created and published',
+        };
+
         return response()->json([
-            'message' => $status === 'pending_review' ? 'Product created, waiting for review' : 'Product created as draft',
+            'message' => $message,
             'data'    => $this->presentProduct($this->loadProductFull($product), true),
         ], 201);
     }
@@ -218,7 +226,7 @@ class VendorProductController extends Controller
      * @OA\Put(
      *     path="/api/marketplace/vendor/products/{id}",
      *     summary="Update my product",
-     *     description="Send only the fields to change. images / attributes / compatibility / variants: send the array to REPLACE the full current set, or omit the key to leave it untouched. status (if sent) is limited to draft/pending_review - e.g. resubmit a rejected product by sending status=pending_review, it also clears status_reason. Editing an already-active product's other fields (price, stock...) does not unpublish it: only touch status when you mean to change it.",
+     *     description="Send only the fields to change. images / attributes / compatibility / variants: send the array to REPLACE the full current set, or omit the key to leave it untouched. status (if sent) accepts draft/pending_review/active - e.g. resubmit a REJECTED product by sending status=pending_review (sending status=active directly on a rejected product is refused, 422: it needs a fresh admin look first), it also clears status_reason. Editing an already-active product's other fields (price, stock...) does not unpublish it: only touch status when you mean to change it.",
      *     tags={"Marketplace - Vendor products"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
@@ -229,7 +237,7 @@ class VendorProductController extends Controller
      *     @OA\Response(response=401, ref="#/components/responses/Unauthenticated"),
      *     @OA\Response(response=403, description="Shop not active", @OA\JsonContent(ref="#/components/schemas/MarketplaceConflict")),
      *     @OA\Response(response=404, description="No shop, or not your product"),
-     *     @OA\Response(response=422, description="Validation error (also used for status=active/inactive/rejected)", @OA\JsonContent(ref="#/components/schemas/MarketplaceValidationError"))
+     *     @OA\Response(response=422, description="Validation error (also used for status=inactive/rejected, or status=active on a rejected product)", @OA\JsonContent(ref="#/components/schemas/MarketplaceValidationError"))
      * )
      */
     public function update(Request $request, int $id): JsonResponse
@@ -253,6 +261,12 @@ class VendorProductController extends Controller
 
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        // A rejected product still needs a fresh admin look before it can go live again — a
+        // vendor can resubmit it (status=pending_review), not silently republish it themselves.
+        if ($product->status === 'rejected' && $request->input('status') === 'active') {
+            return response()->json(['errors' => ['status' => ['A rejected product must be resubmitted for review (status=pending_review), not republished directly.']]], 422);
         }
 
         DB::transaction(function () use ($request, $product) {
