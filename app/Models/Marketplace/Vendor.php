@@ -16,7 +16,7 @@ class Vendor extends MarketplaceModel
     protected $fillable = [
         'user_id', 'shop_name', 'shop_name_ar', 'slug', 'description', 'description_ar',
         'logo_path', 'cover_image_path', 'brand_color',
-        'phone', 'email', 'country_id', 'city_id',
+        'phone', 'email', 'country_id', 'city_id', 'address', 'latitude', 'longitude',
         'status', 'status_reason', 'approved_at', 'approved_by', 'is_featured',
         'commission_override', 'bank_name', 'iban',
         'rating_avg', 'reviews_count',
@@ -29,6 +29,8 @@ class Vendor extends MarketplaceModel
         'approved_at'         => 'datetime',
         'iban'                => 'encrypted',
         'is_featured'         => 'boolean',
+        'latitude'            => 'decimal:8',
+        'longitude'           => 'decimal:8',
     ];
 
     protected $hidden = ['iban', 'bank_name', 'commission_override'];

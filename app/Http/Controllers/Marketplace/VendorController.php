@@ -87,6 +87,7 @@ class VendorController extends Controller
      *     @OA\Response(response=200, description="Shop", @OA\JsonContent(
      *         example={"data": {"id": 4, "slug": "moto-parts-riyadh", "shop_name": "Moto Parts Riyadh", "shop_name_ar": "مركز قطع الغيار الرياض", "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-logo.png", "cover_image_url": "https://api.dabapp.co/storage/marketplace/vendors/moto-parts-riyadh-cover.png", "brand_color": "#E63946", "is_featured": true, "rating_avg": 4.5, "reviews_count": 2, "products_count": 13, "city": {"id": 1, "name": "Riyadh"},
      *             "description": "Tyres, brakes and engine parts for sport and touring bikes.", "description_ar": null, "country": {"id": 1, "name": "Saudi Arabia"},
+     *             "address": "King Fahd Rd, Al Olaya", "latitude": 24.7136, "longitude": 46.6753,
      *             "categories": {
      *                 {"id": 11, "slug": "air-filters", "name": "Air filters", "name_ar": "فلاتر الهواء", "products_count": 1},
      *                 {"id": 14, "slug": "batteries", "name": "Batteries", "name_ar": "البطاريات", "products_count": 1}
@@ -101,6 +102,9 @@ class VendorController extends Controller
      *                 @OA\Property(property="description", type="string", nullable=true),
      *                 @OA\Property(property="description_ar", type="string", nullable=true),
      *                 @OA\Property(property="country", type="object", nullable=true, @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string")),
+     *                 @OA\Property(property="address", type="string", nullable=true),
+     *                 @OA\Property(property="latitude", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="longitude", type="number", format="float", nullable=true),
      *                 @OA\Property(property="categories", type="array", @OA\Items(type="object",
      *                     @OA\Property(property="id", type="integer"), @OA\Property(property="slug", type="string"),
      *                     @OA\Property(property="name", type="string"), @OA\Property(property="name_ar", type="string", nullable=true),
@@ -152,6 +156,9 @@ class VendorController extends Controller
             'description'      => $vendor->description,
             'description_ar'   => $vendor->description_ar,
             'country'          => $vendor->country ? ['id' => $vendor->country->id, 'name' => $vendor->country->name] : null,
+            'address'          => $vendor->address,
+            'latitude'         => $vendor->latitude !== null ? (float) $vendor->latitude : null,
+            'longitude'        => $vendor->longitude !== null ? (float) $vendor->longitude : null,
             'categories'       => $categories,
             'shipping_methods' => $shipping,
         ]]);

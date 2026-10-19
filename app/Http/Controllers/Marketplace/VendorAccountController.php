@@ -38,6 +38,9 @@ class VendorAccountController extends Controller
      *         @OA\Property(property="email", type="string"),
      *         @OA\Property(property="country_id", type="integer", example=1),
      *         @OA\Property(property="city_id", type="integer", example=1, description="Must belong to country_id"),
+     *         @OA\Property(property="address", type="string", example="King Fahd Rd, Al Olaya"),
+     *         @OA\Property(property="latitude", type="number", format="float", example=24.7136),
+     *         @OA\Property(property="longitude", type="number", format="float", example=46.6753),
      *         @OA\Property(property="brand_color", type="string", example="#E63946", description="#RRGGBB"),
      *         @OA\Property(property="logo_path", type="string", nullable=true, example="https://api.dabapp.co/storage/marketplace/vendors/aB3dE9fGh1JkLmN0pQrS.jpg", description="URL returned by POST /api/marketplace/upload-image (type=vendor)"),
      *         @OA\Property(property="cover_image_path", type="string", nullable=true, example="https://api.dabapp.co/storage/marketplace/vendors/zY8xW7vU6tS5rQ4pO3nM.jpg"),
@@ -47,12 +50,12 @@ class VendorAccountController extends Controller
      *     @OA\Response(response=201, description="Application created. Show the 'under review' screen.", @OA\JsonContent(
      *         @OA\Property(property="message", type="string", example="Application sent, waiting for approval"),
      *         @OA\Property(property="data", ref="#/components/schemas/MarketplaceMyVendor"),
-     *         example={"message": "Application sent, waiting for approval", "data": {"id": 200, "slug": "moto-parts-riyadh", "shop_name": "Moto Parts Riyadh", "shop_name_ar": "مركز قطع الغيار", "description": "Tyres and brakes", "description_ar": null, "logo_url": null, "cover_image_url": null, "brand_color": "#E63946", "phone": "+966500000000", "email": null, "country": {"id": 1, "name": "Saudi Arabia"}, "city": {"id": 1, "name": "Riyadh"}, "status": "pending", "status_reason": null, "can_sell": false, "approved_at": null, "bank_name": null, "iban": null, "rating_avg": 0, "reviews_count": 0, "products_count": 0, "created_at": "2026-09-22T01:51:36+03:00"}}
+     *         example={"message": "Application sent, waiting for approval", "data": {"id": 200, "slug": "moto-parts-riyadh", "shop_name": "Moto Parts Riyadh", "shop_name_ar": "مركز قطع الغيار", "description": "Tyres and brakes", "description_ar": null, "logo_url": null, "cover_image_url": null, "brand_color": "#E63946", "phone": "+966500000000", "email": null, "country": {"id": 1, "name": "Saudi Arabia"}, "city": {"id": 1, "name": "Riyadh"}, "address": "King Fahd Rd, Al Olaya", "latitude": 24.7136, "longitude": 46.6753, "status": "pending", "status_reason": null, "can_sell": false, "approved_at": null, "bank_name": null, "iban": null, "rating_avg": 0, "reviews_count": 0, "products_count": 0, "created_at": "2026-09-22T01:51:36+03:00"}}
      *     )),
      *     @OA\Response(response=200, description="A rejected application was sent again: same shop (same id), back to pending, reason cleared.", @OA\JsonContent(
      *         @OA\Property(property="message", type="string", example="Application sent again, waiting for approval"),
      *         @OA\Property(property="data", ref="#/components/schemas/MarketplaceMyVendor"),
-     *         example={"message": "Application sent again, waiting for approval", "data": {"id": 200, "slug": "moto-parts-riyadh", "shop_name": "Moto Parts Riyadh (fixed)", "shop_name_ar": null, "description": "Tyres and brakes", "description_ar": null, "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/logo.png", "cover_image_url": null, "brand_color": "#E63946", "phone": "+966500000000", "email": null, "country": {"id": 1, "name": "Saudi Arabia"}, "city": {"id": 1, "name": "Riyadh"}, "status": "pending", "status_reason": null, "can_sell": false, "approved_at": null, "bank_name": null, "iban": null, "rating_avg": 0, "reviews_count": 0, "products_count": 0, "created_at": "2026-09-22T01:51:36+03:00"}}
+     *         example={"message": "Application sent again, waiting for approval", "data": {"id": 200, "slug": "moto-parts-riyadh", "shop_name": "Moto Parts Riyadh (fixed)", "shop_name_ar": null, "description": "Tyres and brakes", "description_ar": null, "logo_url": "https://api.dabapp.co/storage/marketplace/vendors/logo.png", "cover_image_url": null, "brand_color": "#E63946", "phone": "+966500000000", "email": null, "country": {"id": 1, "name": "Saudi Arabia"}, "city": {"id": 1, "name": "Riyadh"}, "address": "King Fahd Rd, Al Olaya", "latitude": 24.7136, "longitude": 46.6753, "status": "pending", "status_reason": null, "can_sell": false, "approved_at": null, "bank_name": null, "iban": null, "rating_avg": 0, "reviews_count": 0, "products_count": 0, "created_at": "2026-09-22T01:51:36+03:00"}}
      *     )),
      *     @OA\Response(response=401, ref="#/components/responses/Unauthenticated"),
      *     @OA\Response(response=409, description="The user already has a shop. Use `code`, not the message, to choose the screen.", @OA\JsonContent(ref="#/components/schemas/MarketplaceConflict",
@@ -85,7 +88,8 @@ class VendorAccountController extends Controller
 
         $data = $request->only([
             'shop_name', 'shop_name_ar', 'description', 'description_ar', 'phone', 'email',
-            'country_id', 'city_id', 'brand_color', 'logo_path', 'cover_image_path', 'bank_name', 'iban',
+            'country_id', 'city_id', 'address', 'latitude', 'longitude',
+            'brand_color', 'logo_path', 'cover_image_path', 'bank_name', 'iban',
         ]);
 
         if ($existing) {
@@ -152,6 +156,9 @@ class VendorAccountController extends Controller
      *         @OA\Property(property="email", type="string"),
      *         @OA\Property(property="country_id", type="integer"),
      *         @OA\Property(property="city_id", type="integer"),
+     *         @OA\Property(property="address", type="string", example="King Fahd Rd, Al Olaya"),
+     *         @OA\Property(property="latitude", type="number", format="float", example=24.7136),
+     *         @OA\Property(property="longitude", type="number", format="float", example=46.6753),
      *         @OA\Property(property="brand_color", type="string", example="#1D3557"),
      *         @OA\Property(property="logo_path", type="string", nullable=true, description="URL from POST /api/marketplace/upload-image, or null to remove it"),
      *         @OA\Property(property="cover_image_path", type="string", nullable=true, description="URL from POST /api/marketplace/upload-image, or null to remove it"),
@@ -199,7 +206,8 @@ class VendorAccountController extends Controller
 
         $data = $request->only([
             'shop_name', 'shop_name_ar', 'description', 'description_ar', 'phone', 'email',
-            'country_id', 'city_id', 'brand_color', 'bank_name', 'iban',
+            'country_id', 'city_id', 'address', 'latitude', 'longitude',
+            'brand_color', 'bank_name', 'iban',
         ]);
 
         if ($request->has('logo_path')) {
@@ -231,6 +239,9 @@ class VendorAccountController extends Controller
             'cover_image_path' => $this->imagePathRule(),
             'bank_name'        => 'nullable|string|max:255',
             'iban'             => 'nullable|string|max:64',
+            'address'          => 'nullable|string|max:500',
+            'latitude'         => 'nullable|numeric|between:-90,90',
+            'longitude'        => 'nullable|numeric|between:-180,180',
         ];
     }
 
@@ -278,6 +289,9 @@ class VendorAccountController extends Controller
             'email'           => $vendor->email,
             'country'         => $vendor->country ? ['id' => $vendor->country->id, 'name' => $vendor->country->name] : null,
             'city'            => $vendor->city ? ['id' => $vendor->city->id, 'name' => $vendor->city->name] : null,
+            'address'         => $vendor->address,
+            'latitude'        => $vendor->latitude !== null ? (float) $vendor->latitude : null,
+            'longitude'       => $vendor->longitude !== null ? (float) $vendor->longitude : null,
             'status'          => $vendor->status,
             'status_reason'   => $vendor->status_reason,
             'can_sell'        => $vendor->status === 'active',
