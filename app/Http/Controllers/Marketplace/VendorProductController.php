@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Marketplace;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Marketplace\Concerns\ManagesProductChildren;
+use App\Http\Controllers\Marketplace\Concerns\RequiresActiveVendor;
 use App\Models\Marketplace\OrderItem;
 use App\Models\Marketplace\Product;
-use App\Models\Marketplace\Vendor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -24,6 +23,7 @@ use Illuminate\Validation\Rule;
 class VendorProductController extends Controller
 {
     use ManagesProductChildren;
+    use RequiresActiveVendor;
 
     private const CONDITIONS = ['new', 'used'];
     private const VENDOR_STATUSES = ['draft', 'pending_review', 'active'];
@@ -331,24 +331,6 @@ class VendorProductController extends Controller
     }
 
     // ------------------------------------------------------------------ internals
-
-    /** The logged-in user's shop, only if it can sell. Returns the error JsonResponse otherwise (NO_VENDOR / VENDOR_SUSPENDED / VENDOR_NOT_ACTIVE). */
-    private function myActiveVendorOrError(): Vendor|JsonResponse
-    {
-        $vendor = Vendor::where('user_id', Auth::id())->first();
-
-        if (! $vendor) {
-            return response()->json(['message' => 'You do not have a vendor account', 'code' => 'NO_VENDOR'], 404);
-        }
-        if ($vendor->status === 'suspended') {
-            return response()->json(['message' => 'Your shop is suspended', 'code' => 'VENDOR_SUSPENDED', 'reason' => $vendor->status_reason], 403);
-        }
-        if ($vendor->status !== 'active') {
-            return response()->json(['message' => 'Your shop is not approved yet', 'code' => 'VENDOR_NOT_ACTIVE', 'status' => $vendor->status], 403);
-        }
-
-        return $vendor;
-    }
 
     private function rules(?int $ignoreId = null): array
     {

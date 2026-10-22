@@ -86,6 +86,21 @@ use App\Http\Controllers\Controller;
  * )
  *
  * @OA\Schema(
+ *     schema="VendorMarketplaceShippingMethod",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=3),
+ *     @OA\Property(property="vendor_id", type="integer", example=7),
+ *     @OA\Property(property="provider_id", type="integer", example=1),
+ *     @OA\Property(property="provider", type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string", example="DHL"), @OA\Property(property="code", type="string", example="dhl")),
+ *     @OA\Property(property="uses_own_api", type="boolean", example=false),
+ *     @OA\Property(property="has_credentials", type="boolean", description="Keys are write-only: only this flag is ever returned", example=false),
+ *     @OA\Property(property="flat_rate", type="number", example=35),
+ *     @OA\Property(property="estimated_days_min", type="integer", nullable=true, example=2),
+ *     @OA\Property(property="estimated_days_max", type="integer", nullable=true, example=4),
+ *     @OA\Property(property="is_active", type="boolean", example=true)
+ * )
+ *
+ * @OA\Schema(
  *     schema="MarketplaceConflict",
  *     type="object",
  *     @OA\Property(property="message", type="string", example="Your application is already waiting for approval"),

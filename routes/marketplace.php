@@ -13,9 +13,11 @@ use App\Http\Controllers\Marketplace\CategoryController;
 use App\Http\Controllers\Marketplace\HomeController;
 use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Marketplace\ProductReviewController;
+use App\Http\Controllers\Marketplace\ShippingProviderController;
 use App\Http\Controllers\Marketplace\VendorAccountController;
 use App\Http\Controllers\Marketplace\VendorController;
 use App\Http\Controllers\Marketplace\VendorProductController;
+use App\Http\Controllers\Marketplace\VendorShippingMethodController;
 use App\Http\Controllers\Marketplace\WishlistController;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +41,7 @@ Route::prefix('marketplace')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{idOrSlug}', [CategoryController::class, 'show']);
     Route::get('/brands', [BrandController::class, 'index']);
+    Route::get('/shipping-providers', [ShippingProviderController::class, 'index']);
 
     // ---- Step 2: vendors (public) ----
     Route::get('/vendors', [VendorController::class, 'index']);
@@ -57,6 +60,15 @@ Route::prefix('marketplace')->group(function () {
             Route::get('/{id}', [VendorProductController::class, 'show'])->whereNumber('id');
             Route::put('/{id}', [VendorProductController::class, 'update'])->whereNumber('id');
             Route::delete('/{id}', [VendorProductController::class, 'destroy'])->whereNumber('id');
+        });
+
+        // ---- Vendor self-service: my own shipping methods (own shop only, status active required) ----
+        Route::prefix('shipping-methods')->group(function () {
+            Route::get('/', [VendorShippingMethodController::class, 'index']);
+            Route::post('/', [VendorShippingMethodController::class, 'store']);
+            Route::get('/{id}', [VendorShippingMethodController::class, 'show'])->whereNumber('id');
+            Route::put('/{id}', [VendorShippingMethodController::class, 'update'])->whereNumber('id');
+            Route::delete('/{id}', [VendorShippingMethodController::class, 'destroy'])->whereNumber('id');
         });
     });
 
