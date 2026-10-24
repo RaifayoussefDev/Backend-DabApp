@@ -111,6 +111,7 @@ class TrainerCourseController extends Controller
             ->select('cities.id', 'cities.name', DB::raw('COUNT(*) as courses_count'))
             ->orderByDesc('courses_count')
             ->orderBy('cities.name')
+            ->toBase() // plain rows: the course accessors (prices) need columns this aggregate doesn't select
             ->get();
 
         return response()->json(['success' => true, 'data' => $cities]);

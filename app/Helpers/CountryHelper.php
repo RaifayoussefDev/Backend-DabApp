@@ -38,6 +38,24 @@ class CountryHelper
     }
 
     /**
+     * Digits of a number typed in international form ("+966 55…" or "0096655…"), without the
+     * leading 00; null for a local number.
+     */
+    private static function internationalDigits($phone): ?string
+    {
+        $phone = ltrim((string) $phone);
+        if (str_starts_with($phone, '+')) {
+            $digits = preg_replace('/\D+/', '', $phone);
+        } elseif (str_starts_with($phone, '00')) {
+            $digits = substr(preg_replace('/\D+/', '', $phone), 2);
+        } else {
+            return null;
+        }
+
+        return $digits !== '' ? $digits : null;
+    }
+
+    /**
      * Format phone number based on country code
      *
      * Examples:
@@ -45,6 +63,7 @@ class CountryHelper
      * - SA + "966688808238" → "+966688808238" (already has code)
      * - MA + "212688808080" → "+212688808080" (already has code)
      * - MA + "0688808238" → "+212688808238"
+     * - MA + "+966568001066" → "+966568001066" (international: own code kept)
      */
     public static function formatPhone($phone, $countryCode)
     {
@@ -67,6 +86,11 @@ class CountryHelper
                 $cleanPhone = $dialCodeWithoutPlus . substr($remaining, 1);
             }
             return '+' . $cleanPhone;
+        }
+
+        // ✅ Already international (+966…, 00966…): keep its own country code, never prepend another
+        if ($international = self::internationalDigits($phone)) {
+            return '+' . $international;
         }
 
         // ✅ Remove leading 0 if present (local format like 0688808238)
@@ -102,6 +126,11 @@ class CountryHelper
                 $cleanPhone = $dialCodeWithoutPlus . substr($remaining, 1);
             }
             return '+' . $cleanPhone;
+        }
+
+        // ✅ Already international (+966…, 00966…): keep its own country code, never prepend another
+        if ($international = self::internationalDigits($phone)) {
+            return '+' . $international;
         }
 
         // ✅ Remove leading 0 if present (local format like 0688808238)
