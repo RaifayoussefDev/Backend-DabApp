@@ -35,9 +35,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx supervisor unzip curl \
         libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev \
+        libwebp-dev libavif-dev \
         nodejs npm \
         chromium fonts-liberation fonts-noto-core fonts-kacst \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql mbstring bcmath gd zip intl exif pcntl opcache sockets calendar \
     && pecl install redis \
