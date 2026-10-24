@@ -10,16 +10,13 @@ class SwaggerAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        $username = config('swagger-auth.user', env('SWAGGER_USER', 'admin'));
-        $password = config('swagger-auth.password', env('SWAGGER_PASSWORD', 'secret'));
+        $username = config('swagger-auth.user');
+        $password = config('swagger-auth.password');
 
+        // Never log credentials: only whether they matched.
         Log::info('SwaggerAuth attempt', [
             'user_match'     => $request->getUser() === $username,
             'password_match' => $request->getPassword() === $password,
-            'got_user'       => $request->getUser(),
-            'got_pass'       => $request->getPassword(),
-            'expected_user'  => $username,
-            'expected_pass'  => $password,
         ]);
 
         if ($request->getUser() != $username || $request->getPassword() != $password) {
