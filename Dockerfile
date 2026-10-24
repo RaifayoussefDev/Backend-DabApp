@@ -7,7 +7,7 @@ FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 # composer:2 ships its own PHP (8.5, no gd/calendar); this stage only fetches packages.
-# Platform requirements are verified against the real PHP 8.2 runtime in stage 3.
+# Platform requirements are verified against the real PHP 8.3 runtime in stage 3.
 RUN composer install \
       --no-dev --no-scripts --no-autoloader \
       --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
@@ -28,16 +28,17 @@ RUN npm run build
 # ───────────────────────────────────────────────
 # Stage 3 — Runtime (php-fpm + nginx + supervisor)
 # ───────────────────────────────────────────────
-FROM php:8.2-fpm-bookworm AS runtime
+FROM php:8.3-fpm-bookworm AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         nginx supervisor unzip curl \
         libicu-dev libzip-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libonig-dev \
+        libwebp-dev libavif-dev \
         nodejs npm \
         chromium fonts-liberation fonts-noto-core fonts-kacst \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql mbstring bcmath gd zip intl exif pcntl opcache sockets calendar \
     && pecl install redis \
@@ -69,6 +70,9 @@ ENV NODE_BINARY_PATH=/usr/bin/node \
     CHROME_PATH=/usr/bin/chromium \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PUPPETEER_SKIP_DOWNLOAD=true
+
+# Overridden by the entrypoint from BROADCAST_CONNECTION; default keeps supervisord valid
+ENV REVERB_AUTOSTART=false
 
 RUN set -eux; \
     mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \

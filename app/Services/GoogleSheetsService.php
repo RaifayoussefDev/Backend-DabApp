@@ -27,10 +27,7 @@ class GoogleSheetsService
     public function __construct()
     {
         $this->http = new Client(['timeout' => 15]);
-        $this->credentialsPath = env(
-            'GOOGLE_SERVICE_ACCOUNT_PATH',
-            storage_path('app/google-service-account.json')
-        );
+        $this->credentialsPath = config('services.google_sheets.credentials_path');
     }
 
     /**
