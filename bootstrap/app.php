@@ -4,6 +4,7 @@ use App\Http\Middleware\OwnCors;
 use App\Http\Middleware\SwaggerAuth;
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckAdminAccess;
+use App\Http\Middleware\VisitorCountryFromCloudflare;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Visitor country from Cloudflare (CF-IPCountry) before any controller reads X-Forwarded-Country
+        $middleware->prepend(VisitorCountryFromCloudflare::class);
+
         // Ajouter OwnCors globalement
         $middleware->append(OwnCors::class);
 
