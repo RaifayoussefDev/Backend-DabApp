@@ -71,6 +71,9 @@ ENV NODE_BINARY_PATH=/usr/bin/node \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
     PUPPETEER_SKIP_DOWNLOAD=true
 
+# Overridden by the entrypoint from BROADCAST_CONNECTION; default keeps supervisord valid
+ENV REVERB_AUTOSTART=false
+
 RUN set -eux; \
     mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views \
              storage/logs storage/app/public bootstrap/cache; \
