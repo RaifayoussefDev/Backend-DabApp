@@ -42,4 +42,11 @@ fi
 
 php artisan queue:restart || true
 
+# Run the Reverb websocket server only when broadcasting actually uses it
+if [ "${BROADCAST_CONNECTION:-}" = "reverb" ]; then
+  export REVERB_AUTOSTART=true
+else
+  export REVERB_AUTOSTART=false
+fi
+
 exec "$@"

@@ -21,7 +21,6 @@ services:
       - storage:/var/www/html/storage/app
       - ./secrets/firebase_credentials.json:/var/www/html/app/firebase_credentials.json:ro
       - ./secrets/google-service-account.json:/var/www/html/storage/app/google-service-account.json:ro
-      - ./secrets/google-service-account.json:/var/www/html/storage/app/public/google-service-account.json:ro
     depends_on:
       redis:
         condition: service_started

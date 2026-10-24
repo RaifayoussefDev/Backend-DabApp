@@ -1059,7 +1059,7 @@ class TrainerBookingController extends Controller
         $cartId    = $request->get('cart_id', '');
         $bookingId = str_replace('TRAINER_', '', $cartId);
         $tranRef   = $request->get('tran_ref', '');
-        $frontend  = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'http://localhost:4200')), '/');
+        $frontend  = rtrim(config('app.frontend_url') ?: 'http://localhost:4200', '/');
 
         if ($bookingId && $tranRef) {
             return redirect($frontend . '/trainers/booking-confirmation?booking_id=' . $bookingId . '&status=success');
@@ -1082,7 +1082,7 @@ class TrainerBookingController extends Controller
             'cart_description' => "DabApp — Training session with {$trainer->name} on {$booking->booking_date->format('Y-m-d')} at {$booking->start_time}",
             // No status param here — PayTabs redirects here regardless of outcome, so the
             // frontend determines success/failure itself from the booking's payment_status.
-            'return'       => rtrim(env('FRONTEND_URL', 'http://localhost:4200'), '/') . '/trainers/booking-confirmation?booking_id=' . $booking->id,
+            'return'       => rtrim(config('app.frontend_url') ?: 'http://localhost:4200', '/') . '/trainers/booking-confirmation?booking_id=' . $booking->id,
             'callback'     => rtrim(config('app.url'), '/') . '/api/trainer/payments/callback',
             'customer_details' => [
                 'name'   => $user->first_name . ' ' . $user->last_name,

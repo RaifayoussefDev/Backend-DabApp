@@ -810,10 +810,10 @@ class AuthController extends Controller
             $destination = ($hasPlus ? '+' : '') . preg_replace('/\D/', '', $rawPhone);
 
             $payload = [
-                'apiKey'              => env('AISENSY_API_KEY'),
-                'campaignName'        => env('AISENSY_CAMPAIGN_NAME', 'DabApp'),
+                'apiKey'              => config('services.aisensy.api_key'),
+                'campaignName'        => config('services.aisensy.campaign_name'),
                 'destination'         => $destination,
-                'userName'            => env('AISENSY_USERNAME', 'Fadel Brothers Group L.L.C'),
+                'userName'            => config('services.aisensy.username'),
                 'templateParams'      => [(string) $code],
                 'source'              => 'new-landing-page form',
                 'media'               => (object)[],
@@ -2322,10 +2322,10 @@ class AuthController extends Controller
     public function getAllCountries()
     {
         try {
-            $path = storage_path('app/countries.json');
+            $path = CountryHelper::countriesPath();
 
-            if (!file_exists($path)) {
-                Log::error('Countries JSON file not found', ['path' => $path]);
+            if (!$path) {
+                Log::error('Countries JSON file not found', ['path' => storage_path('app/countries.json')]);
                 return response()->json([
                     'success' => false,
                     'error' => 'Countries file not found'

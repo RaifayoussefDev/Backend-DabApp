@@ -116,8 +116,7 @@ Secrets à transmettre (présents dans le `.env` actuel) :
 
 À copier manuellement sur le nouveau serveur / monter en volume :
 - `app/firebase_credentials.json` — compte de service Firebase (push notifications). Chemin défini par `FIREBASE_CREDENTIALS`.
-- `storage/app/google-service-account.json` — compte de service Google
-- `storage/app/public/google-service-account.json`
+- `storage/app/google-service-account.json` — compte de service Google (jamais sous `storage/app/public/` : ce dossier est servi publiquement via `/storage/`)
 
 ---
 
@@ -171,7 +170,7 @@ L'`entrypoint` reconstruit les caches (`config/route/event:cache`), fait `storag
 **Volumes** (`docker-compose.yml`) :
 - `storage` (nommé) → `storage/app` : uploads utilisateurs
 - `./secrets/firebase_credentials.json` → `app/firebase_credentials.json` (ro)
-- `./secrets/google-service-account.json` → `storage/app/{,public/}google-service-account.json` (ro)
+- `./secrets/google-service-account.json` → `storage/app/google-service-account.json` (ro)
 
 **⚠️ Changement de code déjà appliqué** : [PlateGeneratorController.php](../app/Http/Controllers/PlateGeneratorController.php) avait le chemin Chrome en dur (`.cache/puppeteer/chrome/linux-143…`, spécifique Cloudways). Il lit maintenant `PUPPETEER_EXECUTABLE_PATH` / `CHROME_PATH` avec fallback. `screenshot.cjs` a besoin du package `puppeteer` → il est bien copié dans l'image.
 

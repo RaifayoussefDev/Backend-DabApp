@@ -247,7 +247,7 @@ class PlateGeneratorController extends Controller
             $localNodeBin = base_path('node_bin');
             $nvmNodeBin = '/home/master/.nvm/versions/node/v22.12.0/bin/node';
 
-            $nodeBinary = env('NODE_BINARY_PATH');
+            $nodeBinary = config('services.browsershot.node_binary');
 
             if (file_exists($localNodeBin)) {
                 $nodeBinary = $localNodeBin;
@@ -267,9 +267,8 @@ class PlateGeneratorController extends Controller
                 'height' => $windowSize[1],
                 'deviceScaleFactor' => 3,
                 'format' => $format,
-                'chromePath' => env('PUPPETEER_EXECUTABLE_PATH')
-                    ?: (env('CHROME_PATH')
-                        ?: base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome')),
+                'chromePath' => config('services.browsershot.chrome_path')
+                    ?: base_path('.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome'),
                 'userDataDir' => storage_path('app/chrome-user-data')
             ];
 
