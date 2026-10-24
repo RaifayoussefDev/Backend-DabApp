@@ -41,10 +41,10 @@ class WhatsAppOtpController extends Controller
     public function sendAisensyOtp(string $phone, string $otp): bool
     {
         $payload = [
-            'apiKey'              => env('AISENSY_API_KEY'),
-            'campaignName'        => env('AISENSY_CAMPAIGN_NAME', 'DabApp'),
+            'apiKey'              => config('services.aisensy.api_key'),
+            'campaignName'        => config('services.aisensy.campaign_name'),
             'destination'         => $phone,
-            'userName'            => env('AISENSY_USERNAME', 'Fadel Brothers Group L.L.C'),
+            'userName'            => config('services.aisensy.username'),
             'templateParams'      => [$otp],
             'source'              => 'new-landing-page form',
             'media'               => (object)[],

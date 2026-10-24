@@ -835,7 +835,7 @@ class PayTabsController extends Controller
      */
     private function resultPageUrl(): string
     {
-        $frontend = rtrim(config('app.frontend_url', env('FRONTEND_URL', 'https://dabapp.co')), '/');
+        $frontend = rtrim(config('app.frontend_url') ?: 'https://dabapp.co', '/');
 
         return $frontend . '/submission-success';
     }
