@@ -13,6 +13,7 @@ use App\Observers\PaymentObserver;
 use App\Services\FirebaseService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Broadcast;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -43,5 +44,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Use JWT guard for WebSocket private-channel authentication
         Broadcast::routes(['middleware' => ['auth:api']]);
+
+        // TLS ends at Cloudflare; the app receives plain http through the tunnel/Traefik.
+        // Generate https links whenever the configured APP_URL is https.
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
     }
 }
