@@ -1,0 +1,13 @@
+# Fadel-B-G — code owners for every Dabapp repository.
+# Install at .github/CODEOWNERS on main, test and dev.
+#
+# GitHub reads CODEOWNERS from the PR's *base* branch. Branch protection on
+# `test` and `main` sets "Require review from Code Owners", so a PR into either
+# branch needs an approval from one of these admins. On `dev` the code-owner
+# requirement is off: these admins are still auto-requested as reviewers, but
+# a developer can merge without their approval.
+
+*                   @ashrafabulsoud @fadelbg
+
+# Explicit entry so changes to ownership itself always need an admin.
+/.github/CODEOWNERS @ashrafabulsoud @fadelbg
