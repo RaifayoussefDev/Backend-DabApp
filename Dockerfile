@@ -7,7 +7,7 @@ FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 # composer:2 ships its own PHP (8.5, no gd/calendar); this stage only fetches packages.
-# Platform requirements are verified against the real PHP 8.2 runtime in stage 3.
+# Platform requirements are verified against the real PHP 8.3 runtime in stage 3.
 RUN composer install \
       --no-dev --no-scripts --no-autoloader \
       --prefer-dist --no-interaction --no-progress --ignore-platform-reqs
@@ -28,7 +28,7 @@ RUN npm run build
 # ───────────────────────────────────────────────
 # Stage 3 — Runtime (php-fpm + nginx + supervisor)
 # ───────────────────────────────────────────────
-FROM php:8.2-fpm-bookworm AS runtime
+FROM php:8.3-fpm-bookworm AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
