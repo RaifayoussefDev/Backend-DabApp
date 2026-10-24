@@ -2322,10 +2322,10 @@ class AuthController extends Controller
     public function getAllCountries()
     {
         try {
-            $path = storage_path('app/countries.json');
+            $path = CountryHelper::countriesPath();
 
-            if (!file_exists($path)) {
-                Log::error('Countries JSON file not found', ['path' => $path]);
+            if (!$path) {
+                Log::error('Countries JSON file not found', ['path' => storage_path('app/countries.json')]);
                 return response()->json([
                     'success' => false,
                     'error' => 'Countries file not found'

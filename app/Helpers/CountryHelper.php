@@ -4,10 +4,25 @@ namespace App\Helpers;
 
 class CountryHelper
 {
+    /**
+     * countries.json: storage/app/countries.json when present (existing servers), otherwise the copy
+     * shipped with the code in resources/data/. Null when neither exists.
+     */
+    public static function countriesPath(): ?string
+    {
+        foreach ([storage_path('app/countries.json'), resource_path('data/countries.json')] as $path) {
+            if (file_exists($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
     public static function getDialCode($countryCode)
     {
-        $path = storage_path('app/countries.json');
-        if (!file_exists($path)) {
+        $path = self::countriesPath();
+        if (!$path) {
             return null;
         }
 
@@ -103,8 +118,8 @@ class CountryHelper
      */
     public static function getCountryInfoByName($countryName)
     {
-        $path = storage_path('app/countries.json');
-        if (!file_exists($path)) {
+        $path = self::countriesPath();
+        if (!$path) {
             return null;
         }
 
@@ -118,8 +133,8 @@ class CountryHelper
      */
     public static function getCountryInfo($countryCode)
     {
-        $path = storage_path('app/countries.json');
-        if (!file_exists($path)) {
+        $path = self::countriesPath();
+        if (!$path) {
             return null;
         }
 
