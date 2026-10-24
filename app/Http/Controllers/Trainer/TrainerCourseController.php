@@ -11,6 +11,7 @@ use App\Models\TrainerEquipment;
 use App\Models\TrainerLevelApproval;
 use App\Models\TrainerTrainingBike;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -107,7 +108,7 @@ class TrainerCourseController extends Controller
             ->where('trainer_courses.is_active', true)
             ->whereHas('trainer', fn ($q) => $q->approved())
             ->groupBy('cities.id', 'cities.name')
-            ->select('cities.id', 'cities.name', IlluminateSupportFacadesDB::raw('COUNT(*) as courses_count'))
+            ->select('cities.id', 'cities.name', DB::raw('COUNT(*) as courses_count'))
             ->orderByDesc('courses_count')
             ->orderBy('cities.name')
             ->get();
