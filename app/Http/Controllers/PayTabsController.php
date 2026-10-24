@@ -913,7 +913,7 @@ class PayTabsController extends Controller
             'currency' => $payment->currency ?? 'SAR',
             'tran_ref' => $payment->tran_ref,
             'listing' => $payment->listing,
-            'redirect_url' => 'https://dabapp.co/payment/success?' . http_build_query([
+            'redirect_url' => rtrim(config('app.frontend_url') ?: 'https://dabapp.co', '/') . '/payment/success?' . http_build_query([
                 'payment_id' => $payment->id,
                 'amount' => $payment->amount,
                 'currency' => $payment->currency ?? 'SAR',

@@ -34,7 +34,7 @@ class NotificationMail extends Mailable
     {
         try {
             // Télécharger le SVG depuis ton site
-            $svgContent = @file_get_contents('https://dabapp.co/assets/images/logo-header.svg');
+            $svgContent = @file_get_contents($this->logoUrl());
 
             if ($svgContent) {
                 // Encoder en base64
@@ -45,7 +45,12 @@ class NotificationMail extends Mailable
         }
 
         // Fallback: retourner l'URL directe
-        return 'https://dabapp.co/assets/images/logo-header.svg';
+        return $this->logoUrl();
+    }
+
+    protected function logoUrl(): string
+    {
+        return rtrim(config('app.frontend_url') ?: 'https://dabapp.co', '/') . '/assets/images/logo-header.svg';
     }
 
     public function build()
