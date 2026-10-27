@@ -68,6 +68,11 @@ class Kernel extends ConsoleKernel
             ->hourly()
             ->withoutOverlapping();
 
+        // Release reserved stock and cancel marketplace orders left unpaid 30 minutes after creation.
+        $schedule->command('orders:expire-unpaid')
+            ->everyFiveMinutes()
+            ->withoutOverlapping();
+
         // Fire admin broadcast notifications scheduled for a future date/time
         $schedule->command('notifications:dispatch-scheduled')
             ->everyMinute()

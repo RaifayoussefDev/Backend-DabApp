@@ -108,7 +108,8 @@ use App\Http\Controllers\Controller;
  *     @OA\Property(property="provider", type="object", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string", example="DHL"), @OA\Property(property="code", type="string", example="dhl")),
  *     @OA\Property(property="uses_own_api", type="boolean", example=true),
  *     @OA\Property(property="has_credentials", type="boolean", description="Keys are write-only: only this flag is ever returned", example=true),
- *     @OA\Property(property="flat_rate", type="number", example=35),
+ *     @OA\Property(property="flat_rate", type="number", example=35, description="Rest-of-the-country rate"),
+ *     @OA\Property(property="local_rate", type="number", nullable=true, example=15, description="Applied instead of flat_rate when the order ships to the vendor's own city"),
  *     @OA\Property(property="estimated_days_min", type="integer", nullable=true, example=2),
  *     @OA\Property(property="estimated_days_max", type="integer", nullable=true, example=4),
  *     @OA\Property(property="is_active", type="boolean", example=true)
@@ -186,6 +187,73 @@ use App\Http\Controllers\Controller;
  *             @OA\Property(property="variants", type="array", @OA\Items(ref="#/components/schemas/AdminMarketplaceProductVariant"))
  *         )
  *     }
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AdminMarketplaceOrderItem",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=116),
+ *     @OA\Property(property="order_id", type="integer", example=113),
+ *     @OA\Property(property="product_id", type="integer", example=19),
+ *     @OA\Property(property="variant_id", type="integer", nullable=true, example=71),
+ *     @OA\Property(property="vendor_id", type="integer", example=4),
+ *     @OA\Property(property="product_name", type="string", example="Michelin Pilot Road 5 120/70 ZR17"),
+ *     @OA\Property(property="product_reference", type="string", nullable=true),
+ *     @OA\Property(property="variant_sku", type="string", nullable=true),
+ *     @OA\Property(property="variant_label", type="string", nullable=true),
+ *     @OA\Property(property="quantity", type="integer", example=2),
+ *     @OA\Property(property="unit_price", type="number", example=649),
+ *     @OA\Property(property="total_price", type="number", example=1298),
+ *     @OA\Property(property="shipping_fee", type="number", example=35),
+ *     @OA\Property(property="discount_amount", type="number", example=0),
+ *     @OA\Property(property="commission_rate", type="number", example=15),
+ *     @OA\Property(property="commission_amount", type="number", example=194.70),
+ *     @OA\Property(property="vendor_net", type="number", example=1138.30),
+ *     @OA\Property(property="payout_id", type="integer", nullable=true),
+ *     @OA\Property(property="fulfillment_status", type="string", enum={"pending","processing","shipped","delivered","cancelled"}, example="pending"),
+ *     @OA\Property(property="tracking_number", type="string", nullable=true),
+ *     @OA\Property(property="product", type="object", nullable=true, description="Only on the detail call", @OA\Property(property="id", type="integer"), @OA\Property(property="name", type="string")),
+ *     @OA\Property(property="vendor", type="object", nullable=true, description="Only on the detail call", @OA\Property(property="id", type="integer"), @OA\Property(property="shop_name", type="string"))
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AdminMarketplacePayment",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=6),
+ *     @OA\Property(property="order_id", type="integer", example=113),
+ *     @OA\Property(property="gateway", type="string", example="paytabs"),
+ *     @OA\Property(property="amount", type="number", example=2062),
+ *     @OA\Property(property="currency", type="string", example="AED"),
+ *     @OA\Property(property="payment_status", type="string", enum={"pending","completed","failed","refunded"}, example="completed"),
+ *     @OA\Property(property="tran_ref", type="string", nullable=true),
+ *     @OA\Property(property="paid_at", type="string", nullable=true),
+ *     @OA\Property(property="failure_reason", type="string", nullable=true)
+ * )
+ *
+ * @OA\Schema(
+ *     schema="AdminMarketplaceOrder",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=113),
+ *     @OA\Property(property="order_number", type="string", example="DAB-261023-0001"),
+ *     @OA\Property(property="user_id", type="integer", example=65),
+ *     @OA\Property(property="user", type="object", nullable=true,
+ *         @OA\Property(property="id", type="integer"), @OA\Property(property="first_name", type="string"), @OA\Property(property="last_name", type="string"), @OA\Property(property="email", type="string")),
+ *     @OA\Property(property="address_id", type="integer", nullable=true),
+ *     @OA\Property(property="shipping_address", type="object", nullable=true,
+ *         @OA\Property(property="full_name", type="string"), @OA\Property(property="phone", type="string"), @OA\Property(property="address_line", type="string")),
+ *     @OA\Property(property="subtotal", type="number", example=2027),
+ *     @OA\Property(property="shipping_fee", type="number", example=35),
+ *     @OA\Property(property="discount", type="number", example=0),
+ *     @OA\Property(property="total", type="number", example=2062),
+ *     @OA\Property(property="currency", type="string", example="AED"),
+ *     @OA\Property(property="status", type="string", enum={"pending_payment","paid","processing","shipped","delivered","cancelled","refunded"}, example="paid"),
+ *     @OA\Property(property="expires_at", type="string", nullable=true),
+ *     @OA\Property(property="paid_at", type="string", nullable=true),
+ *     @OA\Property(property="cancelled_at", type="string", nullable=true),
+ *     @OA\Property(property="cancel_reason", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string"),
+ *     @OA\Property(property="items", type="array", @OA\Items(ref="#/components/schemas/AdminMarketplaceOrderItem")),
+ *     @OA\Property(property="payments", type="array", description="Only on the detail call", @OA\Items(ref="#/components/schemas/AdminMarketplacePayment"))
  * )
  *
  * @OA\Schema(

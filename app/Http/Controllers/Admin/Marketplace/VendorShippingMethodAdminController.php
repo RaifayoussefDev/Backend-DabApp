@@ -83,7 +83,8 @@ class VendorShippingMethodAdminController extends MarketplaceAdminController
      *     @OA\Parameter(name="vendorId", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(required={"provider_id","flat_rate"},
      *         @OA\Property(property="provider_id", type="integer", example=1),
-     *         @OA\Property(property="flat_rate", type="number", example=35),
+     *         @OA\Property(property="flat_rate", type="number", example=35, description="Rest-of-the-country rate"),
+     *         @OA\Property(property="local_rate", type="number", nullable=true, example=15, description="Applied instead of flat_rate when the order ships to the vendor's own city"),
      *         @OA\Property(property="uses_own_api", type="boolean", example=true),
      *         @OA\Property(property="credentials", type="object", example={"api_key": "xxxx", "account_number": "123456"}),
      *         @OA\Property(property="estimated_days_min", type="integer", example=2),
@@ -131,6 +132,7 @@ class VendorShippingMethodAdminController extends MarketplaceAdminController
             'uses_own_api'       => $request->boolean('uses_own_api'),
             'credentials'        => $request->boolean('uses_own_api') ? $request->input('credentials') : null,
             'flat_rate'          => $request->input('flat_rate'),
+            'local_rate'         => $request->filled('local_rate') ? $request->input('local_rate') : null,
             'estimated_days_min' => $request->input('estimated_days_min'),
             'estimated_days_max' => $request->input('estimated_days_max'),
             'is_active'          => $request->has('is_active') ? $request->boolean('is_active') : true,
@@ -153,6 +155,7 @@ class VendorShippingMethodAdminController extends MarketplaceAdminController
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         @OA\Property(property="flat_rate", type="number"),
+     *         @OA\Property(property="local_rate", type="number", nullable=true, description="Send null to go back to flat_rate everywhere"),
      *         @OA\Property(property="uses_own_api", type="boolean"),
      *         @OA\Property(property="credentials", type="object"),
      *         @OA\Property(property="clear_credentials", type="boolean"),
@@ -199,6 +202,9 @@ class VendorShippingMethodAdminController extends MarketplaceAdminController
         }
 
         $data = $request->only(['flat_rate', 'estimated_days_min', 'estimated_days_max']);
+        if ($request->has('local_rate')) {
+            $data['local_rate'] = $request->filled('local_rate') ? $request->input('local_rate') : null;
+        }
 
         foreach (['uses_own_api', 'is_active'] as $flag) {
             if ($request->has($flag)) {
@@ -253,6 +259,7 @@ class VendorShippingMethodAdminController extends MarketplaceAdminController
     private function rules(Request $request): array
     {
         return [
+            'local_rate'         => 'nullable|numeric|min:0|max:99999999',
             'uses_own_api'       => 'nullable|boolean',
             'credentials'        => 'nullable|array',
             'credentials.*'      => 'nullable|string|max:500',

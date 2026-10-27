@@ -9,8 +9,9 @@ class OrderItem extends MarketplaceModel
     protected $table = 'marketplace_order_items';
 
     protected $fillable = [
-        'order_id', 'product_id', 'vendor_id', 'shipping_method_id',
-        'product_name', 'product_reference', 'quantity', 'unit_price', 'total_price',
+        'order_id', 'product_id', 'variant_id', 'vendor_id', 'shipping_method_id',
+        'product_name', 'product_reference', 'variant_sku', 'variant_label',
+        'quantity', 'unit_price', 'total_price',
         'shipping_fee', 'discount_amount',
         'commission_rate', 'commission_amount', 'vendor_net', 'payout_id',
         'fulfillment_status', 'tracking_number', 'shipped_at', 'delivered_at',
@@ -37,6 +38,11 @@ class OrderItem extends MarketplaceModel
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'product_id')->withTrashed();
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id')->withTrashed();
     }
 
     public function vendor(): BelongsTo

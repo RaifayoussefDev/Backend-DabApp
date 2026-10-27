@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 /**
  * @OA\Tag(
  *     name="Marketplace - Vendor shipping methods",
- *     description="A vendor sets up their own shipping (carrier + flat rate) from the app, same idea as vendor products. Only an active shop can do this - a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account/products endpoints). uses_own_api / credentials exist for a vendor who runs their own carrier API, but have no app UI yet - leave them out to just use a flat rate, no carrier call (v1). Credentials are write-only, encrypted at rest, never returned (only has_credentials). Access: User (Bearer JWT)."
+ *     description="A vendor sets up their own shipping (carrier + flat rate) from the app, same idea as vendor products. Only an active shop can do this - a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account/products endpoints). flat_rate is the rest-of-the-country rate; local_rate (optional) applies instead whenever an order ships to the vendor's own city (Vendor.city_id) - a simple 2-tier model, not a full per-city rate table. uses_own_api / credentials exist for a vendor who runs their own carrier API, but have no app UI yet and no real carrier call is ever made (v1, informational only) - leave them out to just use flat_rate/local_rate. Credentials are write-only, encrypted at rest, never returned (only has_credentials). Access: User (Bearer JWT)."
  * )
  */
 class VendorShippingMethodController extends Controller
@@ -87,7 +87,8 @@ class VendorShippingMethodController extends Controller
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(required=true, @OA\JsonContent(required={"provider_id","flat_rate"},
      *         @OA\Property(property="provider_id", type="integer", example=1),
-     *         @OA\Property(property="flat_rate", type="number", example=35),
+     *         @OA\Property(property="flat_rate", type="number", example=35, description="Rest-of-the-country rate"),
+     *         @OA\Property(property="local_rate", type="number", nullable=true, example=15, description="Applied instead of flat_rate when the order ships to your own city. Omit/null to always use flat_rate."),
      *         @OA\Property(property="uses_own_api", type="boolean", example=false),
      *         @OA\Property(property="credentials", type="object", example={"api_key": "xxxx", "account_number": "123456"}),
      *         @OA\Property(property="estimated_days_min", type="integer", example=2),
@@ -135,6 +136,7 @@ class VendorShippingMethodController extends Controller
             'uses_own_api'       => $request->boolean('uses_own_api'),
             'credentials'        => $request->boolean('uses_own_api') ? $request->input('credentials') : null,
             'flat_rate'          => $request->input('flat_rate'),
+            'local_rate'         => $request->filled('local_rate') ? $request->input('local_rate') : null,
             'estimated_days_min' => $request->input('estimated_days_min'),
             'estimated_days_max' => $request->input('estimated_days_max'),
             'is_active'          => $request->has('is_active') ? $request->boolean('is_active') : true,
@@ -156,6 +158,7 @@ class VendorShippingMethodController extends Controller
      *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
      *     @OA\RequestBody(required=true, @OA\JsonContent(
      *         @OA\Property(property="flat_rate", type="number"),
+     *         @OA\Property(property="local_rate", type="number", nullable=true, description="Send null to go back to flat_rate everywhere"),
      *         @OA\Property(property="uses_own_api", type="boolean"),
      *         @OA\Property(property="credentials", type="object"),
      *         @OA\Property(property="clear_credentials", type="boolean"),
@@ -205,6 +208,9 @@ class VendorShippingMethodController extends Controller
         }
 
         $data = $request->only(['flat_rate', 'estimated_days_min', 'estimated_days_max']);
+        if ($request->has('local_rate')) {
+            $data['local_rate'] = $request->filled('local_rate') ? $request->input('local_rate') : null;
+        }
 
         foreach (['uses_own_api', 'is_active'] as $flag) {
             if ($request->has($flag)) {
@@ -261,6 +267,7 @@ class VendorShippingMethodController extends Controller
     private function rules(Request $request): array
     {
         return [
+            'local_rate'         => 'nullable|numeric|min:0|max:99999999',
             'uses_own_api'       => 'nullable|boolean',
             'credentials'        => 'nullable|array',
             'credentials.*'      => 'nullable|string|max:500',

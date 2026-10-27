@@ -6,6 +6,341 @@
         "version": "1.0.0"
     },
     "paths": {
+        "/api/marketplace/addresses": {
+            "get": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "List my addresses",
+                "operationId": "8d3d4f32a38111109093658eddb00ad0",
+                "responses": {
+                    "200": {
+                        "description": "Addresses",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceAddress"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "Add an address",
+                "operationId": "3fd41afee0289768eb53ef711ab4d292",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "phone",
+                                    "country_id",
+                                    "address_line"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Khalid Al-Otaibi"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+966500000000"
+                                    },
+                                    "country_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "city_id": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "nullable": true
+                                    },
+                                    "address_line": {
+                                        "type": "string",
+                                        "example": "King Fahd Road, Building 12"
+                                    },
+                                    "address_line_2": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "postal_code": {
+                                        "type": "string",
+                                        "example": "12345",
+                                        "nullable": true
+                                    },
+                                    "is_default": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Address added successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceAddress"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/addresses/{id}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "My address detail",
+                "operationId": "3bafda7d0f4dca80ea25d34393b5d105",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceAddress"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your address"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "Update an address",
+                "operationId": "152f268442b3d9eb7a39a46af45d4e89",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Address updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceAddress"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your address"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "Delete an address",
+                "description": "Soft delete. If it was the default, the most recently added remaining address becomes the new default.",
+                "operationId": "514afb7c8f93d041dee4f5a8837dec8f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Address deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your address"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/addresses/{id}/default": {
+            "post": {
+                "tags": [
+                    "Marketplace - Addresses"
+                ],
+                "summary": "Set as my default address",
+                "operationId": "89e6083f31f6cf2d4ef4d69c0271fad2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceAddress"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your address"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/marketplace/brands": {
             "get": {
                 "tags": [
@@ -806,6 +1141,152 @@
                 }
             }
         },
+        "/api/marketplace/checkout": {
+            "post": {
+                "tags": [
+                    "Marketplace - Checkout"
+                ],
+                "summary": "Convert my cart into an order and start payment",
+                "description": "Send exactly one shipping_methods entry per vendor present in the cart. idempotency_key: any client-generated string (e.g. a UUID) — resending the same key returns the original order instead of creating a second one, safe to retry on a network error. address_id XOR new_address is required.",
+                "operationId": "23db9319cb405ee3339cda29b98c179d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "shipping_methods",
+                                    "idempotency_key"
+                                ],
+                                "properties": {
+                                    "address_id": {
+                                        "type": "integer",
+                                        "example": 12,
+                                        "nullable": true
+                                    },
+                                    "new_address": {
+                                        "properties": {
+                                            "full_name": {
+                                                "type": "string"
+                                            },
+                                            "phone": {
+                                                "type": "string"
+                                            },
+                                            "country_id": {
+                                                "type": "integer"
+                                            },
+                                            "city_id": {
+                                                "type": "integer",
+                                                "nullable": true
+                                            },
+                                            "address_line": {
+                                                "type": "string"
+                                            },
+                                            "address_line_2": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "postal_code": {
+                                                "type": "string",
+                                                "nullable": true
+                                            },
+                                            "save": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object",
+                                        "nullable": true
+                                    },
+                                    "shipping_methods": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "vendor_id": {
+                                                    "type": "integer"
+                                                },
+                                                "shipping_method_id": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "promo_codes": {
+                                        "description": "At most 2: one platform code (DabApp-wide) and one shop code (discounts only that vendor's lines).",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "MP5"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "idempotency_key": {
+                                        "type": "string",
+                                        "example": "b2f1c9e0-..."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Order created, payment started",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceOrder"
+                                        },
+                                        "payment_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Address not found"
+                    },
+                    "409": {
+                        "description": "Cart empty or not enough stock",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error, or an invalid/expired/inapplicable promo_codes entry (code=INVALID_PROMO_CODE)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/marketplace/home": {
             "get": {
                 "tags": [
@@ -1045,6 +1526,265 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/api/marketplace/orders": {
+            "get": {
+                "tags": [
+                    "Marketplace - Orders"
+                ],
+                "summary": "List my orders",
+                "operationId": "fd72233fc5bcd0584fd5c0a851460757",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/MarketplaceOrder"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Orders"
+                ],
+                "summary": "My order detail",
+                "operationId": "9772ceb3883e795286779095ea201ed2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceOrder"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your order"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/orders/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Marketplace - Orders"
+                ],
+                "summary": "Cancel my order before it ships",
+                "description": "Allowed while the order is pending_payment/paid/processing AND no item has shipped/delivered yet (a multi-vendor order can have one vendor ship before another). Releases reserved stock. Refund (if already paid) is a manual support process, not automated here.",
+                "operationId": "2b372eff95e914d3d28f4e08adeca0e4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cancelled",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/MarketplaceOrder"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your order"
+                    },
+                    "409": {
+                        "description": "Cannot be cancelled anymore",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/orders/{id}/pay": {
+            "post": {
+                "tags": [
+                    "Marketplace - Orders"
+                ],
+                "summary": "Retry payment for a still-unpaid order",
+                "description": "Use when the initial PayTabs payment/request call itself failed (not a declined card) and the order hasn't expired yet.",
+                "operationId": "14c45e7cb51344f4daa74c7226acd1c8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment started",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "payment_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "404": {
+                        "description": "Not your order"
+                    },
+                    "409": {
+                        "description": "Order no longer payable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/orders/paytabs/callback": {
+            "post": {
+                "tags": [
+                    "Marketplace - Order payments"
+                ],
+                "summary": "PayTabs server-to-server webhook",
+                "operationId": "6a439456727f5247f35ceef42495118e",
+                "responses": {
+                    "200": {
+                        "description": "Processed"
+                    }
+                }
+            }
+        },
+        "/api/marketplace/orders/paytabs/return": {
+            "get": {
+                "tags": [
+                    "Marketplace - Order payments"
+                ],
+                "summary": "Browser redirect after payment",
+                "operationId": "385e31e3ee2ec31ecca6fdb66384c184",
+                "responses": {
+                    "302": {
+                        "description": "Redirects to the frontend order page"
+                    }
+                }
             }
         },
         "/api/marketplace/products": {
@@ -2190,6 +2930,72 @@
                 ]
             }
         },
+        "/api/marketplace/shipping-providers": {
+            "get": {
+                "tags": [
+                    "Marketplace - Shipping providers"
+                ],
+                "summary": "List shipping providers",
+                "description": "Active carriers only (DHL, Aramex, SMSA, DabApp Shipping...). requires_api_key just flags whether this carrier normally needs its own credentials - vendors don't have to use it. Access: Public.",
+                "operationId": "1f1d5e7ce19d5bbe42e3ab7f655dd7ae",
+                "responses": {
+                    "200": {
+                        "description": "Providers, A-Z",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "code": {
+                                                        "type": "string"
+                                                    },
+                                                    "requires_api_key": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": 2,
+                                            "name": "Aramex",
+                                            "code": "aramex",
+                                            "requires_api_key": true
+                                        },
+                                        {
+                                            "id": 4,
+                                            "name": "DabApp Shipping",
+                                            "code": "dabapp",
+                                            "requires_api_key": false
+                                        },
+                                        {
+                                            "id": 1,
+                                            "name": "DHL",
+                                            "code": "dhl",
+                                            "requires_api_key": true
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/marketplace/vendor/apply": {
             "post": {
                 "tags": [
@@ -2238,6 +3044,20 @@
                                         "description": "Must belong to country_id",
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "King Fahd Rd, Al Olaya"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 24.7136
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 46.6753
                                     },
                                     "brand_color": {
                                         "description": "#RRGGBB",
@@ -2306,6 +3126,9 @@
                                             "id": 1,
                                             "name": "Riyadh"
                                         },
+                                        "address": "King Fahd Rd, Al Olaya",
+                                        "latitude": 24.7136,
+                                        "longitude": 46.6753,
                                         "status": "pending",
                                         "status_reason": null,
                                         "can_sell": false,
@@ -2359,6 +3182,9 @@
                                             "id": 1,
                                             "name": "Riyadh"
                                         },
+                                        "address": "King Fahd Rd, Al Olaya",
+                                        "latitude": 24.7136,
+                                        "longitude": 46.6753,
                                         "status": "pending",
                                         "status_reason": null,
                                         "can_sell": false,
@@ -2469,6 +3295,9 @@
                                                     "id": 1,
                                                     "name": "Riyadh"
                                                 },
+                                                "address": "King Fahd Rd, Al Olaya",
+                                                "latitude": 24.7136,
+                                                "longitude": 46.6753,
                                                 "status": "pending",
                                                 "status_reason": null,
                                                 "can_sell": false,
@@ -2505,6 +3334,9 @@
                                                     "id": 1,
                                                     "name": "Riyadh"
                                                 },
+                                                "address": "King Fahd Rd, Al Olaya",
+                                                "latitude": 24.7136,
+                                                "longitude": 46.6753,
                                                 "status": "rejected",
                                                 "status_reason": "Photos are missing",
                                                 "can_sell": false,
@@ -2541,6 +3373,9 @@
                                                     "id": 1,
                                                     "name": "Riyadh"
                                                 },
+                                                "address": "King Fahd Rd, Al Olaya",
+                                                "latitude": 24.7136,
+                                                "longitude": 46.6753,
                                                 "status": "active",
                                                 "status_reason": null,
                                                 "can_sell": true,
@@ -2617,6 +3452,20 @@
                                     "city_id": {
                                         "type": "integer"
                                     },
+                                    "address": {
+                                        "type": "string",
+                                        "example": "King Fahd Rd, Al Olaya"
+                                    },
+                                    "latitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 24.7136
+                                    },
+                                    "longitude": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 46.6753
+                                    },
                                     "brand_color": {
                                         "type": "string",
                                         "example": "#1D3557"
@@ -2682,6 +3531,9 @@
                                             "id": 2,
                                             "name": "Jeddah"
                                         },
+                                        "address": null,
+                                        "latitude": null,
+                                        "longitude": null,
                                         "status": "pending",
                                         "status_reason": null,
                                         "can_sell": false,
@@ -2976,6 +3828,20 @@
                                                             "type": "object",
                                                             "nullable": true
                                                         },
+                                                        "address": {
+                                                            "type": "string",
+                                                            "nullable": true
+                                                        },
+                                                        "latitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        },
+                                                        "longitude": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "nullable": true
+                                                        },
                                                         "categories": {
                                                             "type": "array",
                                                             "items": {
@@ -3062,6 +3928,9 @@
                                             "id": 1,
                                             "name": "Saudi Arabia"
                                         },
+                                        "address": "King Fahd Rd, Al Olaya",
+                                        "latitude": 24.7136,
+                                        "longitude": 46.6753,
                                         "categories": [
                                             {
                                                 "id": 11,
@@ -3113,6 +3982,244 @@
                         }
                     }
                 }
+            }
+        },
+        "/api/marketplace/vendor/orders": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor orders"
+                ],
+                "summary": "List my order items",
+                "operationId": "3d82e279b4835d61b61a340118aa6511",
+                "parameters": [
+                    {
+                        "name": "fulfillment_status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "processing",
+                                "shipped",
+                                "delivered",
+                                "cancelled"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order items",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VendorMarketplaceOrderItem"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/orders/items/{id}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor orders"
+                ],
+                "summary": "My order item detail",
+                "operationId": "deacaab68f72d77643e00b3da580a887",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order item",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceOrderItem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your order item"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Marketplace - Vendor orders"
+                ],
+                "summary": "Update fulfillment for my order item",
+                "description": "Forward-only: pending -> processing -> shipped -> delivered (or cancelled, blocked once shipped/delivered). Setting shipped/delivered stamps shipped_at/delivered_at. The parent order's own status rolls up once every vendor's lines in it cross the same step.",
+                "operationId": "4142fe8a2ce3aa9d11b29c861d43ee24",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "fulfillment_status"
+                                ],
+                                "properties": {
+                                    "fulfillment_status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "processing",
+                                            "shipped",
+                                            "delivered"
+                                        ]
+                                    },
+                                    "tracking_number": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceOrderItem"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active, or order not paid yet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your order item"
+                    },
+                    "422": {
+                        "description": "Validation error, or backward/invalid transition",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/marketplace/vendor/products": {
@@ -3242,7 +4349,7 @@
                     "Marketplace - Vendor products"
                 ],
                 "summary": "Create a product",
-                "description": "reference is the SKU (one product = no variants) - generated from your product name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug. status defaults to draft; send pending_review to submit it for review right away - active/inactive/rejected are refused (422), only an admin sets those. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
+                "description": "reference is the SKU (one product = no variants) - generated from your product name when omitted (uppercased, -2/-3... appended on a collision), same idea as slug. status defaults to active (an approved shop publishes directly) - send draft to hold it back, or pending_review to request an admin look first; inactive/rejected are refused here (422), only an admin sets those. To add photos, call POST /api/marketplace/upload-image (type=product) first and send the URLs it returns in images[].image_path.",
                 "operationId": "ae1bfca230fa38a101c9e0e33b66e28c",
                 "requestBody": {
                     "required": true,
@@ -3307,12 +4414,14 @@
                                         "example": "new"
                                     },
                                     "status": {
+                                        "description": "Defaults to active when omitted",
                                         "type": "string",
                                         "enum": [
                                             "draft",
-                                            "pending_review"
+                                            "pending_review",
+                                            "active"
                                         ],
-                                        "example": "draft"
+                                        "example": "active"
                                     },
                                     "images": {
                                         "type": "array",
@@ -3447,7 +4556,7 @@
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Product created, waiting for review"
+                                            "example": "Product created and published"
                                         },
                                         "data": {
                                             "$ref": "#/components/schemas/VendorMarketplaceProductDetail"
@@ -3472,7 +4581,7 @@
                         }
                     },
                     "422": {
-                        "description": "Validation error (also used for status=active/inactive/rejected)",
+                        "description": "Validation error (also used for status=inactive/rejected)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3550,7 +4659,7 @@
                     "Marketplace - Vendor products"
                 ],
                 "summary": "Update my product",
-                "description": "Send only the fields to change. images / attributes / compatibility / variants: send the array to REPLACE the full current set, or omit the key to leave it untouched. status (if sent) is limited to draft/pending_review - e.g. resubmit a rejected product by sending status=pending_review, it also clears status_reason. Editing an already-active product's other fields (price, stock...) does not unpublish it: only touch status when you mean to change it.",
+                "description": "Send only the fields to change. images / attributes / compatibility / variants: send the array to REPLACE the full current set, or omit the key to leave it untouched. status (if sent) accepts draft/pending_review/active - e.g. resubmit a REJECTED product by sending status=pending_review (sending status=active directly on a rejected product is refused, 422: it needs a fresh admin look first), it also clears status_reason. Editing an already-active product's other fields (price, stock...) does not unpublish it: only touch status when you mean to change it.",
                 "operationId": "4aa41e3c4ddcf09c5c29e9260076a950",
                 "parameters": [
                     {
@@ -3599,7 +4708,7 @@
                         "description": "No shop, or not your product"
                     },
                     "422": {
-                        "description": "Validation error (also used for status=active/inactive/rejected)",
+                        "description": "Validation error (also used for status=inactive/rejected, or status=active on a rejected product)",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3674,6 +4783,426 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/shipping-methods": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor shipping methods"
+                ],
+                "summary": "List my shipping methods",
+                "operationId": "82ef870480f00dbf0f246001d35ff1e1",
+                "parameters": [
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Methods",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VendorMarketplaceShippingMethod"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Add a shipping method",
+                "description": "You can offer a given provider only once. The provider must be active. uses_own_api=true requires credentials (key/value object, e.g. {api_key, account_number}); they are stored encrypted and never returned. Without an own API the flat_rate is used, no carrier call is made (v1).",
+                "operationId": "08f70677d019b42f2b2244777f7198f3",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "provider_id",
+                                    "flat_rate"
+                                ],
+                                "properties": {
+                                    "provider_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "flat_rate": {
+                                        "description": "Rest-of-the-country rate",
+                                        "type": "number",
+                                        "example": 35
+                                    },
+                                    "local_rate": {
+                                        "description": "Applied instead of flat_rate when the order ships to your own city. Omit/null to always use flat_rate.",
+                                        "type": "number",
+                                        "example": 15,
+                                        "nullable": true
+                                    },
+                                    "uses_own_api": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "credentials": {
+                                        "type": "object",
+                                        "example": {
+                                            "api_key": "xxxx",
+                                            "account_number": "123456"
+                                        }
+                                    },
+                                    "estimated_days_min": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "estimated_days_max": {
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method created successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop",
+                        "content": {
+                            "application/json": {
+                                "schema": {},
+                                "example": {
+                                    "message": "You do not have a vendor account",
+                                    "code": "NO_VENDOR"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error (also: provider already added)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/marketplace/vendor/shipping-methods/{id}": {
+            "get": {
+                "tags": [
+                    "Marketplace - Vendor shipping methods"
+                ],
+                "summary": "My shipping method detail",
+                "operationId": "73ab4c1e0d6b742b6b41ccfea9238239",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Method",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your method"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Update a shipping method",
+                "description": "Send only the fields to change. credentials replaces the stored keys when sent; clear_credentials=true removes them. Turning uses_own_api off also wipes the keys. The provider cannot be changed (delete and add another).",
+                "operationId": "b053c097d48a65fdd73af5d560ec3f03",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "flat_rate": {
+                                        "type": "number"
+                                    },
+                                    "local_rate": {
+                                        "description": "Send null to go back to flat_rate everywhere",
+                                        "type": "number",
+                                        "nullable": true
+                                    },
+                                    "uses_own_api": {
+                                        "type": "boolean"
+                                    },
+                                    "credentials": {
+                                        "type": "object"
+                                    },
+                                    "clear_credentials": {
+                                        "type": "boolean"
+                                    },
+                                    "estimated_days_min": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "estimated_days_max": {
+                                        "type": "integer",
+                                        "nullable": true
+                                    },
+                                    "is_active": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method updated successfully"
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/VendorMarketplaceShippingMethod"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your method"
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Marketplace - Vendor shipping methods"
+                ],
+                "summary": "Remove a shipping method",
+                "description": "Soft delete. Orders already placed keep their shipping snapshot.",
+                "operationId": "acafd52c949787f387da7179b7345ed2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Deleted",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shipping method deleted successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Shop not active",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MarketplaceConflict"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No shop, or not your method"
                     }
                 },
                 "security": [
@@ -4050,6 +5579,23 @@
                         "type": "object",
                         "nullable": true
                     },
+                    "address": {
+                        "type": "string",
+                        "example": "King Fahd Rd, Al Olaya",
+                        "nullable": true
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 24.7136,
+                        "nullable": true
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 46.6753,
+                        "nullable": true
+                    },
                     "status": {
                         "type": "string",
                         "enum": [
@@ -4096,6 +5642,559 @@
                     },
                     "created_at": {
                         "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "VendorMarketplaceShippingMethod": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "provider_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "provider": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "DHL"
+                            },
+                            "code": {
+                                "type": "string",
+                                "example": "dhl"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "uses_own_api": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "has_credentials": {
+                        "description": "Keys are write-only: only this flag is ever returned",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "flat_rate": {
+                        "description": "Rest-of-the-country rate",
+                        "type": "number",
+                        "example": 35
+                    },
+                    "local_rate": {
+                        "description": "Applied instead of flat_rate when the order ships to the vendor's own city",
+                        "type": "number",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "estimated_days_min": {
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "estimated_days_max": {
+                        "type": "integer",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceAddress": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 31
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 65
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "example": "Khalid Al-Otaibi"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+966500000000"
+                    },
+                    "country_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "city_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "address_line": {
+                        "type": "string",
+                        "example": "King Fahd Road, Building 12"
+                    },
+                    "address_line_2": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "postal_code": {
+                        "type": "string",
+                        "example": "12345",
+                        "nullable": true
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "country": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Saudi Arabia"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "city": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Riyadh"
+                            },
+                            "name_ar": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceOrderItem": {
+                "description": "One product/variant line, frozen at checkout time - name/price/commission never change afterwards even if the product does.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 116
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 19
+                    },
+                    "variant_id": {
+                        "type": "integer",
+                        "example": 71,
+                        "nullable": true
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "shipping_method_id": {
+                        "type": "integer",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "product_name": {
+                        "description": "Snapshot - survives the product being edited or deleted",
+                        "type": "string",
+                        "example": "Michelin Pilot Road 5 120/70 ZR17"
+                    },
+                    "product_reference": {
+                        "type": "string",
+                        "example": "DEMO-001",
+                        "nullable": true
+                    },
+                    "variant_sku": {
+                        "type": "string",
+                        "example": "DEMO-001-1",
+                        "nullable": true
+                    },
+                    "variant_label": {
+                        "type": "string",
+                        "example": "Front 120/70-17",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "unit_price": {
+                        "type": "number",
+                        "example": 649
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "example": 1298
+                    },
+                    "shipping_fee": {
+                        "description": "Only non-zero on one line per vendor group - the vendor's flat/local rate, charged once",
+                        "type": "number",
+                        "example": 35
+                    },
+                    "discount_amount": {
+                        "description": "This line's share of every applied promo code (platform + shop combined)",
+                        "type": "number",
+                        "example": 97.35
+                    },
+                    "commission_rate": {
+                        "description": "% frozen at order time: vendor override > category > global",
+                        "type": "number",
+                        "example": 15
+                    },
+                    "commission_amount": {
+                        "description": "Computed on total_price minus only the shop-funded discount share - a platform-funded discount comes out of DabApp's margin, not the vendor's commission base",
+                        "type": "number",
+                        "example": 87.62
+                    },
+                    "vendor_net": {
+                        "description": "(total_price - shop-funded discount - commission_amount) + shipping_fee (shipping is never commissioned or discounted)",
+                        "type": "number",
+                        "example": 531.48
+                    },
+                    "payout_id": {
+                        "description": "Not wired up yet - vendor payouts are a separate future feature",
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "fulfillment_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled"
+                        ],
+                        "example": "pending"
+                    },
+                    "tracking_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "shipped_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "delivered_at": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "VendorMarketplaceOrderItem": {
+                "description": "Same fields as MarketplaceOrderItem, with the parent order's own status/number and the product/variant names attached - this is what a vendor sees when preparing an item.",
+                "type": "object",
+                "allOf": [
+                    {
+                        "$ref": "#/components/schemas/MarketplaceOrderItem"
+                    },
+                    {
+                        "properties": {
+                            "order": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "order_number": {
+                                        "type": "string",
+                                        "example": "DAB-261023-0001"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "paid"
+                                    },
+                                    "created_at": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object",
+                                "nullable": true
+                            },
+                            "product": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object",
+                                "nullable": true
+                            },
+                            "variant": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "sku": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    }
+                ]
+            },
+            "MarketplacePayment": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "gateway": {
+                        "type": "string",
+                        "example": "paytabs"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "example": 2062
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "AED"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed",
+                            "failed",
+                            "refunded"
+                        ],
+                        "example": "completed"
+                    },
+                    "cart_id": {
+                        "description": "PayTabs-side reference, unrelated to the shopping Cart",
+                        "type": "string",
+                        "example": "order_DAB-261023-0001_1792748009",
+                        "nullable": true
+                    },
+                    "tran_ref": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "payment_url": {
+                        "description": "Open in a browser/WebView to complete payment",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "description": "Matches the order's own expires_at - the 30-minute reservation window",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "failure_reason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceOrder": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "order_number": {
+                        "description": "Sortable, human-readable - show this to the customer, not the numeric id",
+                        "type": "string",
+                        "example": "DAB-261023-0001"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 65
+                    },
+                    "address_id": {
+                        "type": "integer",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "shipping_address": {
+                        "description": "Snapshot taken at checkout - survives the address being edited or deleted afterwards",
+                        "properties": {
+                            "full_name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "country": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "city": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "city_id": {
+                                "type": "integer",
+                                "nullable": true
+                            },
+                            "address_line": {
+                                "type": "string"
+                            },
+                            "address_line_2": {
+                                "type": "string",
+                                "nullable": true
+                            },
+                            "postal_code": {
+                                "type": "string",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "example": 649
+                    },
+                    "shipping_fee": {
+                        "type": "number",
+                        "example": 35
+                    },
+                    "discount": {
+                        "description": "Sum of every applied promo code's discount_amount across all lines (see promo_codes below)",
+                        "type": "number",
+                        "example": 97.35
+                    },
+                    "total": {
+                        "description": "subtotal + shipping_fee - discount",
+                        "type": "number",
+                        "example": 586.65
+                    },
+                    "currency": {
+                        "description": "Follows the buyer's own checkout-address country (falls back to SAR if unknown), not a fixed value - PayTabs itself still always settles in its own merchant currency underneath",
+                        "type": "string",
+                        "example": "SAR"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending_payment",
+                            "paid",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled",
+                            "refunded"
+                        ],
+                        "example": "pending_payment"
+                    },
+                    "idempotency_key": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "description": "Pay before this, or the order auto-cancels and stock is released (30 min after creation)",
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cancel_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MarketplaceOrderItem"
+                        }
+                    },
+                    "promo_codes": {
+                        "description": "One row per applied code (at most one platform + one shop code)",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MarketplaceOrderPromoCode"
+                        }
+                    },
+                    "payments": {
+                        "description": "Only on the detail call",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MarketplacePayment"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "MarketplaceOrderPromoCode": {
+                "description": "One applied promo code, snapshotted at checkout time.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 134
+                    },
+                    "promo_code_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "vendor_id": {
+                        "description": "null = platform code (DabApp-wide, discounts every line); set = shop code (discounts only that vendor's lines)",
+                        "type": "integer",
+                        "example": 4,
+                        "nullable": true
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "SHOPA10"
+                    },
+                    "discount_amount": {
+                        "description": "This code's total effect across every line it applied to",
+                        "type": "number",
+                        "example": 64.9
                     }
                 },
                 "type": "object"
@@ -4941,6 +7040,10 @@
     },
     "tags": [
         {
+            "name": "Marketplace - Addresses",
+            "description": "A customer's own delivery address book, used at checkout. Access: User (Bearer JWT)."
+        },
+        {
             "name": "Marketplace - Brands",
             "description": "Product brands (All Brands screen). Public, no token needed."
         },
@@ -4953,12 +7056,24 @@
             "description": "Category tree of the marketplace (unlimited depth). Public, no token needed."
         },
         {
+            "name": "Marketplace - Checkout",
+            "description": "Converts the caller's active cart into one Order (split into one OrderItem group per vendor) and starts a PayTabs payment for it. Stock is decremented immediately (the 'reservation') and released automatically if the order is still unpaid 30 minutes later. Access: User (Bearer JWT) only — a guest must log in first."
+        },
+        {
             "name": "Marketplace - Home",
             "description": "One call for the Marketplace home screen. Public, no token needed."
         },
         {
             "name": "Marketplace - Images",
             "description": "Upload images before you use them, the same way listings do it: a standalone endpoint that returns URL strings, decoupled from creating or editing the resource. Send those strings as logo_path / cover_image_path / image_path on the vendor, category, brand or product endpoints — those endpoints take plain JSON, never files."
+        },
+        {
+            "name": "Marketplace - Orders",
+            "description": "A customer's own orders. Access: User (Bearer JWT)."
+        },
+        {
+            "name": "Marketplace - Order payments",
+            "description": "PayTabs server-to-server webhook and browser return for marketplace orders. Called by PayTabs directly, never by the app — no auth."
         },
         {
             "name": "Marketplace - Products",
@@ -4969,6 +7084,10 @@
             "description": "Product reviews: rating, a title/comment, 'what did you like' tags, photos. List is public; writing one needs a token. verified_purchase is always false for now - Orders/Cart (Step 5) aren't built yet, so there is nothing to verify a purchase against."
         },
         {
+            "name": "Marketplace - Shipping providers",
+            "description": "The global carrier list a vendor can pick from when setting up their own shipping methods. Public, no token needed."
+        },
+        {
             "name": "Marketplace - Vendor account",
             "description": "A logged-in user applies to become a vendor and manages their own shop profile. Access: User (Bearer JWT). A guest gets the structured 401 (requires_auth=true). Being a vendor = owning a shop whose status is active; an admin approves applications from the Admin Panel. logo_path / cover_image_path are URLs from POST /api/marketplace/upload-image (type=vendor), not files: upload first, then send the strings here."
         },
@@ -4977,8 +7096,16 @@
             "description": "Shops (All Shops screen and shop page). Public, no token needed. Only approved (active) vendors are ever visible."
         },
         {
+            "name": "Marketplace - Vendor orders",
+            "description": "A vendor's own order lines, for fulfillment. Only lines belonging to a paid order are visible/editable - a pending_payment order never shows up here. Access: User (Bearer JWT)."
+        },
+        {
             "name": "Marketplace - Vendor products",
-            "description": "A vendor manages their own catalog from the app. Only an active shop can sell: a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account endpoints). Unlike the admin side, a vendor cannot publish directly: status is limited to draft or pending_review here - an admin reviews and sets active/rejected from the Admin Panel (mirrors how vendor applications themselves are approved). vendor_id and is_featured are never settable here. images / attributes / compatibility / variants follow the same full-replace convention as the admin endpoint: each array sent REPLACES the product's current set. Access: User (Bearer JWT)."
+            "description": "A vendor manages their own catalog from the app. Only an active shop can sell: a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account endpoints). An already-approved shop is trusted to publish directly: a new product defaults to status=active unless the vendor explicitly asks for draft or pending_review instead (e.g. to prepare it before going live, or to request an extra admin look). An admin can still set inactive/rejected at any time from the Admin Panel (pre- or post-publish moderation). vendor_id and is_featured are never settable here. images / attributes / compatibility / variants follow the same full-replace convention as the admin endpoint: each array sent REPLACES the product's current set. Access: User (Bearer JWT)."
+        },
+        {
+            "name": "Marketplace - Vendor shipping methods",
+            "description": "A vendor sets up their own shipping (carrier + flat rate) from the app, same idea as vendor products. Only an active shop can do this - a pending/rejected/suspended shop gets a structured error instead (same codes as the vendor account/products endpoints). flat_rate is the rest-of-the-country rate; local_rate (optional) applies instead whenever an order ships to the vendor's own city (Vendor.city_id) - a simple 2-tier model, not a full per-city rate table. uses_own_api / credentials exist for a vendor who runs their own carrier API, but have no app UI yet and no real carrier call is ever made (v1, informational only) - leave them out to just use flat_rate/local_rate. Credentials are write-only, encrypted at rest, never returned (only has_credentials). Access: User (Bearer JWT)."
         },
         {
             "name": "Marketplace - Wishlist",

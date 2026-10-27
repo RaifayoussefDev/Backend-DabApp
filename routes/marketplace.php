@@ -2,20 +2,26 @@
 
 use App\Http\Controllers\Admin\Marketplace\BrandAdminController;
 use App\Http\Controllers\Admin\Marketplace\CategoryAdminController;
+use App\Http\Controllers\Admin\Marketplace\OrderAdminController;
 use App\Http\Controllers\Admin\Marketplace\ProductAdminController;
 use App\Http\Controllers\Admin\Marketplace\ShippingProviderAdminController;
 use App\Http\Controllers\Admin\Marketplace\VendorAdminController;
 use App\Http\Controllers\Admin\Marketplace\VendorShippingMethodAdminController;
 use App\Http\Controllers\ImageUploadController;
+use App\Http\Controllers\Marketplace\AddressController;
 use App\Http\Controllers\Marketplace\BrandController;
 use App\Http\Controllers\Marketplace\CartController;
 use App\Http\Controllers\Marketplace\CategoryController;
+use App\Http\Controllers\Marketplace\CheckoutController;
 use App\Http\Controllers\Marketplace\HomeController;
+use App\Http\Controllers\Marketplace\OrderController;
+use App\Http\Controllers\Marketplace\OrderPaymentController;
 use App\Http\Controllers\Marketplace\ProductController;
 use App\Http\Controllers\Marketplace\ProductReviewController;
 use App\Http\Controllers\Marketplace\ShippingProviderController;
 use App\Http\Controllers\Marketplace\VendorAccountController;
 use App\Http\Controllers\Marketplace\VendorController;
+use App\Http\Controllers\Marketplace\VendorOrderController;
 use App\Http\Controllers\Marketplace\VendorProductController;
 use App\Http\Controllers\Marketplace\VendorShippingMethodController;
 use App\Http\Controllers\Marketplace\WishlistController;
@@ -70,6 +76,13 @@ Route::prefix('marketplace')->group(function () {
             Route::put('/{id}', [VendorShippingMethodController::class, 'update'])->whereNumber('id');
             Route::delete('/{id}', [VendorShippingMethodController::class, 'destroy'])->whereNumber('id');
         });
+
+        // ---- Vendor self-service: my own order lines, for fulfillment (own shop only, status active required) ----
+        Route::prefix('orders')->group(function () {
+            Route::get('/', [VendorOrderController::class, 'index']);
+            Route::get('/items/{id}', [VendorOrderController::class, 'show'])->whereNumber('id');
+            Route::put('/items/{id}', [VendorOrderController::class, 'updateFulfillment'])->whereNumber('id');
+        });
     });
 
     // ---- Step 3: catalog (public) ----
@@ -99,6 +112,34 @@ Route::prefix('marketplace')->group(function () {
     });
     Route::middleware('auth:api')->post('/cart/merge', [CartController::class, 'merge']);
 
+    // ---- Step 6: addresses (user = auth:api) ----
+    Route::middleware('auth:api')->prefix('addresses')->group(function () {
+        Route::get('/', [AddressController::class, 'index']);
+        Route::post('/', [AddressController::class, 'store']);
+        Route::get('/{id}', [AddressController::class, 'show'])->whereNumber('id');
+        Route::put('/{id}', [AddressController::class, 'update'])->whereNumber('id');
+        Route::delete('/{id}', [AddressController::class, 'destroy'])->whereNumber('id');
+        Route::post('/{id}/default', [AddressController::class, 'setDefault'])->whereNumber('id');
+    });
+
+    // ---- Step 7: checkout (user = auth:api) ----
+    Route::middleware('auth:api')->post('/checkout', [CheckoutController::class, 'store']);
+
+    // ---- PayTabs for orders (public - called by PayTabs directly, never by the app). Must be
+    // registered before the /orders/{id} wildcard below or "paytabs" would be swallowed as an id. ----
+    Route::prefix('orders/paytabs')->group(function () {
+        Route::post('/callback', [OrderPaymentController::class, 'callback']);
+        Route::match(['get', 'post'], '/return', [OrderPaymentController::class, 'return']);
+    });
+
+    // ---- Step 8: my orders (user = auth:api) ----
+    Route::middleware('auth:api')->prefix('orders')->group(function () {
+        Route::get('/', [OrderController::class, 'index']);
+        Route::get('/{id}', [OrderController::class, 'show'])->whereNumber('id');
+        Route::post('/{id}/cancel', [OrderController::class, 'cancel'])->whereNumber('id');
+        Route::post('/{id}/pay', [OrderController::class, 'pay'])->whereNumber('id');
+    });
+
     // ---- Images (user = auth:api). Standalone, decoupled upload: see ImageUploadController::uploadMarketplaceImage.
     // Used by every step above: upload here first, then pass the returned URL as logo_path / cover_image_path / image_path.
     Route::middleware('auth:api')->post('/upload-image', [ImageUploadController::class, 'uploadMarketplaceImage']);
@@ -125,6 +166,10 @@ Route::prefix('admin/marketplace')->middleware(['auth.admin'])->group(function (
     // ---- Step 3: products ----
     Route::get('/products/stats', [ProductAdminController::class, 'stats']);
     Route::apiResource('products', ProductAdminController::class)->names('admin.marketplace.products')->whereNumber('product');
+
+    // ---- Checkout/Orders: read-only visibility for support/ops ----
+    Route::apiResource('orders', OrderAdminController::class)->only(['index', 'show'])
+        ->names('admin.marketplace.orders')->whereNumber('order');
 
     Route::prefix('vendors/{vendorId}/shipping-methods')->whereNumber(['vendorId', 'id'])->group(function () {
         Route::get('/', [VendorShippingMethodAdminController::class, 'index']);

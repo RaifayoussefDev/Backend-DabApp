@@ -846,6 +846,138 @@
                 ]
             }
         },
+        "/api/admin/marketplace/orders": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Orders"
+                ],
+                "summary": "List orders (Admin)",
+                "operationId": "684942604cb30278dd91ef677d208cf4",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending_payment",
+                                "paid",
+                                "processing",
+                                "shipped",
+                                "delivered",
+                                "cancelled",
+                                "refunded"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Orders",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AdminMarketplaceOrder"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/admin/marketplace/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketplace - Orders"
+                ],
+                "summary": "Order detail (Admin)",
+                "operationId": "68324ac9471c47f145c9fbf15cc7a90a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Order",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/AdminMarketplaceOrder"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Not an admin"
+                    },
+                    "404": {
+                        "description": "Order not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/admin/marketplace/products": {
             "get": {
                 "tags": [
@@ -2887,8 +3019,15 @@
                                         "example": 1
                                     },
                                     "flat_rate": {
+                                        "description": "Rest-of-the-country rate",
                                         "type": "number",
                                         "example": 35
+                                    },
+                                    "local_rate": {
+                                        "description": "Applied instead of flat_rate when the order ships to the vendor's own city",
+                                        "type": "number",
+                                        "example": 15,
+                                        "nullable": true
                                     },
                                     "uses_own_api": {
                                         "type": "boolean",
@@ -3044,6 +3183,11 @@
                                 "properties": {
                                     "flat_rate": {
                                         "type": "number"
+                                    },
+                                    "local_rate": {
+                                        "description": "Send null to go back to flat_rate everywhere",
+                                        "type": "number",
+                                        "nullable": true
                                     },
                                     "uses_own_api": {
                                         "type": "boolean"
@@ -3475,8 +3619,15 @@
                         "example": true
                     },
                     "flat_rate": {
+                        "description": "Rest-of-the-country rate",
                         "type": "number",
                         "example": 35
+                    },
+                    "local_rate": {
+                        "description": "Applied instead of flat_rate when the order ships to the vendor's own city",
+                        "type": "number",
+                        "example": 15,
+                        "nullable": true
                     },
                     "estimated_days_min": {
                         "type": "integer",
@@ -3823,6 +3974,291 @@
                     }
                 ]
             },
+            "AdminMarketplaceOrderItem": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 116
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 19
+                    },
+                    "variant_id": {
+                        "type": "integer",
+                        "example": 71,
+                        "nullable": true
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "product_name": {
+                        "type": "string",
+                        "example": "Michelin Pilot Road 5 120/70 ZR17"
+                    },
+                    "product_reference": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "variant_sku": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "variant_label": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "quantity": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "unit_price": {
+                        "type": "number",
+                        "example": 649
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "example": 1298
+                    },
+                    "shipping_fee": {
+                        "type": "number",
+                        "example": 35
+                    },
+                    "discount_amount": {
+                        "type": "number",
+                        "example": 0
+                    },
+                    "commission_rate": {
+                        "type": "number",
+                        "example": 15
+                    },
+                    "commission_amount": {
+                        "type": "number",
+                        "example": 194.7
+                    },
+                    "vendor_net": {
+                        "type": "number",
+                        "example": 1138.3
+                    },
+                    "payout_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "fulfillment_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled"
+                        ],
+                        "example": "pending"
+                    },
+                    "tracking_number": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "product": {
+                        "description": "Only on the detail call",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "vendor": {
+                        "description": "Only on the detail call",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "shop_name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplacePayment": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 6
+                    },
+                    "order_id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "gateway": {
+                        "type": "string",
+                        "example": "paytabs"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "example": 2062
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "AED"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "completed",
+                            "failed",
+                            "refunded"
+                        ],
+                        "example": "completed"
+                    },
+                    "tran_ref": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "failure_reason": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminMarketplaceOrder": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 113
+                    },
+                    "order_number": {
+                        "type": "string",
+                        "example": "DAB-261023-0001"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 65
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "first_name": {
+                                "type": "string"
+                            },
+                            "last_name": {
+                                "type": "string"
+                            },
+                            "email": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "address_id": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "shipping_address": {
+                        "properties": {
+                            "full_name": {
+                                "type": "string"
+                            },
+                            "phone": {
+                                "type": "string"
+                            },
+                            "address_line": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "example": 2027
+                    },
+                    "shipping_fee": {
+                        "type": "number",
+                        "example": 35
+                    },
+                    "discount": {
+                        "type": "number",
+                        "example": 0
+                    },
+                    "total": {
+                        "type": "number",
+                        "example": 2062
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "AED"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending_payment",
+                            "paid",
+                            "processing",
+                            "shipped",
+                            "delivered",
+                            "cancelled",
+                            "refunded"
+                        ],
+                        "example": "paid"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "cancel_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminMarketplaceOrderItem"
+                        }
+                    },
+                    "payments": {
+                        "description": "Only on the detail call",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AdminMarketplacePayment"
+                        }
+                    }
+                },
+                "type": "object"
+            },
             "ConflictError": {
                 "properties": {
                     "message": {
@@ -3867,6 +4303,10 @@
         {
             "name": "Admin Marketplace - Categories",
             "description": "Category tree management (unlimited depth). image_path is a URL from POST /api/marketplace/upload-image (type=category), not a file: upload first, then send the string here."
+        },
+        {
+            "name": "Admin Marketplace - Orders",
+            "description": "Read-only order visibility for support/ops. Every vendor, every status. Access: Admin."
         },
         {
             "name": "Admin Marketplace - Products",

@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('marketplace_order_items', function (Blueprint $table) {
+            $table->foreignId('variant_id')->nullable()->after('product_id')
+                ->constrained('marketplace_product_variants')->nullOnDelete();
+            $table->string('variant_sku')->nullable()->after('product_reference');
+            $table->string('variant_label')->nullable()->after('variant_sku');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('marketplace_order_items', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('variant_id');
+            $table->dropColumn(['variant_sku', 'variant_label']);
+        });
+    }
+};
